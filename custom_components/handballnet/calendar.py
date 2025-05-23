@@ -2,6 +2,11 @@ from homeassistant.components.calendar import CalendarEntity
 from datetime import datetime, timedelta
 from .const import DOMAIN
 
+async def async_setup_entry(hass, entry, async_add_entities):
+    team_id = entry.data["team_id"]
+    matches = hass.data[DOMAIN][team_id].get("matches", [])
+    async_add_entities([HandballCalendar(hass, team_id, matches)])
+
 class HandballCalendar(CalendarEntity):
     def __init__(self, hass, team_id):
         self.hass = hass

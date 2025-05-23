@@ -6,6 +6,10 @@ from .const import DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
 
+async def async_setup_entry(hass, entry, async_add_entities):
+    team_id = entry.data["team_id"]
+    async_add_entities([HandballNetSensor(hass, team_id)], update_before_add=True)
+
 class HandballNetSensor(Entity):
     def __init__(self, hass, team_id):
         self.hass = hass
@@ -43,7 +47,6 @@ class HandballNetSensor(Entity):
                     "spiele": matches
                 }
 
-                # Gemeinsame Daten aktualisieren
                 self.hass.data[DOMAIN][self._team_id]["matches"] = matches
 
         except Exception as e:

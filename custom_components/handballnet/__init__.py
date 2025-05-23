@@ -1,17 +1,16 @@
 from .const import DOMAIN
 
-async def async_setup_entry(hass, entry, async_add_devices):
+async def async_setup(hass, config):
+    return True
+
+async def async_setup_entry(hass, entry):
     team_id = entry.data["team_id"]
 
-    # Gemeinsame Datenstruktur für diesen team_id anlegen
+    # Gemeinsame Datenstruktur anlegen
     hass.data.setdefault(DOMAIN, {})
     hass.data[DOMAIN][team_id] = {"matches": []}
 
-    from .sensor import HandballNetSensor
-    from .calendar import HandballCalendar
+    # Entry wurde eingerichtet, Plattformen (sensor, calendar) werden per forward_setup geladen
+    await hass.config_entries.async_forward_entry_setups(entry, ["sensor", "calendar"])
 
-    sensor = HandballNetSensor(hass, team_id)
-    calendar = HandballCalendar(hass, team_id)
-
-    async_add_devices([sensor])
-    async_add_devices([calendar])
+    return True
