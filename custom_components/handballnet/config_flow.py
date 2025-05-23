@@ -10,7 +10,7 @@ class HandballNetConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         errors = {}
         if user_input is not None:
             team_id = user_input.get(CONF_TEAM_ID)
-            if not team_id or not team_id.isdigit():
+            if not team_id:
                 errors[CONF_TEAM_ID] = "invalid_team_id"
             else:
                 return self.async_create_entry(title=f"Team {team_id}", data=user_input)
