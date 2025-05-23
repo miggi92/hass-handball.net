@@ -1,14 +1,17 @@
 from .const import DOMAIN
-import logging
 
-_LOGGER = logging.getLogger(__name__)
+async def async_setup_entry(hass, entry, async_add_devices):
+    team_id = entry.data["team_id"]
 
-async def async_setup_entry(hass, entry):
-    _LOGGER.info("Handballnet async_setup_entry aufgerufen")
-    hass.async_create_task(
-        hass.config_entries.async_forward_entry_setup(entry, "sensor")
-    )
-    return True
+    # Gemeinsame Datenstruktur für diesen team_id anlegen
+    hass.data.setdefault(DOMAIN, {})
+    hass.data[DOMAIN][team_id] = {"matches": []}
 
-async def async_unload_entry(hass, entry):
-    return await hass.config_entries.async_forward_entry_unload(entry, "sensor")
+    from .sensor import HandballNetSensor
+    from .calendar import HandballCalendar
+
+    sensor = HandballNetSensor(hass, team_id)
+    calendar = HandballCalendar(hass, team_id)
+
+    async_add_devices([sensor])
+    async_add_devices([calendar])
