@@ -3,6 +3,7 @@
     "name": "Handball.net Integration",
     "version": "0.0.1",
     "documentation": "https://github.com/miggi92/hass-handball.net/blob/main/README.md",
+    "issue_tracker": "https://github.com/miggi92/hass-handball.net/issues",
     "dependencies": [],
     "codeowners": ["@miggi92"],
     "requirements": ["requests"],
