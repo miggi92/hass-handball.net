@@ -5,6 +5,7 @@
     "documentation": "https://github.com/miggi92/hass-handball.net/blob/main/README.md",
     "dependencies": [],
     "codeowners": ["@miggi92"],
-    "requirements": ["requests"]
+    "requirements": ["requests"],
+    "config_flow": true
   }
   
