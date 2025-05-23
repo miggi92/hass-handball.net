@@ -1,79 +1,72 @@
-from __future__ import annotations
-
+from homeassistant.components.calendar import CalendarEntity
 from datetime import datetime, timedelta
-import logging
-from homeassistant.components.calendar import CalendarEntity, CalendarEvent
-from homeassistant.core import HomeAssistant
-from homeassistant.config_entries import ConfigEntry
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
-
+from homeassistant.helpers.entity import Entity
 from .const import DOMAIN
 
-_LOGGER = logging.getLogger(__name__)
-
-async def async_setup_entry(
-    hass: HomeAssistant,
-    entry: ConfigEntry,
-    async_add_entities: AddEntitiesCallback,
-) -> None:
-    """Set up the calendar platform for handballnet."""
-    team_id = entry.data["team_id"]
-    async_add_entities([HandballCalendar(hass, team_id)], update_before_add=True)
-
-
 class HandballCalendar(CalendarEntity):
-    def __init__(self, hass: HomeAssistant, team_id: str) -> None:
+    def __init__(self, hass, team_id):
         self.hass = hass
         self._team_id = team_id
         self._name = f"Handball Spielplan {team_id}"
+        self._matches = []
 
     @property
-    def name(self) -> str:
+    def name(self):
         return self._name
 
     @property
-    def event(self) -> CalendarEvent | None:
-        """Return the next upcoming event."""
-        matches = self.hass.data.get(DOMAIN, {}).get(self._team_id, {}).get("matches", [])
+    def event(self):
         now = datetime.now()
+        matches = self.hass.data.get(DOMAIN, {}).get(self._team_id, {}).get("matches", [])
+        for match in matches:
+            start_raw = match.get("startsAt")
+            if not isinstance(start_raw, str):
+                continue
+            try:
+                start = datetime.fromisoformat(start_raw)
+            except ValueError:
+                continue
 
-        future_matches = [
-            match for match in matches
-            if datetime.fromisoformat(match["startsAt"]) > now
-        ]
+            if start > now:
+                return {
+                    "uid": match.get("id", "unknown"),
+                    "start": start,
+                    "end": start + timedelta(hours=2),
+                    "summary": f"{match['homeTeam']['name']} vs {match['awayTeam']['name']}",
+                    "description": f"Ort: {match.get('field', {}).get('name', 'unbekannt')}",
+                    "all_day": False,
+                }
+        return None
 
-        if not future_matches:
-            return None
-
-        next_match = sorted(future_matches, key=lambda m: m["startsAt"])[0]
-        start = datetime.fromisoformat(next_match["startsAt"])
-        end = start + timedelta(hours=2)
-
-        return CalendarEvent(
-            summary=f"{next_match['homeTeam']['name']} vs {next_match['awayTeam']['name']}",
-            start=start,
-            end=end,
-            description=f"Ort: {next_match.get('field', {}).get('name', 'unbekannt')}",
-            location=next_match.get('field', {}).get('name', ''),
-        )
-
-    async def async_get_events(
-        self, hass: HomeAssistant, start_date: datetime, end_date: datetime
-    ) -> list[CalendarEvent]:
-        """Return all events in the given time range."""
+    async def async_get_events(self, start_date: datetime, end_date: datetime):
         matches = self.hass.data.get(DOMAIN, {}).get(self._team_id, {}).get("matches", [])
         events = []
-
         for match in matches:
-            start = datetime.fromisoformat(match["startsAt"])
+            start_raw = match.get("startsAt")
+            if not isinstance(start_raw, str):
+                continue
+            try:
+                start = datetime.fromisoformat(start_raw)
+            except ValueError:
+                continue
+
             end = start + timedelta(hours=2)
             if start >= start_date and start <= end_date:
-                events.append(CalendarEvent(
-                    summary=f"{match['homeTeam']['name']} vs {match['awayTeam']['name']}",
-                    start=start,
-                    end=end,
-                    description=f"Ort: {match.get('field', {}).get('name', 'unbekannt')}",
-                    location=match.get('field', {}).get('name', ''),
-                ))
-
+                events.append({
+                    "uid": match.get("id", "unknown"),
+                    "start": start,
+                    "end": end,
+                    "summary": f"{match['homeTeam']['name']} vs {match['awayTeam']['name']}",
+                    "description": f"Ort: {match.get('field', {}).get('name', 'unbekannt')}",
+                    "all_day": False,
+                })
         return events
+
+    async def async_update(self):
+        # Es ist kein Update nötig, da der Sensor die Daten liefert
+        pass
+
+
+async def async_setup_entry(hass, entry, async_add_entities):
+    team_id = entry.data["team_id"]
+    async_add_entities([HandballCalendar(hass, team_id)], update_before_add=True)
