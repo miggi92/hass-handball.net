@@ -10,7 +10,7 @@
   "iot_class": "cloud_polling",
   "issue_tracker": "https://github.com/miggi92/hass-handball.net/issues",
   "requirements": [
-    "requests"
+    "aiohttp"
   ],
   "version": "0.0.1"
 }
