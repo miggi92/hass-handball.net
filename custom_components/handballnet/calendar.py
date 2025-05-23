@@ -8,9 +8,10 @@ async def async_setup_entry(hass, entry, async_add_entities):
     async_add_entities([HandballCalendar(hass, team_id, matches)])
 
 class HandballCalendar(CalendarEntity):
-    def __init__(self, hass, team_id):
+    def __init__(self, hass, team_id, matches):
         self.hass = hass
         self._team_id = team_id
+        self._matches = matches
         self._name = f"Handball Spielplan {team_id}"
 
     @property
