@@ -5,8 +5,12 @@ from homeassistant.helpers.typing import AddEntitiesCallback
 
 import requests
 import datetime
+import logging
+
+_LOGGER = logging.getLogger(__name__)
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback):
+    _LOGGER.info("Sensor wird erstellt")
     team_id = entry.data["team_id"]
     async_add_entities([HandballNetSensor(team_id)], update_before_add=True)
 
@@ -17,6 +21,7 @@ class HandballNetSensor(Entity):
         self._attributes = {}
 
     def update(self):
+        _LOGGER.info("Update aufgerufen für Team %s", self._team_id)
         try:
             url = f"https://www.handball.net/a/sportdata/1/teams/{self._team_id}/schedule"
             response = requests.get(url)
