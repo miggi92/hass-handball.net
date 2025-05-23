@@ -9,6 +9,9 @@ _LOGGER = logging.getLogger(__name__)
 
 async def async_setup_entry(hass, entry, async_add_entities):
     team_id = entry.data["team_id"]
+    hass.data.setdefault(DOMAIN, {})
+    hass.data[DOMAIN].setdefault(team_id, {})
+    
     async_add_entities([HandballNetSensor(hass, team_id)], update_before_add=True)
 
 class HandballNetSensor(Entity):
