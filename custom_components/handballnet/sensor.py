@@ -1,4 +1,5 @@
 from homeassistant.helpers.entity import Entity
+from homeassistant.helpers.aiohttp_client import async_get_clientsession
 import logging
 import aiohttp
 from datetime import datetime
@@ -33,7 +34,7 @@ class HandballNetSensor(Entity):
     async def async_update(self):
         url = f"https://www.handball.net/a/sportdata/1/teams/{self._team_id}/schedule"
         try:
-            session = self.hass.helpers.aiohttp_client.async_get_clientsession()
+            session = async_get_clientsession(self.hass)
             async with session.get(url) as resp:
                 if resp.status != 200:
                     _LOGGER.warning("Fehler beim Abrufen von Handball.net: %s", resp.status)
