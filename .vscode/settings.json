@@ -1,1 +1,5 @@
-{}
+{    
+    "pylint.args": [
+    ],
+    "python.testing.pytestEnabled": true
+}
