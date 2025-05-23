@@ -1,7 +1,8 @@
+import logging
 from homeassistant.helpers.entity import Entity
+from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.core import HomeAssistant
 from homeassistant.config_entries import ConfigEntry
-import logging
 import aiohttp
 
 _LOGGER = logging.getLogger(__name__)
@@ -34,16 +35,19 @@ class HandballNetSensor(Entity):
     async def async_update(self):
         url = f"https://www.handball.net/a/sportdata/1/teams/{self._team_id}/schedule"
         try:
-            session: aiohttp.ClientSession = self.hass.helpers.aiohttp_client.async_get_clientsession()
+            session: aiohttp.ClientSession = async_get_clientsession(self.hass)
             async with session.get(url) as resp:
                 if resp.status != 200:
                     _LOGGER.warning("Fehler beim Abrufen von Handball.net: %s", resp.status)
                     return
                 data = await resp.json()
 
-                # Beispielverarbeitung
                 matches = data.get("data", [])
-                team_name = matches[0]["homeTeam"]["name"] if matches else "Unbekannt"
+                team_name = (
+                    matches[0]["homeTeam"]["name"]
+                    if matches and "homeTeam" in matches[0]
+                    else "Unbekannt"
+                )
 
                 self._state = f"{team_name} ({len(matches)} Spiele)"
                 self._attributes = {
