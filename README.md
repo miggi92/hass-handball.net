@@ -28,7 +28,7 @@ Copy the `custom_components/handball_net` folder to your Home Assistant `custom_
 2. Go to `Configuration` > `Integrations`
 3. Click on `+ Add Integration`
 4. Search for `Handball.net`
-5. Enter the team ID of your team (e.g. `12345` for `https://handball.net/team/12345`)
+5. Enter the team ID of your team (e.g. `id.12345` for `https://handball.net/mannschaften/id.12345`)
 6. Click on `Submit`
 
 ## Example
