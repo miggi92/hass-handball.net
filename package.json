@@ -1,4 +1,5 @@
 {
     "name": "hass-handball.net",
-    "version": "0.0.1"
+    "version": "0.0.1",
+    "repository": "miggi92/hass-handball.net"
 }
