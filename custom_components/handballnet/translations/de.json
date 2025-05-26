@@ -1,20 +1,30 @@
 {
-    "config": {
-      "step": {
-        "user": {
-          "title": "Handball.net Team hinzufügen",
-          "description": "Bitte gib die Team-ID ein.",
-          "data": {
-            "team_id": "Team-ID"
-          }
+  "config": {
+    "step": {
+      "user": {
+        "title": "Handball.net Team hinzufügen",
+        "description": "Bitte gib die Team-ID ein.",
+        "data": {
+          "team_id": "Team-ID"
         }
-      },
-      "error": {
-        "invalid_team_id": "Ungültige Team-ID"
-      },
-      "abort": {
-        "already_configured": "Dieses Team ist bereits konfiguriert."
+      }
+    },
+    "error": {
+      "invalid_team_id": "Ungültige Team-ID"
+    },
+    "abort": {
+      "already_configured": "Dieses Team ist bereits konfiguriert."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Optionen für Handball-Team",
+        "data": {
+          "update_interval": "Aktualisierungsintervall (Sekunden)"
+        }
       }
     }
   }
+}
   
