@@ -12,6 +12,5 @@
   "requirements": [
     "aiohttp"
   ],
-  "translations": ["translations"],
   "version": "0.0.1"
 }
