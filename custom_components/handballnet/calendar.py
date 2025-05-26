@@ -13,6 +13,15 @@ class HandballCalendar(CalendarEntity):
     @property
     def name(self):
         return self._name
+    
+    @property
+    def device_info(self):
+        return {
+            "identifiers": {(DOMAIN, self._team_id)},
+            "name": f"Handball Team {self._team_id}",
+            "manufacturer": "handball.net",
+            "model": "Team Kalender + Sensor"
+        }
 
     @property
     def event(self):

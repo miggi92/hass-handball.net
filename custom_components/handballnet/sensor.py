@@ -37,7 +37,7 @@ class HandballNetSensor(Entity):
     @property
     def device_info(self):
         return {
-            "identifiers": {("handballnet", self._team_id)},
+            "identifiers": {(DOMAIN, self._team_id)},
             "name": f"Handball Team {self._team_id}",
             "manufacturer": "handball.net",
             "model": "Team Kalender + Sensor"
