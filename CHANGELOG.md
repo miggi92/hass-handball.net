@@ -1,6 +1,23 @@
 # Changelog
 
 
+## v0.0.2-1
+
+[compare changes](https://github.com/miggi92/hass-handball.net/compare/v0.0.2-0...v0.0.2-1)
+
+### 🚀 Enhancements
+
+- ✨  added live update interval ([9cde757](https://github.com/miggi92/hass-handball.net/commit/9cde757))
+- ✨  added liveticker active sensor ([d615cbd](https://github.com/miggi92/hass-handball.net/commit/d615cbd))
+
+### 🩹 Fixes
+
+- 🐛  fixed can't config polling intervall afterwards ([5a93721](https://github.com/miggi92/hass-handball.net/commit/5a93721))
+
+### ❤️ Contributors
+
+- Miguel <miguel.gebhardt@bechtle.com>
+
 ## v0.0.2-0
 
 [compare changes](https://github.com/miggi92/hass-handball.net/compare/v0.0.1...v0.0.2-0)
