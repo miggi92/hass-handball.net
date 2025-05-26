@@ -1,7 +1,9 @@
 from homeassistant.helpers.entity import Entity
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.event import async_call_later
+from homeassistant.helpers.typing import HomeAssistantType, ConfigType
 from datetime import timedelta, datetime, timezone
+from typing import Any
 import logging
 
 from .const import (
@@ -14,7 +16,7 @@ from .const import (
 
 _LOGGER = logging.getLogger(__name__)
 
-async def async_setup_entry(hass, entry, async_add_entities):
+async def async_setup_entry(hass: HomeAssistantType, entry: ConfigType, async_add_entities):
     team_id = entry.data["team_id"]
     update_interval = entry.options.get(CONF_UPDATE_INTERVAL, entry.data.get(CONF_UPDATE_INTERVAL, DEFAULT_UPDATE_INTERVAL))
     live_interval = entry.options.get(CONF_UPDATE_INTERVAL_LIVE, entry.data.get(CONF_UPDATE_INTERVAL_LIVE, DEFAULT_UPDATE_INTERVAL_LIVE))
@@ -65,14 +67,14 @@ class HandballAllGamesSensor(Entity):
         self._attr_config_entry_id = entry.entry_id
 
     @property
-    def state(self):
+    def state(self) -> str | None:
         return self._state
 
     @property
-    def extra_state_attributes(self):
+    def extra_state_attributes(self) -> dict[str, Any]:
         return self._attributes
 
-    async def async_update(self):
+    async def async_update(self) -> None:
         url = f"https://www.handball.net/a/sportdata/1/teams/{self._team_id}/schedule"
         try:
             session = async_get_clientsession(self.hass)
@@ -120,11 +122,11 @@ class HandballHeimspielSensor(Entity):
         }
 
     @property
-    def state(self):
+    def state(self) -> int:
         return len(self.hass.data[DOMAIN][self._team_id].get("heimspiele", []))
 
     @property
-    def extra_state_attributes(self):
+    def extra_state_attributes(self) -> dict[str, Any]:
         return {"heimspiele": self.hass.data[DOMAIN][self._team_id].get("heimspiele", [])}
 
 
@@ -142,11 +144,11 @@ class HandballAuswaertsspielSensor(Entity):
         }
 
     @property
-    def state(self):
+    def state(self) -> int:
         return len(self.hass.data[DOMAIN][self._team_id].get("auswaertsspiele", []))
 
     @property
-    def extra_state_attributes(self):
+    def extra_state_attributes(self) -> dict[str, Any]:
         return {"auswaertsspiele": self.hass.data[DOMAIN][self._team_id].get("auswaertsspiele", [])}
 
 
@@ -166,7 +168,7 @@ class HandballLiveTickerSensor(Entity):
         self._attr_should_poll = False
         self._attr_native_value = "off"
 
-    def update_state(self):
+    def update_state(self) -> None:
         now_ts = datetime.now(timezone.utc).timestamp()
         matches = self.hass.data.get(DOMAIN, {}).get(self._team_id, {}).get("matches", [])
         self._attr_native_value = "on" if any(
@@ -175,9 +177,16 @@ class HandballLiveTickerSensor(Entity):
         ) else "off"
 
     @property
-    def state(self):
+    def state(self) -> str:
         return self._attr_native_value
 
     @property
-    def is_on(self):
+    def is_on(self) -> bool:
         return self._attr_native_value == "on"
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any]:
+        return {
+            "team_id": self._team_id,
+            "matches_tracked": len(self.hass.data.get(DOMAIN, {}).get(self._team_id, {}).get("matches", []))
+        }
