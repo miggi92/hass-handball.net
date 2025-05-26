@@ -20,3 +20,25 @@
 ### Manual
 
 Copy the `custom_components/handball_net` folder to your Home Assistant `custom_components` folder. Then restart Home Assistant.
+
+
+## Configuration
+
+1. Open the Home Assistant UI
+2. Go to `Configuration` > `Integrations`
+3. Click on `+ Add Integration`
+4. Search for `Handball.net`
+5. Enter the team ID of your team (e.g. `12345` for `https://handball.net/team/12345`)
+6. Click on `Submit`
+
+## Example
+
+![Integration Example](assets/integration_example.png)
+![Calendar Example](assets/calendar_example.png)
+
+## Features
+
+- Fetches team information from [Handball.net](https://handball.net)
+- Creates sensors for home and away games
+- Creates calendar events for games
+- Supports multiple teams
