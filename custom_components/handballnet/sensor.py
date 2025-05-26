@@ -33,6 +33,16 @@ class HandballNetSensor(Entity):
     @property
     def extra_state_attributes(self):
         return self._attributes
+    
+    @property
+    def device_info(self):
+        return {
+            "identifiers": {("handballnet", self._team_id)},
+            "name": f"Handball Team {self._team_id}",
+            "manufacturer": "handball.net",
+            "model": "Team Kalender + Sensor"
+        }
+
 
     async def async_update(self):
         url = f"https://www.handball.net/a/sportdata/1/teams/{self._team_id}/schedule"
