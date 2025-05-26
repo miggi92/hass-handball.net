@@ -9,11 +9,13 @@ _LOGGER = logging.getLogger(__name__)
 
 async def async_setup_entry(hass, entry, async_add_entities):
     team_id = entry.data["team_id"]
-    update_interval = entry.data.get(CONF_UPDATE_INTERVAL, DEFAULT_UPDATE_INTERVAL)
+    update_interval = entry.options.get(CONF_UPDATE_INTERVAL, DEFAULT_UPDATE_INTERVAL)
+
     all_sensor = HandballAllGamesSensor(hass, entry, team_id)
     heim_sensor = HandballHeimspielSensor(hass, entry, team_id)
     aus_sensor = HandballAuswaertsspielSensor(hass, entry, team_id)
-    async_add_entities([all_sensor, heim_sensor, aus_sensor], update_before_add=True)
+
+    async_add_entities([all_sensor, heim_sensor, aus_sensor])
 
     async def update_all(now):
         await all_sensor.async_update()
