@@ -1,7 +1,7 @@
 from homeassistant.helpers.entity import Entity
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.event import async_call_later
-from homeassistant.helpers.typing import HomeAssistantType, ConfigType
+from homeassistant.core import HomeAssistant
 from datetime import timedelta, datetime, timezone
 from typing import Any
 import logging
@@ -16,7 +16,7 @@ from .const import (
 
 _LOGGER = logging.getLogger(__name__)
 
-async def async_setup_entry(hass: HomeAssistantType, entry: ConfigType, async_add_entities):
+async def async_setup_entry(hass: HomeAssistant, entry, async_add_entities):
     team_id = entry.data["team_id"]
     update_interval = entry.options.get(CONF_UPDATE_INTERVAL, entry.data.get(CONF_UPDATE_INTERVAL, DEFAULT_UPDATE_INTERVAL))
     live_interval = entry.options.get(CONF_UPDATE_INTERVAL_LIVE, entry.data.get(CONF_UPDATE_INTERVAL_LIVE, DEFAULT_UPDATE_INTERVAL_LIVE))
