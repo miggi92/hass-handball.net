@@ -1,5 +1,5 @@
 from homeassistant.components.calendar import CalendarEntity, CalendarEvent
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from .const import DOMAIN
 
 async def async_setup_entry(hass, entry, async_add_entities):
@@ -26,14 +26,14 @@ class HandballCalendar(CalendarEntity):
     @property
     def event(self) -> CalendarEvent | None:
         matches = self.hass.data[DOMAIN][self._team_id].get("matches", [])
-        now = datetime.now()
+        now = datetime.now(timezone.utc)
         for match in matches:
-            start_str = match.get("startsAt")
-            if not isinstance(start_str, str):
+            ts = match.get("startsAt")
+            if not isinstance(ts, int):
                 continue
             try:
-                start = datetime.fromisoformat(start_str)
-            except ValueError:
+                start = datetime.fromtimestamp(ts / 1000, tz=timezone.utc)
+            except Exception:
                 continue
             if start > now:
                 return CalendarEvent(
@@ -49,12 +49,12 @@ class HandballCalendar(CalendarEntity):
         matches = self.hass.data[DOMAIN][self._team_id].get("matches", [])
         events: list[CalendarEvent] = []
         for match in matches:
-            start_str = match.get("startsAt")
-            if not isinstance(start_str, str):
+            ts = match.get("startsAt")
+            if not isinstance(ts, int):
                 continue
             try:
-                start = datetime.fromisoformat(start_str)
-            except ValueError:
+                start = datetime.fromtimestamp(ts / 1000, tz=timezone.utc)
+            except Exception:
                 continue
             if start_date <= start <= end_date:
                 events.append(CalendarEvent(
