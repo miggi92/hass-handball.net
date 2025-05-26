@@ -1,16 +1,27 @@
 from homeassistant.helpers.entity import Entity
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
+from homeassistant.helpers.event import async_track_time_interval
+from datetime import timedelta
 import logging
-from .const import DOMAIN
+from .const import DOMAIN, CONF_UPDATE_INTERVAL, DEFAULT_UPDATE_INTERVAL
 
 _LOGGER = logging.getLogger(__name__)
 
 async def async_setup_entry(hass, entry, async_add_entities):
     team_id = entry.data["team_id"]
+    update_interval = entry.data.get(CONF_UPDATE_INTERVAL, DEFAULT_UPDATE_INTERVAL)
     all_sensor = HandballAllGamesSensor(hass, entry, team_id)
     heim_sensor = HandballHeimspielSensor(hass, entry, team_id)
     aus_sensor = HandballAuswaertsspielSensor(hass, entry, team_id)
     async_add_entities([all_sensor, heim_sensor, aus_sensor], update_before_add=True)
+
+    async def update_all(now):
+        await all_sensor.async_update()
+        all_sensor.async_write_ha_state()
+        heim_sensor.async_write_ha_state()
+        aus_sensor.async_write_ha_state()
+
+    async_track_time_interval(hass, update_all, timedelta(seconds=update_interval))
 
 class HandballAllGamesSensor(Entity):
     def __init__(self, hass, entry, team_id):
