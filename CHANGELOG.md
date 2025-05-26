@@ -1,6 +1,23 @@
 # Changelog
 
 
+## v0.0.2-2
+
+[compare changes](https://github.com/miggi92/hass-handball.net/compare/v0.0.2-1...v0.0.2-2)
+
+### 🚀 Enhancements
+
+- ✨  added binary sensor ([fd72def](https://github.com/miggi92/hass-handball.net/commit/fd72def))
+
+### 🩹 Fixes
+
+- 🐛  fixed config not showing ([1639f71](https://github.com/miggi92/hass-handball.net/commit/1639f71))
+- 🐛  fixed sensor not showing ([3ebd26e](https://github.com/miggi92/hass-handball.net/commit/3ebd26e))
+
+### ❤️ Contributors
+
+- Miguel <miguel.gebhardt@bechtle.com>
+
 ## v0.0.2-1
 
 [compare changes](https://github.com/miggi92/hass-handball.net/compare/v0.0.2-0...v0.0.2-1)
