@@ -12,6 +12,8 @@ class HandballCalendar(CalendarEntity):
         self.hass = hass
         self._team_id = team_id
         self._attr_name = f"Handball Spielplan {team_id}"
+        self._attr_unique_id = f"handball_calendar_{team_id}"
+        self._attr_config_entry_id = entry.entry_id
         self._attr_device_info = {
             "identifiers": {(DOMAIN, team_id)},
             "name": f"Handball Team {team_id}",
@@ -19,11 +21,10 @@ class HandballCalendar(CalendarEntity):
             "model": "Team Kalender + Sensor",
             "entry_type": "service"
         }
-        self._attr_config_entry_id = entry.entry_id
+        self._event = None
 
     @property
     def event(self) -> CalendarEvent | None:
-        """Return the next upcoming event."""
         matches = self.hass.data[DOMAIN][self._team_id].get("matches", [])
         now = datetime.now()
         for match in matches:
@@ -34,7 +35,6 @@ class HandballCalendar(CalendarEntity):
                 start = datetime.fromisoformat(start_str)
             except ValueError:
                 continue
-
             if start > now:
                 return CalendarEvent(
                     summary=f"{match['homeTeam']['name']} vs {match['awayTeam']['name']}",
@@ -45,7 +45,7 @@ class HandballCalendar(CalendarEntity):
                 )
         return None
 
-    async def async_get_events(self, start_date: datetime, end_date: datetime) -> list[CalendarEvent]:
+    async def async_get_events(self, hass, start_date: datetime, end_date: datetime) -> list[CalendarEvent]:
         matches = self.hass.data[DOMAIN][self._team_id].get("matches", [])
         events: list[CalendarEvent] = []
         for match in matches:
@@ -56,7 +56,6 @@ class HandballCalendar(CalendarEntity):
                 start = datetime.fromisoformat(start_str)
             except ValueError:
                 continue
-
             if start_date <= start <= end_date:
                 events.append(CalendarEvent(
                     summary=f"{match['homeTeam']['name']} vs {match['awayTeam']['name']}",
