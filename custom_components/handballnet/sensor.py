@@ -19,6 +19,7 @@ class HandballAllGamesSensor(Entity):
         self._state = None
         self._attributes = {}
         self._attr_name = f"Alle Spiele {team_id}"
+        self._attr_unique_id = f"handball_allgames_{team_id}"
         self._attr_device_info = {
             "identifiers": {(DOMAIN, self._team_id)},
             "name": f"Handball Team {self._team_id}",
@@ -73,7 +74,8 @@ class HandballHeimspielSensor(Entity):
     def __init__(self, hass, entry, team_id):
         self.hass = hass
         self._team_id = team_id
-        self._attr_name = "Handball Heimspiele"
+        self._attr_name = f"Handball Heimspiele {team_id}"
+        self._attr_unique_id = f"handball_heim_{team_id}"
         self._attr_config_entry_id = entry.entry_id
         self._attr_device_info = {
             "identifiers": {(DOMAIN, team_id)},
@@ -94,7 +96,8 @@ class HandballAuswaertsspielSensor(Entity):
     def __init__(self, hass, entry, team_id):
         self.hass = hass
         self._team_id = team_id
-        self._attr_name = "Handball Auswärtsspiele"
+        self._attr_name = f"Handball Auswärtsspiele {team_id}"
+        self._attr_unique_id = f"handball_auswaerts_{team_id}"
         self._attr_config_entry_id = entry.entry_id
         self._attr_device_info = {
             "identifiers": {(DOMAIN, team_id)},
