@@ -1,3 +1,20 @@
 {
-    
-}
+    "config": {
+      "step": {
+        "user": {
+          "title": "Add Handball.net Team",
+          "description": "Please enter the team ID.",
+          "data": {
+            "team_id": "Team ID"
+          }
+        }
+      },
+      "error": {
+        "invalid_team_id": "Invalid team ID"
+      },
+      "abort": {
+        "already_configured": "This team is already configured."
+      }
+    }
+  }
+  
