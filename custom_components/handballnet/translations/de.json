@@ -21,7 +21,8 @@
       "init": {
         "title": "Optionen für Handball-Team",
         "data": {
-          "update_interval": "Aktualisierungsintervall (Sekunden)"
+          "update_interval": "Aktualisierungsintervall (Sekunden)",
+          "update_interval_live": "Intervall während Spielen (Sekunden)"
         }
       }
     }
