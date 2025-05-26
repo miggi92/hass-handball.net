@@ -1,16 +1,25 @@
+from homeassistant.config_entries import ConfigEntry
+from homeassistant.core import HomeAssistant
 from .const import DOMAIN
 
-async def async_setup(hass, config):
+PLATFORMS = ["sensor", "calendar"]
+
+async def async_setup(hass: HomeAssistant, config: dict):
     return True
 
-async def async_setup_entry(hass, entry):
-    team_id = entry.data["team_id"]
-
-    # Gemeinsame Datenstruktur anlegen
+async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     hass.data.setdefault(DOMAIN, {})
-    hass.data[DOMAIN][team_id] = {"matches": []}
+    hass.data[DOMAIN][entry.data["team_id"]] = {"matches": []}
 
-    # Entry wurde eingerichtet, Plattformen (sensor, calendar) werden per forward_setup geladen
-    await hass.config_entries.async_forward_entry_setups(entry, ["sensor", "calendar"])
-
+    # Plattformen laden (sensor.py, calendar.py)
+    for platform in PLATFORMS:
+        hass.async_create_task(
+            hass.config_entries.async_forward_entry_setup(entry, platform)
+        )
     return True
+
+async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry):
+    unload_ok = await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
+    if unload_ok:
+        hass.data[DOMAIN].pop(entry.data["team_id"])
+    return unload_ok

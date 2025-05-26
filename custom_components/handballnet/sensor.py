@@ -1,26 +1,30 @@
 from homeassistant.helpers.entity import Entity
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 import logging
-import aiohttp
-from datetime import datetime
 from .const import DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
 
 async def async_setup_entry(hass, entry, async_add_entities):
     team_id = entry.data["team_id"]
-    hass.data.setdefault(DOMAIN, {})
-    hass.data[DOMAIN].setdefault(team_id, {})
-    
-    async_add_entities([HandballNetSensor(hass, team_id)], update_before_add=True)
+    sensor = HandballNetSensor(hass, entry, team_id)
+    async_add_entities([sensor], update_before_add=True)
 
 class HandballNetSensor(Entity):
-    def __init__(self, hass, team_id):
+    def __init__(self, hass, entry, team_id):
         self.hass = hass
         self._team_id = team_id
         self._state = None
         self._attributes = {}
         self._name = f"Handball Team {team_id}"
+        self._attr_device_info = {
+            "identifiers": {(DOMAIN, self._team_id)},
+            "name": f"Handball Team {self._team_id}",
+            "manufacturer": "handball.net",
+            "model": "Team Kalender + Sensor",
+            "entry_type": "service"
+        }
+        self._attr_config_entry_id = entry.entry_id
 
     @property
     def name(self):
@@ -33,16 +37,6 @@ class HandballNetSensor(Entity):
     @property
     def extra_state_attributes(self):
         return self._attributes
-    
-    @property
-    def device_info(self):
-        return {
-            "identifiers": {(DOMAIN, self._team_id)},
-            "name": f"Handball Team {self._team_id}",
-            "manufacturer": "handball.net",
-            "model": "Team Kalender + Sensor"
-        }
-
 
     async def async_update(self):
         url = f"https://www.handball.net/a/sportdata/1/teams/{self._team_id}/schedule"

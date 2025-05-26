@@ -1,81 +1,65 @@
 from homeassistant.components.calendar import CalendarEntity
 from datetime import datetime, timedelta
-from homeassistant.helpers.entity import Entity
 from .const import DOMAIN
 
+async def async_setup_entry(hass, entry, async_add_entities):
+    team_id = entry.data["team_id"]
+    entity = HandballCalendar(hass, entry, team_id)
+    async_add_entities([entity], update_before_add=True)
+
 class HandballCalendar(CalendarEntity):
-    def __init__(self, hass, team_id):
+    def __init__(self, hass, entry, team_id):
         self.hass = hass
         self._team_id = team_id
         self._name = f"Handball Spielplan {team_id}"
-        self._matches = []
+        self._attr_device_info = {
+            "identifiers": {(DOMAIN, team_id)},
+            "name": f"Handball Team {team_id}",
+            "manufacturer": "handball.net",
+            "model": "Team Kalender + Sensor",
+            "entry_type": "service"
+        }
+        self._attr_config_entry_id = entry.entry_id
 
     @property
     def name(self):
         return self._name
-    
-    @property
-    def device_info(self):
-        return {
-            "identifiers": {(DOMAIN, self._team_id)},
-            "name": f"Handball Team {self._team_id}",
-            "manufacturer": "handball.net",
-            "model": "Team Kalender + Sensor"
-        }
 
     @property
     def event(self):
+        matches = self.hass.data[DOMAIN][self._team_id].get("matches", [])
         now = datetime.now()
-        matches = self.hass.data.get(DOMAIN, {}).get(self._team_id, {}).get("matches", [])
         for match in matches:
-            start_raw = match.get("startsAt")
-            if not isinstance(start_raw, str):
+            start_str = match.get("startsAt")
+            if not start_str or not isinstance(start_str, str):
                 continue
-            try:
-                start = datetime.fromisoformat(start_raw)
-            except ValueError:
-                continue
-
+            start = datetime.fromisoformat(start_str)
             if start > now:
                 return {
-                    "uid": match.get("id", "unknown"),
+                    "uid": match["id"],
                     "start": start,
                     "end": start + timedelta(hours=2),
                     "summary": f"{match['homeTeam']['name']} vs {match['awayTeam']['name']}",
-                    "description": f"Ort: {match.get('field', {}).get('name', 'unbekannt')}",
-                    "all_day": False,
+                    "description": match.get("field", {}).get("name", "unbekannt"),
+                    "all_day": False
                 }
         return None
 
-    async def async_get_events(self, start_date: datetime, end_date: datetime):
-        matches = self.hass.data.get(DOMAIN, {}).get(self._team_id, {}).get("matches", [])
+    async def async_get_events(self, start_date, end_date):
+        matches = self.hass.data[DOMAIN][self._team_id].get("matches", [])
         events = []
         for match in matches:
-            start_raw = match.get("startsAt")
-            if not isinstance(start_raw, str):
+            start_str = match.get("startsAt")
+            if not start_str or not isinstance(start_str, str):
                 continue
-            try:
-                start = datetime.fromisoformat(start_raw)
-            except ValueError:
-                continue
-
-            end = start + timedelta(hours=2)
+            start = datetime.fromisoformat(start_str)
             if start >= start_date and start <= end_date:
                 events.append({
-                    "uid": match.get("id", "unknown"),
+                    "uid": match["id"],
                     "start": start,
-                    "end": end,
+                    "end": start + timedelta(hours=2),
                     "summary": f"{match['homeTeam']['name']} vs {match['awayTeam']['name']}",
-                    "description": f"Ort: {match.get('field', {}).get('name', 'unbekannt')}",
+                    "description": match.get("field", {}).get("name", "unbekannt"),
                     "all_day": False,
                 })
         return events
-
-    async def async_update(self):
-        # Es ist kein Update nötig, da der Sensor die Daten liefert
-        pass
-
-
-async def async_setup_entry(hass, entry, async_add_entities):
-    team_id = entry.data["team_id"]
-    async_add_entities([HandballCalendar(hass, team_id)], update_before_add=True)
