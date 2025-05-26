@@ -115,7 +115,7 @@ class HandballHeimspielSensor(Entity):
         self._attr_name = f"Handball Heimspiele {team_id}"
         self._attr_config_entry_id = entry.entry_id
         self._attr_device_info = {
-            "identifiers": {(DOMAIN, team_id)},
+            "identifiers": {(DOMAIN, self._team_id)},
             "name": f"Handball Team {team_id}",
             "manufacturer": "handball.net",
             "model": "Team Kalender + Sensor"
@@ -137,7 +137,7 @@ class HandballAuswaertsspielSensor(Entity):
         self._attr_name = f"Handball Auswärtsspiele {team_id}"
         self._attr_config_entry_id = entry.entry_id
         self._attr_device_info = {
-            "identifiers": {(DOMAIN, team_id)},
+            "identifiers": {(DOMAIN, self._team_id)},
             "name": f"Handball Team {team_id}",
             "manufacturer": "handball.net",
             "model": "Team Kalender + Sensor"
@@ -159,7 +159,7 @@ class HandballLiveTickerSensor(Entity):
         self._attr_name = f"Liveticker aktiv {team_id}"
         self._attr_config_entry_id = entry.entry_id
         self._attr_device_info = {
-            "identifiers": {(DOMAIN, team_id)},
+            "identifiers": {(DOMAIN, self._team_id)},
             "name": f"Handball Team {team_id}",
             "manufacturer": "handball.net",
             "model": "Team Kalender + Sensor"
