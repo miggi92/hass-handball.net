@@ -42,3 +42,8 @@ Copy the `custom_components/handball_net` folder to your Home Assistant `custom_
 - Creates sensors for home and away games
 - Creates calendar events for games
 - Supports multiple teams
+
+
+## Sponsors
+
+![Sponsors](https://github.com/miggi92/static/blob/master/sponsors.svg)
