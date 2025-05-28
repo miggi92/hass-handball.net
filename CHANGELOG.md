@@ -1,6 +1,22 @@
 # Changelog
 
 
+## v0.0.3-1
+
+[compare changes](https://github.com/miggi92/hass-handball.net/compare/v0.0.3-0...v0.0.3-1)
+
+### 🚀 Enhancements
+
+- ✨  show teamname ([1d942c7](https://github.com/miggi92/hass-handball.net/commit/1d942c7))
+
+### 🩹 Fixes
+
+- 🐛  fixed errors ([24465c7](https://github.com/miggi92/hass-handball.net/commit/24465c7))
+
+### ❤️ Contributors
+
+- Miguel ([@miggi92](https://github.com/miggi92))
+
 ## v0.0.3-0
 
 [compare changes](https://github.com/miggi92/hass-handball.net/compare/v0.0.2...v0.0.3-0)
