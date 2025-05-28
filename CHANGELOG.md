@@ -1,6 +1,37 @@
 # Changelog
 
 
+## v0.0.3-0
+
+[compare changes](https://github.com/miggi92/hass-handball.net/compare/v0.0.2...v0.0.3-0)
+
+### 🚀 Enhancements
+
+- ✨  added table ranking sensor ([6048a63](https://github.com/miggi92/hass-handball.net/commit/6048a63))
+
+### 🩹 Fixes
+
+- 🐛  fixed home assistant deprecation warning ([e53aea9](https://github.com/miggi92/hass-handball.net/commit/e53aea9))
+
+### 💅 Refactors
+
+- ♻️  added own api file ([67f17b5](https://github.com/miggi92/hass-handball.net/commit/67f17b5))
+- ♻️  reduced attribute size ([bafc64d](https://github.com/miggi92/hass-handball.net/commit/bafc64d))
+- ♻️  split sensors in seperate files ([f8f5622](https://github.com/miggi92/hass-handball.net/commit/f8f5622))
+
+### 📖 Documentation
+
+- 📝  changed picture size ([9f92ae8](https://github.com/miggi92/hass-handball.net/commit/9f92ae8))
+
+### 🏡 Chore
+
+- 📝  changed name ([8287867](https://github.com/miggi92/hass-handball.net/commit/8287867))
+- 📝  changed model name ([c9cdd6a](https://github.com/miggi92/hass-handball.net/commit/c9cdd6a))
+
+### ❤️ Contributors
+
+- Miguel ([@miggi92](https://github.com/miggi92))
+
 ## v0.0.2
 
 [compare changes](https://github.com/miggi92/hass-handball.net/compare/v0.0.1...v0.0.2)
