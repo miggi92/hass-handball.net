@@ -61,7 +61,7 @@ class HandballAllGamesSensor(Entity):
             "identifiers": {(DOMAIN, self._team_id)},
             "name": f"Handball Team {self._team_id}",
             "manufacturer": "handball.net",
-            "model": "Team Kalender + Sensor",
+            "model": "Handball Team",
             "entry_type": "service"
         }
         self._attr_config_entry_id = entry.entry_id
@@ -120,7 +120,7 @@ class HandballHeimspielSensor(Entity):
             "identifiers": {(DOMAIN, self._team_id)},
             "name": f"Handball Team {team_id}",
             "manufacturer": "handball.net",
-            "model": "Team Kalender + Sensor"
+            "model": "Handball Team"
         }
 
     @property
@@ -143,7 +143,7 @@ class HandballAuswaertsspielSensor(Entity):
             "identifiers": {(DOMAIN, self._team_id)},
             "name": f"Handball Team {team_id}",
             "manufacturer": "handball.net",
-            "model": "Team Kalender + Sensor"
+            "model": "Handball Team"
         }
 
     @property
@@ -166,7 +166,7 @@ class HandballLiveTickerSensor(Entity):
             "identifiers": {(DOMAIN, self._team_id)},
             "name": f"Handball Team {self._team_id}",
             "manufacturer": "handball.net",
-            "model": "Team Kalender + Sensor"
+            "model": "Handball Team"
         }
         self._attr_icon = "mdi:clock-alert"
         self._attr_should_poll = False

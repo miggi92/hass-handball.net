@@ -18,7 +18,7 @@ class HandballCalendar(CalendarEntity):
             "identifiers": {(DOMAIN, team_id)},
             "name": f"Handball Team {team_id}",
             "manufacturer": "handball.net",
-            "model": "Team Kalender + Sensor",
+            "model": "Handball Team",
             "entry_type": "service"
         }
         self._event = None
