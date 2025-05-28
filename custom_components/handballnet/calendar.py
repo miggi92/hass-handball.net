@@ -27,7 +27,30 @@ class HandballCalendar(CalendarEntity):
     def event(self) -> CalendarEvent | None:
         matches = self.hass.data[DOMAIN][self._team_id].get("matches", [])
         now = datetime.now(timezone.utc)
+        
+        # First check for currently running matches
         for match in matches:
+            ts = match.get("startsAt")
+            if not isinstance(ts, int):
+                continue
+            try:
+                start = datetime.fromtimestamp(ts / 1000, tz=timezone.utc)
+                end = start + timedelta(hours=2)
+            except Exception:
+                continue
+            
+            # If match is currently running (started but not ended)
+            if start <= now <= end:
+                return CalendarEvent(
+                    summary=f"{match['homeTeam']['name']} vs {match['awayTeam']['name']} (LIVE)",
+                    start=start,
+                    end=end,
+                    description=f"🏆 LIVE: {match.get('field', {}).get('name', 'unbekannt')}",
+                    location=match.get("field", {}).get("name", "")
+                )
+        
+        # If no current match, find next future match
+        for match in sorted(matches, key=lambda x: x.get("startsAt", 0)):
             ts = match.get("startsAt")
             if not isinstance(ts, int):
                 continue
@@ -48,20 +71,34 @@ class HandballCalendar(CalendarEntity):
     async def async_get_events(self, hass, start_date: datetime, end_date: datetime) -> list[CalendarEvent]:
         matches = self.hass.data[DOMAIN][self._team_id].get("matches", [])
         events: list[CalendarEvent] = []
+        now = datetime.now(timezone.utc)
+        
         for match in matches:
             ts = match.get("startsAt")
             if not isinstance(ts, int):
                 continue
             try:
                 start = datetime.fromtimestamp(ts / 1000, tz=timezone.utc)
+                end = start + timedelta(hours=2)
             except Exception:
                 continue
+            
             if start_date <= start <= end_date:
+                # Mark live games
+                is_live = start <= now <= end
+                summary = f"{match['homeTeam']['name']} vs {match['awayTeam']['name']}"
+                if is_live:
+                    summary += " (LIVE)"
+                
+                description = match.get("field", {}).get("name", "unbekannt")
+                if is_live:
+                    description = f"🏆 LIVE: {description}"
+                
                 events.append(CalendarEvent(
-                    summary=f"{match['homeTeam']['name']} vs {match['awayTeam']['name']}",
+                    summary=summary,
                     start=start,
-                    end=start + timedelta(hours=2),
-                    description=match.get("field", {}).get("name", "unbekannt"),
+                    end=end,
+                    description=description,
                     location=match.get("field", {}).get("name", "")
                 ))
         return events
