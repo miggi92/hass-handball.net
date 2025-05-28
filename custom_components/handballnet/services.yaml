@@ -1,0 +1,4 @@
+reload_config:
+  name: Reload Configuration
+  description: Reload the handball.net integration configuration
+  fields: {}

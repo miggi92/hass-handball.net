@@ -1,8 +1,11 @@
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers import config_validation as cv
 from .const import DOMAIN
 
 PLATFORMS = ["sensor", "calendar", "binary_sensor"]
+
+CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
 
 async def async_reload_config(hass: HomeAssistant):
     for entry in hass.config_entries.async_entries(DOMAIN):
