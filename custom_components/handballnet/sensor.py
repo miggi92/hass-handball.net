@@ -89,6 +89,9 @@ class HandballAllGamesSensor(Entity):
         heimspiele = []
         auswaertsspiele = []
         team_name = None
+        next_match = None
+        last_match = None
+        now = datetime.now(timezone.utc)
 
         for match in matches:
             if match["homeTeam"]["id"] == self._team_id:
@@ -98,8 +101,37 @@ class HandballAllGamesSensor(Entity):
                 auswaertsspiele.append(match)
                 team_name = match["awayTeam"]["name"]
 
+        # Find next and last match
+        for match in sorted(matches, key=lambda x: x.get("startsAt", 0)):
+            match_time = datetime.fromtimestamp(match.get("startsAt", 0) / 1000, tz=timezone.utc)
+            if match_time > now and next_match is None:
+                next_match = {
+                    "id": match.get("id"),
+                    "home_team": match.get("homeTeam", {}).get("name"),
+                    "away_team": match.get("awayTeam", {}).get("name"),
+                    "starts_at": match.get("startsAt"),
+                    "field": match.get("field", {}).get("name")
+                }
+            elif match_time <= now:
+                last_match = {
+                    "id": match.get("id"),
+                    "home_team": match.get("homeTeam", {}).get("name"),
+                    "away_team": match.get("awayTeam", {}).get("name"),
+                    "starts_at": match.get("startsAt"),
+                    "home_goals": match.get("homeGoals"),
+                    "away_goals": match.get("awayGoals"),
+                    "state": match.get("state")
+                }
+
         self._state = f"{team_name} ({len(matches)} Spiele)"
-        self._attributes = {"spiele": matches}
+        self._attributes = {
+            "team_name": team_name,
+            "total_games": len(matches),
+            "home_games": len(heimspiele),
+            "away_games": len(auswaertsspiele),
+            "next_match": next_match,
+            "last_match": last_match
+        }
 
         self.hass.data[DOMAIN][self._team_id]["matches"] = matches
         self.hass.data[DOMAIN][self._team_id]["heimspiele"] = heimspiele
@@ -126,7 +158,24 @@ class HandballHeimspielSensor(Entity):
 
     @property
     def extra_state_attributes(self) -> dict[str, Any]:
-        return {"heimspiele": self.hass.data[DOMAIN][self._team_id].get("heimspiele", [])}
+        heimspiele = self.hass.data[DOMAIN][self._team_id].get("heimspiele", [])
+        next_home_match = None
+        now = datetime.now(timezone.utc)
+        
+        for match in sorted(heimspiele, key=lambda x: x.get("startsAt", 0)):
+            match_time = datetime.fromtimestamp(match.get("startsAt", 0) / 1000, tz=timezone.utc)
+            if match_time > now:
+                next_home_match = {
+                    "opponent": match.get("awayTeam", {}).get("name"),
+                    "starts_at": match.get("startsAt"),
+                    "field": match.get("field", {}).get("name")
+                }
+                break
+        
+        return {
+            "total_home_games": len(heimspiele),
+            "next_home_match": next_home_match
+        }
 
 
 class HandballAuswaertsspielSensor(Entity):
@@ -149,7 +198,24 @@ class HandballAuswaertsspielSensor(Entity):
 
     @property
     def extra_state_attributes(self) -> dict[str, Any]:
-        return {"auswaertsspiele": self.hass.data[DOMAIN][self._team_id].get("auswaertsspiele", [])}
+        auswaertsspiele = self.hass.data[DOMAIN][self._team_id].get("auswaertsspiele", [])
+        next_away_match = None
+        now = datetime.now(timezone.utc)
+        
+        for match in sorted(auswaertsspiele, key=lambda x: x.get("startsAt", 0)):
+            match_time = datetime.fromtimestamp(match.get("startsAt", 0) / 1000, tz=timezone.utc)
+            if match_time > now:
+                next_away_match = {
+                    "opponent": match.get("homeTeam", {}).get("name"),
+                    "starts_at": match.get("startsAt"),
+                    "field": match.get("field", {}).get("name")
+                }
+                break
+        
+        return {
+            "total_away_games": len(auswaertsspiele),
+            "next_away_match": next_away_match
+        }
 
 
 class HandballLiveTickerSensor(Entity):
