@@ -3,52 +3,20 @@
 
 ## v0.0.3
 
-[compare changes](https://github.com/miggi92/hass-handball.net/compare/v0.0.3-2...v0.0.3)
-
-## v0.0.3-2
-
-[compare changes](https://github.com/miggi92/hass-handball.net/compare/v0.0.3-1...v0.0.3-2)
+[compare changes](https://github.com/miggi92/hass-handball.net/compare/v0.0.2...v0.0.3)
 
 ### 🚀 Enhancements
 
 - ✨  handle live games ([d20bced](https://github.com/miggi92/hass-handball.net/commit/d20bced))
 - ✨  read liveticker events ([e199615](https://github.com/miggi92/hass-handball.net/commit/e199615))
+- ✨  show teamname ([1d942c7](https://github.com/miggi92/hass-handball.net/commit/1d942c7))
+- ✨  added table ranking sensor ([6048a63](https://github.com/miggi92/hass-handball.net/commit/6048a63))
 
 ### 🩹 Fixes
 
 - 🐛  fixed wrong date format ([b162404](https://github.com/miggi92/hass-handball.net/commit/b162404))
 - 🐛  fixed table place not showing ([395c90d](https://github.com/miggi92/hass-handball.net/commit/395c90d))
-
-### ❤️ Contributors
-
-- Miguel ([@miggi92](https://github.com/miggi92))
-
-## v0.0.3-1
-
-[compare changes](https://github.com/miggi92/hass-handball.net/compare/v0.0.3-0...v0.0.3-1)
-
-### 🚀 Enhancements
-
-- ✨  show teamname ([1d942c7](https://github.com/miggi92/hass-handball.net/commit/1d942c7))
-
-### 🩹 Fixes
-
 - 🐛  fixed errors ([24465c7](https://github.com/miggi92/hass-handball.net/commit/24465c7))
-
-### ❤️ Contributors
-
-- Miguel ([@miggi92](https://github.com/miggi92))
-
-## v0.0.3-0
-
-[compare changes](https://github.com/miggi92/hass-handball.net/compare/v0.0.2...v0.0.3-0)
-
-### 🚀 Enhancements
-
-- ✨  added table ranking sensor ([6048a63](https://github.com/miggi92/hass-handball.net/commit/6048a63))
-
-### 🩹 Fixes
-
 - 🐛  fixed home assistant deprecation warning ([e53aea9](https://github.com/miggi92/hass-handball.net/commit/e53aea9))
 
 ### 💅 Refactors
@@ -69,6 +37,7 @@
 ### ❤️ Contributors
 
 - Miguel ([@miggi92](https://github.com/miggi92))
+
 
 ## v0.0.2
 
