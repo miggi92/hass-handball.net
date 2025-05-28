@@ -54,3 +54,25 @@ class HandballNetAPI:
         except Exception as e:
             _LOGGER.error("Error fetching team info: %s", e)
             return None
+    
+    async def get_team_table_position(self, team_id: str, tournament_id: str) -> Optional[Dict[str, Any]]:
+        """Get team position in league table"""
+        table_data = await self.get_league_table(tournament_id)
+        if table_data is None:
+            return None
+        
+        for position, team_entry in enumerate(table_data, 1):
+            if team_entry.get("team", {}).get("id") == team_id:
+                return {
+                    "position": position,
+                    "team_name": team_entry.get("team", {}).get("name", ""),
+                    "points": team_entry.get("points", 0),
+                    "games_played": team_entry.get("gamesPlayed", 0),
+                    "wins": team_entry.get("wins", 0),
+                    "draws": team_entry.get("draws", 0),
+                    "losses": team_entry.get("losses", 0),
+                    "goals_scored": team_entry.get("goalsScored", 0),
+                    "goals_conceded": team_entry.get("goalsConceded", 0),
+                    "goal_difference": team_entry.get("goalDifference", 0)
+                }
+        return None

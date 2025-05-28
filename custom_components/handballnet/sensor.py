@@ -27,16 +27,19 @@ async def async_setup_entry(hass: HomeAssistant, entry, async_add_entities):
     heim_sensor = HandballHeimspielSensor(hass, entry, team_id)
     aus_sensor = HandballAuswaertsspielSensor(hass, entry, team_id)
     live_sensor = HandballLiveTickerSensor(hass, entry, team_id)
+    table_sensor = HandballTablePositionSensor(hass, entry, team_id, api)
 
-    async_add_entities([all_sensor, heim_sensor, aus_sensor, live_sensor])
+    async_add_entities([all_sensor, heim_sensor, aus_sensor, live_sensor, table_sensor])
 
     async def update_all(now=None):
         await all_sensor.async_update()
+        await table_sensor.async_update()
         all_sensor.async_write_ha_state()
         heim_sensor.async_write_ha_state()
         aus_sensor.async_write_ha_state()
         live_sensor.update_state()
         live_sensor.async_write_ha_state()
+        table_sensor.async_write_ha_state()
         await schedule_next_poll()
 
     async def schedule_next_poll():
@@ -187,4 +190,66 @@ class HandballLiveTickerSensor(Entity):
         return {
             "team_id": self._team_id,
             "matches_tracked": len(self.hass.data.get(DOMAIN, {}).get(self._team_id, {}).get("matches", []))
+        }
+
+
+class HandballTablePositionSensor(Entity):
+    def __init__(self, hass, entry, team_id, api: HandballNetAPI):
+        self.hass = hass
+        self._team_id = team_id
+        self._api = api
+        self._state = None
+        self._attributes = {}
+        self._tournament_id = None
+        self._attr_name = f"Handball Tabellenplatz {team_id}"
+        self._attr_device_info = {
+            "identifiers": {(DOMAIN, self._team_id)},
+            "name": f"Handball Team {self._team_id}",
+            "manufacturer": "handball.net",
+            "model": "Handball Team",
+            "entry_type": "service"
+        }
+        self._attr_config_entry_id = entry.entry_id
+        self._attr_unique_id = f"handball_table_position_{team_id}"
+        self._attr_icon = "mdi:trophy"
+
+    @property
+    def state(self) -> int | None:
+        return self._state
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any]:
+        return self._attributes
+
+    async def async_update(self) -> None:
+        # Get tournament ID from matches
+        matches = self.hass.data.get(DOMAIN, {}).get(self._team_id, {}).get("matches", [])
+        if not matches:
+            return
+
+        # Extract tournament ID from first match
+        tournament_id = matches[0].get("tournament", {}).get("id")
+        if not tournament_id:
+            return
+
+        self._tournament_id = tournament_id
+
+        # Get table position
+        table_position = await self._api.get_team_table_position(self._team_id, tournament_id)
+        if table_position is None:
+            return
+
+        self._state = table_position["position"]
+        self._attributes = {
+            "tournament_id": tournament_id,
+            "tournament_name": matches[0].get("tournament", {}).get("name", ""),
+            "team_name": table_position["team_name"],
+            "points": table_position["points"],
+            "games_played": table_position["games_played"],
+            "wins": table_position["wins"],
+            "draws": table_position["draws"],
+            "losses": table_position["losses"],
+            "goals_scored": table_position["goals_scored"],
+            "goals_conceded": table_position["goals_conceded"],
+            "goal_difference": table_position["goal_difference"]
         }
