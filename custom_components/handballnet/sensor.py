@@ -16,6 +16,7 @@ from .sensors import (
     HandballHeimspielSensor,
     HandballAuswaertsspielSensor,
     HandballLiveTickerSensor,
+    HandballLiveTickerEventsSensor,
     HandballTablePositionSensor
 )
 
@@ -33,12 +34,13 @@ async def async_setup_entry(hass: HomeAssistant, entry, async_add_entities):
     heim_sensor = HandballHeimspielSensor(hass, entry, team_id)
     aus_sensor = HandballAuswaertsspielSensor(hass, entry, team_id)
     live_sensor = HandballLiveTickerSensor(hass, entry, team_id)
+    live_events_sensor = HandballLiveTickerEventsSensor(hass, entry, team_id, api)
     table_sensor = HandballTablePositionSensor(hass, entry, team_id, api)
 
     # Store sensor references for device name updates
-    hass.data[DOMAIN][team_id]["sensors"] = [all_sensor, heim_sensor, aus_sensor, live_sensor, table_sensor]
+    hass.data[DOMAIN][team_id]["sensors"] = [all_sensor, heim_sensor, aus_sensor, live_sensor, live_events_sensor, table_sensor]
 
-    async_add_entities([all_sensor, heim_sensor, aus_sensor, live_sensor, table_sensor])
+    async_add_entities([all_sensor, heim_sensor, aus_sensor, live_sensor, live_events_sensor, table_sensor])
 
     async def update_all(now=None):
         try:
@@ -55,12 +57,18 @@ async def async_setup_entry(hass: HomeAssistant, entry, async_add_entities):
             await table_sensor.async_update()
         except Exception as e:
             _LOGGER.error("Error updating table position sensor: %s", e)
+
+        try:
+            await live_events_sensor.async_update_live_ticker()
+        except Exception as e:
+            _LOGGER.error("Error updating live ticker events: %s", e)
             
         all_sensor.async_write_ha_state()
         heim_sensor.async_write_ha_state()
         aus_sensor.async_write_ha_state()
         live_sensor.update_state()
         live_sensor.async_write_ha_state()
+        live_events_sensor.async_write_ha_state()
         table_sensor.async_write_ha_state()
         await schedule_next_poll()
 

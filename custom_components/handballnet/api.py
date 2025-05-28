@@ -126,3 +126,17 @@ class HandballNetAPI:
         
         _LOGGER.warning("Team %s not found in table for tournament %s", team_id, tournament_id)
         return None
+
+    async def get_live_ticker(self, game_id: str) -> Optional[Dict[str, Any]]:
+        """Get live ticker events for a game"""
+        url = f"{self.base_url}/games/{game_id}/combined"
+        try:
+            async with self.session.get(url) as resp:
+                if resp.status != 200:
+                    _LOGGER.warning("Error fetching live ticker from handball.net: %s", resp.status)
+                    return None
+                data = await resp.json()
+                return data.get("data", {})
+        except Exception as e:
+            _LOGGER.error("Error fetching live ticker: %s", e)
+            return None
