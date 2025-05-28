@@ -1,8 +1,7 @@
 from homeassistant.helpers.entity import Entity
-from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.event import async_call_later
 from homeassistant.core import HomeAssistant
-from datetime import timedelta, datetime, timezone
+from datetime import datetime, timezone
 from typing import Any
 import logging
 
@@ -13,6 +12,7 @@ from .const import (
     DEFAULT_UPDATE_INTERVAL,
     DEFAULT_UPDATE_INTERVAL_LIVE
 )
+from .api import HandballNetAPI
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -21,7 +21,9 @@ async def async_setup_entry(hass: HomeAssistant, entry, async_add_entities):
     update_interval = entry.options.get(CONF_UPDATE_INTERVAL, entry.data.get(CONF_UPDATE_INTERVAL, DEFAULT_UPDATE_INTERVAL))
     live_interval = entry.options.get(CONF_UPDATE_INTERVAL_LIVE, entry.data.get(CONF_UPDATE_INTERVAL_LIVE, DEFAULT_UPDATE_INTERVAL_LIVE))
 
-    all_sensor = HandballAllGamesSensor(hass, entry, team_id)
+    api = HandballNetAPI(hass)
+    
+    all_sensor = HandballAllGamesSensor(hass, entry, team_id, api)
     heim_sensor = HandballHeimspielSensor(hass, entry, team_id)
     aus_sensor = HandballAuswaertsspielSensor(hass, entry, team_id)
     live_sensor = HandballLiveTickerSensor(hass, entry, team_id)
@@ -51,9 +53,10 @@ async def async_setup_entry(hass: HomeAssistant, entry, async_add_entities):
 
 
 class HandballAllGamesSensor(Entity):
-    def __init__(self, hass, entry, team_id):
+    def __init__(self, hass, entry, team_id, api: HandballNetAPI):
         self.hass = hass
         self._team_id = team_id
+        self._api = api
         self._state = None
         self._attributes = {}
         self._attr_name = f"Alle Spiele {team_id}"
@@ -76,37 +79,28 @@ class HandballAllGamesSensor(Entity):
         return self._attributes
 
     async def async_update(self) -> None:
-        url = f"https://www.handball.net/a/sportdata/1/teams/{self._team_id}/schedule"
-        try:
-            session = async_get_clientsession(self.hass)
-            async with session.get(url) as resp:
-                if resp.status != 200:
-                    _LOGGER.warning("Fehler beim Abrufen von Handball.net: %s", resp.status)
-                    return
-                data = await resp.json()
-                matches = data.get("data", [])
+        matches = await self._api.get_team_schedule(self._team_id)
+        if matches is None:
+            return
 
-                heimspiele = []
-                auswaertsspiele = []
-                team_name = None
+        heimspiele = []
+        auswaertsspiele = []
+        team_name = None
 
-                for match in matches:
-                    if match["homeTeam"]["id"] == self._team_id:
-                        heimspiele.append(match)
-                        team_name = match["homeTeam"]["name"]
-                    elif match["awayTeam"]["id"] == self._team_id:
-                        auswaertsspiele.append(match)
-                        team_name = match["awayTeam"]["name"]
+        for match in matches:
+            if match["homeTeam"]["id"] == self._team_id:
+                heimspiele.append(match)
+                team_name = match["homeTeam"]["name"]
+            elif match["awayTeam"]["id"] == self._team_id:
+                auswaertsspiele.append(match)
+                team_name = match["awayTeam"]["name"]
 
-                self._state = f"{team_name} ({len(matches)} Spiele)"
-                self._attributes = {"spiele": matches}
+        self._state = f"{team_name} ({len(matches)} Spiele)"
+        self._attributes = {"spiele": matches}
 
-                self.hass.data[DOMAIN][self._team_id]["matches"] = matches
-                self.hass.data[DOMAIN][self._team_id]["heimspiele"] = heimspiele
-                self.hass.data[DOMAIN][self._team_id]["auswaertsspiele"] = auswaertsspiele
-
-        except Exception as e:
-            _LOGGER.error("Fehler beim Abrufen der Handballdaten: %s", e)
+        self.hass.data[DOMAIN][self._team_id]["matches"] = matches
+        self.hass.data[DOMAIN][self._team_id]["heimspiele"] = heimspiele
+        self.hass.data[DOMAIN][self._team_id]["auswaertsspiele"] = auswaertsspiele
 
 
 class HandballHeimspielSensor(Entity):
