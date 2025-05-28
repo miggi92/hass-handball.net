@@ -1,6 +1,23 @@
 # Changelog
 
 
+## v0.0.2-3
+
+[compare changes](https://github.com/miggi92/hass-handball.net/compare/v0.0.2-2...v0.0.2-3)
+
+### 🩹 Fixes
+
+- 🐛  fixed deprecation warning ([60056b5](https://github.com/miggi92/hass-handball.net/commit/60056b5))
+- 🐛  fixed grouping ([1cf57a6](https://github.com/miggi92/hass-handball.net/commit/1cf57a6))
+
+### 📖 Documentation
+
+- 💸  added sponsors to readme ([c0b0416](https://github.com/miggi92/hass-handball.net/commit/c0b0416))
+
+### ❤️ Contributors
+
+- Miguel ([@miggi92](https://github.com/miggi92))
+
 ## v0.0.2-2
 
 [compare changes](https://github.com/miggi92/hass-handball.net/compare/v0.0.2-1...v0.0.2-2)
@@ -16,7 +33,7 @@
 
 ### ❤️ Contributors
 
-- Miguel <miguel.gebhardt@bechtle.com>
+- Miguel ([@miggi92](https://github.com/miggi92))
 
 ## v0.0.2-1
 
@@ -33,7 +50,7 @@
 
 ### ❤️ Contributors
 
-- Miguel <miguel.gebhardt@bechtle.com>
+- Miguel ([@miggi92](https://github.com/miggi92))
 
 ## v0.0.2-0
 
