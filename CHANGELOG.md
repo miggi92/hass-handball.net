@@ -1,6 +1,24 @@
 # Changelog
 
 
+## v0.0.3-2
+
+[compare changes](https://github.com/miggi92/hass-handball.net/compare/v0.0.3-1...v0.0.3-2)
+
+### 🚀 Enhancements
+
+- ✨  handle live games ([d20bced](https://github.com/miggi92/hass-handball.net/commit/d20bced))
+- ✨  read liveticker events ([e199615](https://github.com/miggi92/hass-handball.net/commit/e199615))
+
+### 🩹 Fixes
+
+- 🐛  fixed wrong date format ([b162404](https://github.com/miggi92/hass-handball.net/commit/b162404))
+- 🐛  fixed table place not showing ([395c90d](https://github.com/miggi92/hass-handball.net/commit/395c90d))
+
+### ❤️ Contributors
+
+- Miguel ([@miggi92](https://github.com/miggi92))
+
 ## v0.0.3-1
 
 [compare changes](https://github.com/miggi92/hass-handball.net/compare/v0.0.3-0...v0.0.3-1)
