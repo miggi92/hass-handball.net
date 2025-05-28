@@ -65,53 +65,63 @@ class HandballNetAPI:
         _LOGGER.debug("Table data for tournament %s: %s", tournament_id, table_data)
         _LOGGER.debug("Table data type: %s", type(table_data))
         
-        # Check if table_data is a list
-        if not isinstance(table_data, list):
-            _LOGGER.warning("Table data is not a list: %s (type: %s)", table_data, type(table_data))
+        # Extract rows from the table data structure
+        if isinstance(table_data, dict):
+            rows = table_data.get("rows", [])
+            _LOGGER.debug("Extracted rows from table data: %d rows", len(rows))
+        elif isinstance(table_data, list):
+            rows = table_data
+            _LOGGER.debug("Table data is already a list: %d rows", len(rows))
+        else:
+            _LOGGER.warning("Table data is neither dict nor list: %s (type: %s)", table_data, type(table_data))
             return None
         
-        _LOGGER.debug("Number of teams in table: %d", len(table_data))
+        if not isinstance(rows, list):
+            _LOGGER.warning("Table rows is not a list: %s (type: %s)", rows, type(rows))
+            return None
         
-        for position, team_entry in enumerate(table_data, 1):
-            _LOGGER.debug("Processing position %d: %s (type: %s)", position, team_entry, type(team_entry))
+        _LOGGER.debug("Number of teams in table: %d", len(rows))
+        
+        for team_entry in rows:
+            _LOGGER.debug("Processing team entry: %s (type: %s)", team_entry, type(team_entry))
             
             # Check if team_entry is a dictionary
             if not isinstance(team_entry, dict):
-                _LOGGER.warning("Team entry at position %d is not a dict: %s (type: %s)", 
-                              position, team_entry, type(team_entry))
+                _LOGGER.warning("Team entry is not a dict: %s (type: %s)", team_entry, type(team_entry))
                 continue
             
-            # Safely get team info
+            # Safely get team info and rank
             try:
+                rank = team_entry.get("rank")
                 team_info = team_entry.get("team")
+                
                 if team_info is None:
-                    _LOGGER.warning("No team info at position %d", position)
+                    _LOGGER.warning("No team info in entry")
                     continue
                     
                 if not isinstance(team_info, dict):
-                    _LOGGER.warning("Team info at position %d is not a dict: %s (type: %s)", 
-                                  position, team_info, type(team_info))
+                    _LOGGER.warning("Team info is not a dict: %s (type: %s)", team_info, type(team_info))
                     continue
                 
                 team_id_from_entry = team_info.get("id")
-                _LOGGER.debug("Team ID at position %d: %s (looking for: %s)", position, team_id_from_entry, team_id)
+                _LOGGER.debug("Team ID: %s (looking for: %s), rank: %s", team_id_from_entry, team_id, rank)
                 
                 if team_id_from_entry == team_id:
-                    _LOGGER.info("Found team %s at position %d in tournament %s", team_id, position, tournament_id)
+                    _LOGGER.info("Found team %s at rank %d in tournament %s", team_id, rank, tournament_id)
                     return {
-                        "position": position,
+                        "position": rank,
                         "team_name": team_info.get("name", ""),
-                        "points": team_entry.get("points", 0),
-                        "games_played": team_entry.get("gamesPlayed", 0),
+                        "points": team_entry.get("points", "0:0"),
+                        "games_played": team_entry.get("games", 0),
                         "wins": team_entry.get("wins", 0),
                         "draws": team_entry.get("draws", 0),
                         "losses": team_entry.get("losses", 0),
-                        "goals_scored": team_entry.get("goalsScored", 0),
-                        "goals_conceded": team_entry.get("goalsConceded", 0),
+                        "goals_scored": team_entry.get("goals", 0),
+                        "goals_conceded": team_entry.get("goalsAgainst", 0),
                         "goal_difference": team_entry.get("goalDifference", 0)
                     }
             except Exception as e:
-                _LOGGER.error("Error processing team entry at position %d: %s", position, e)
+                _LOGGER.error("Error processing team entry: %s", e)
                 continue
         
         _LOGGER.warning("Team %s not found in table for tournament %s", team_id, tournament_id)
