@@ -1,6 +1,27 @@
 # Changelog
 
 
+## v0.0.2-4
+
+[compare changes](https://github.com/miggi92/hass-handball.net/compare/v0.0.2-3...v0.0.2-4)
+
+### 🚀 Enhancements
+
+- ✨  added reconfiguration ([e36b754](https://github.com/miggi92/hass-handball.net/commit/e36b754))
+
+### 🩹 Fixes
+
+- 🐛  fixed unique id missing ([4f20fe1](https://github.com/miggi92/hass-handball.net/commit/4f20fe1))
+- 🐛  fixed errors ([18cf921](https://github.com/miggi92/hass-handball.net/commit/18cf921))
+
+### 🏡 Chore
+
+- 🔥  removed binary_sensor ([351c9af](https://github.com/miggi92/hass-handball.net/commit/351c9af))
+
+### ❤️ Contributors
+
+- Miguel ([@miggi92](https://github.com/miggi92))
+
 ## v0.0.2-3
 
 [compare changes](https://github.com/miggi92/hass-handball.net/compare/v0.0.2-2...v0.0.2-3)
