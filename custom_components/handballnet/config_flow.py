@@ -12,6 +12,11 @@ from .const import (
 class HandballNetConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     VERSION = 1
 
+    @staticmethod
+    def async_get_options_flow(config_entry):
+        from .options_flow import HandballNetOptionsFlowHandler
+        return HandballNetOptionsFlowHandler(config_entry)
+
     async def async_step_user(self, user_input=None):
         errors = {}
         if user_input is not None:

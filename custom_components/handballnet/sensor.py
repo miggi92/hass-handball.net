@@ -65,7 +65,7 @@ class HandballAllGamesSensor(Entity):
             "entry_type": "service"
         }
         self._attr_config_entry_id = entry.entry_id
-        self._attr_unique_id = entry.entry_id
+        self._attr_unique_id = f"handball_all_games_{team_id}"
 
     @property
     def state(self) -> str | None:
@@ -115,7 +115,7 @@ class HandballHeimspielSensor(Entity):
         self._team_id = team_id
         self._attr_name = f"Handball Heimspiele {team_id}"
         self._attr_config_entry_id = entry.entry_id
-        self._attr_unique_id = entry.entry_id
+        self._attr_unique_id = f"handball_home_games_{team_id}"
         self._attr_device_info = {
             "identifiers": {(DOMAIN, self._team_id)},
             "name": f"Handball Team {team_id}",
@@ -138,7 +138,7 @@ class HandballAuswaertsspielSensor(Entity):
         self._team_id = team_id
         self._attr_name = f"Handball Auswärtsspiele {team_id}"
         self._attr_config_entry_id = entry.entry_id
-        self._attr_unique_id = entry.entry_id
+        self._attr_unique_id = f"handball_away_games_{team_id}"
         self._attr_device_info = {
             "identifiers": {(DOMAIN, self._team_id)},
             "name": f"Handball Team {team_id}",
@@ -160,7 +160,7 @@ class HandballLiveTickerSensor(Entity):
         self.hass = hass
         self._team_id = team_id
         self._attr_name = f"Liveticker aktiv {self._team_id}"
-        self._attr_unique_id = entry.entry_id
+        self._attr_unique_id = f"handball_live_ticker_{team_id}"
         self._attr_config_entry_id = entry.entry_id
         self._attr_device_info = {
             "identifiers": {(DOMAIN, self._team_id)},
