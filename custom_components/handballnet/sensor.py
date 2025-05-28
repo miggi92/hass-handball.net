@@ -38,8 +38,16 @@ async def async_setup_entry(hass: HomeAssistant, entry, async_add_entities):
     async_add_entities([all_sensor, heim_sensor, aus_sensor, live_sensor, table_sensor])
 
     async def update_all(now=None):
-        await all_sensor.async_update()
-        await table_sensor.async_update()
+        try:
+            await all_sensor.async_update()
+        except Exception as e:
+            _LOGGER.error("Error updating all games sensor: %s", e)
+            
+        try:
+            await table_sensor.async_update()
+        except Exception as e:
+            _LOGGER.error("Error updating table position sensor: %s", e)
+            
         all_sensor.async_write_ha_state()
         heim_sensor.async_write_ha_state()
         aus_sensor.async_write_ha_state()

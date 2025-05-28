@@ -36,22 +36,43 @@ class HandballTablePositionSensor(HandballBaseSensor):
 
         self._tournament_id = tournament_id
 
-        # Get table position
-        table_position = await self._api.get_team_table_position(self._team_id, tournament_id)
-        if table_position is None:
-            return
+        try:
+            # Get table position
+            table_position = await self._api.get_team_table_position(self._team_id, tournament_id)
+            if table_position is None:
+                # Set default values if no table position found
+                self._state = None
+                self._attributes = {
+                    "tournament_id": tournament_id,
+                    "tournament_name": matches[0].get("tournament", {}).get("name", ""),
+                    "error": "Team not found in table or table not available"
+                }
+                return
 
-        self._state = table_position["position"]
-        self._attributes = {
-            "tournament_id": tournament_id,
-            "tournament_name": matches[0].get("tournament", {}).get("name", ""),
-            "team_name": table_position["team_name"],
-            "points": table_position["points"],
-            "games_played": table_position["games_played"],
-            "wins": table_position["wins"],
-            "draws": table_position["draws"],
-            "losses": table_position["losses"],
-            "goals_scored": table_position["goals_scored"],
-            "goals_conceded": table_position["goals_conceded"],
-            "goal_difference": table_position["goal_difference"]
-        }
+            self._state = table_position["position"]
+            self._attributes = {
+                "tournament_id": tournament_id,
+                "tournament_name": matches[0].get("tournament", {}).get("name", ""),
+                "team_name": table_position["team_name"],
+                "points": table_position["points"],
+                "games_played": table_position["games_played"],
+                "wins": table_position["wins"],
+                "draws": table_position["draws"],
+                "losses": table_position["losses"],
+                "goals_scored": table_position["goals_scored"],
+                "goals_conceded": table_position["goals_conceded"],
+                "goal_difference": table_position["goal_difference"]
+            }
+        except Exception as e:
+            # Log error and set error state
+            from homeassistant.core import HomeAssistant
+            import logging
+            _LOGGER = logging.getLogger(__name__)
+            _LOGGER.error("Error updating table position for team %s: %s", self._team_id, e)
+            
+            self._state = None
+            self._attributes = {
+                "tournament_id": tournament_id,
+                "tournament_name": matches[0].get("tournament", {}).get("name", ""),
+                "error": f"Error fetching table position: {str(e)}"
+            }
