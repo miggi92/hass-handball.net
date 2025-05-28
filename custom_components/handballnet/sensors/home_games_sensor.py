@@ -26,6 +26,8 @@ class HandballHeimspielSensor(HandballBaseSensor):
                 next_home_match = {
                     "opponent": match.get("awayTeam", {}).get("name"),
                     "starts_at": match.get("startsAt"),
+                    "starts_at_formatted": match_time.strftime("%Y-%m-%d %H:%M:%S UTC"),
+                    "starts_at_local": match_time.astimezone().strftime("%Y-%m-%d %H:%M:%S"),
                     "field": match.get("field", {}).get("name")
                 }
                 break

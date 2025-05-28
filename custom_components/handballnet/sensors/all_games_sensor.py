@@ -59,14 +59,19 @@ class HandballAllGamesSensor(HandballBaseSensor):
                     "home_team": match.get("homeTeam", {}).get("name"),
                     "away_team": match.get("awayTeam", {}).get("name"),
                     "starts_at": match.get("startsAt"),
+                    "starts_at_formatted": match_time.strftime("%Y-%m-%d %H:%M:%S UTC"),
+                    "starts_at_local": match_time.astimezone().strftime("%Y-%m-%d %H:%M:%S"),
                     "field": match.get("field", {}).get("name")
                 }
             elif match_time <= now:
+                last_match_time = datetime.fromtimestamp(match.get("startsAt", 0) / 1000, tz=timezone.utc)
                 last_match = {
                     "id": match.get("id"),
                     "home_team": match.get("homeTeam", {}).get("name"),
                     "away_team": match.get("awayTeam", {}).get("name"),
                     "starts_at": match.get("startsAt"),
+                    "starts_at_formatted": last_match_time.strftime("%Y-%m-%d %H:%M:%S UTC"),
+                    "starts_at_local": last_match_time.astimezone().strftime("%Y-%m-%d %H:%M:%S"),
                     "home_goals": match.get("homeGoals"),
                     "away_goals": match.get("awayGoals"),
                     "state": match.get("state")
