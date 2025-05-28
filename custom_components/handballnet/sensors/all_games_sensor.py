@@ -42,6 +42,14 @@ class HandballAllGamesSensor(HandballBaseSensor):
                 auswaertsspiele.append(match)
                 team_name = match["awayTeam"]["name"]
 
+        # Update device name for all sensors if we have team name
+        if team_name:
+            self.update_device_name(team_name)
+            # Update device name for other sensors in the same device
+            if hasattr(self.hass.data[DOMAIN][self._team_id], 'sensors'):
+                for sensor in self.hass.data[DOMAIN][self._team_id]['sensors']:
+                    sensor.update_device_name(team_name)
+
         # Find next and last match
         for match in sorted(matches, key=lambda x: x.get("startsAt", 0)):
             match_time = datetime.fromtimestamp(match.get("startsAt", 0) / 1000, tz=timezone.utc)
@@ -77,3 +85,4 @@ class HandballAllGamesSensor(HandballBaseSensor):
         self.hass.data[DOMAIN][self._team_id]["matches"] = matches
         self.hass.data[DOMAIN][self._team_id]["heimspiele"] = heimspiele
         self.hass.data[DOMAIN][self._team_id]["auswaertsspiele"] = auswaertsspiele
+        self.hass.data[DOMAIN][self._team_id]["team_name"] = team_name

@@ -19,7 +19,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     hass.data.setdefault(DOMAIN, {})
     hass.data[DOMAIN][entry.data["team_id"]] = {
         "matches": [],
-        "table_position": None
+        "table_position": None,
+        "team_name": None,
+        "sensors": []
     }
 
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)

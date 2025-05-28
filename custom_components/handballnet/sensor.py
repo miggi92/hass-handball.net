@@ -35,11 +35,19 @@ async def async_setup_entry(hass: HomeAssistant, entry, async_add_entities):
     live_sensor = HandballLiveTickerSensor(hass, entry, team_id)
     table_sensor = HandballTablePositionSensor(hass, entry, team_id, api)
 
+    # Store sensor references for device name updates
+    hass.data[DOMAIN][team_id]["sensors"] = [all_sensor, heim_sensor, aus_sensor, live_sensor, table_sensor]
+
     async_add_entities([all_sensor, heim_sensor, aus_sensor, live_sensor, table_sensor])
 
     async def update_all(now=None):
         try:
             await all_sensor.async_update()
+            # Update device names for all sensors after getting team name
+            team_name = hass.data.get(DOMAIN, {}).get(team_id, {}).get("team_name")
+            if team_name:
+                for sensor in hass.data[DOMAIN][team_id]["sensors"]:
+                    sensor.update_device_name(team_name)
         except Exception as e:
             _LOGGER.error("Error updating all games sensor: %s", e)
             

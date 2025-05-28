@@ -16,3 +16,8 @@ class HandballBaseSensor(Entity):
             "model": "Handball Team",
             "entry_type": "service"
         }
+
+    def update_device_name(self, team_name: str) -> None:
+        """Update device name with actual team name"""
+        if team_name and team_name != "":
+            self._attr_device_info["name"] = f"Handball {team_name}"
