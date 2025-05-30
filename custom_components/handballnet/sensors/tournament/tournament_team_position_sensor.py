@@ -34,7 +34,7 @@ class HandballTournamentTeamPositionSensor(HandballBaseSensor):
         # Override device info to group by tournament
         self._attr_device_info = {
             "identifiers": {(DOMAIN, f"tournament_{tournament_id}")},
-            "name": f"Liga {tournament_name}",
+            "name": f"{tournament_name}",
             "manufacturer": "handball.net",
             "model": "Handball Tournament",
             "entry_type": "service"
