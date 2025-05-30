@@ -1,6 +1,25 @@
 # Changelog
 
 
+## v0.0.6-0
+
+[compare changes](https://github.com/miggi92/hass-handball.net/compare/v0.0.5...v0.0.6-0)
+
+### 🚀 Enhancements
+
+- ✨  added tournament sensors ([b5d404e](https://github.com/miggi92/hass-handball.net/commit/b5d404e))
+- ✨  added base sensors ([868135c](https://github.com/miggi92/hass-handball.net/commit/868135c))
+- ✨  added tournament calendar ([a264e46](https://github.com/miggi92/hass-handball.net/commit/a264e46))
+
+### 💅 Refactors
+
+- ♻️  removed comment ([737a04c](https://github.com/miggi92/hass-handball.net/commit/737a04c))
+- ♻️  refactor file structure ([235cc2d](https://github.com/miggi92/hass-handball.net/commit/235cc2d))
+
+### ❤️ Contributors
+
+- Miguel ([@miggi92](https://github.com/miggi92))
+
 ## v0.0.5
 
 [compare changes](https://github.com/miggi92/hass-handball.net/compare/v0.0.4...v0.0.5)
