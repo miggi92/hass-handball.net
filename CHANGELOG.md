@@ -43,6 +43,7 @@
 ### ❤️ Contributors
 
 - Miguel ([@miggi92](https://github.com/miggi92))
+- Renovate Bot ([@renovatebot](https://github.com/renovatebot))
 
 ## v0.0.5
 
