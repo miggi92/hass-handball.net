@@ -1,7 +1,8 @@
 from datetime import datetime, timezone
-from typing import Any
+from typing import Any, Optional
 from .base_sensor import HandballBaseSensor
 from ..const import DOMAIN
+from ..utils import format_datetime_for_display
 
 
 class HandballAuswaertsspielSensor(HandballBaseSensor):
@@ -11,28 +12,54 @@ class HandballAuswaertsspielSensor(HandballBaseSensor):
         self._attr_unique_id = f"handball_away_games_{team_id}"
 
     @property
-    def state(self) -> int:
-        return len(self.hass.data[DOMAIN][self._team_id].get("auswaertsspiele", []))
+    def state(self) -> str:
+        next_away_match = self._get_next_away_match()
+        if next_away_match:
+            return f"@ {next_away_match['opponent']} - {next_away_match['starts_at_local']}"
+        return "Kein nächstes Auswärtsspiel"
 
     @property
     def extra_state_attributes(self) -> dict[str, Any]:
         auswaertsspiele = self.hass.data[DOMAIN][self._team_id].get("auswaertsspiele", [])
-        next_away_match = None
+        now = datetime.now(timezone.utc)
+        
+        future_matches = []
+        for match in sorted(auswaertsspiele, key=lambda x: x.get("startsAt", 0)):
+            match_time = datetime.fromtimestamp(match.get("startsAt", 0) / 1000, tz=timezone.utc)
+            if match_time > now:
+                time_formats = format_datetime_for_display(match_time)
+                future_matches.append({
+                    "id": match.get("id"),
+                    "opponent": match.get("homeTeam", {}).get("name"),
+                    "starts_at": match.get("startsAt"),
+                    "starts_at_formatted": time_formats["formatted"],
+                    "starts_at_local": time_formats["local"],
+                    "field": match.get("field", {}).get("name")
+                })
+        
+        attributes = {
+            "total_away_games": len(auswaertsspiele),
+            "next_away_match": future_matches[0] if future_matches else None,
+            "upcoming_away_matches": future_matches[:3]  # Nächste 3 Auswärtsspiele
+        }
+        
+        if len(future_matches) > 1:
+            attributes["second_next_away_match"] = future_matches[1]
+            
+        return attributes
+
+    def _get_next_away_match(self) -> Optional[dict]:
+        """Get next away match info"""
+        auswaertsspiele = self.hass.data[DOMAIN][self._team_id].get("auswaertsspiele", [])
         now = datetime.now(timezone.utc)
         
         for match in sorted(auswaertsspiele, key=lambda x: x.get("startsAt", 0)):
             match_time = datetime.fromtimestamp(match.get("startsAt", 0) / 1000, tz=timezone.utc)
             if match_time > now:
-                next_away_match = {
+                time_formats = format_datetime_for_display(match_time)
+                return {
                     "opponent": match.get("homeTeam", {}).get("name"),
-                    "starts_at": match.get("startsAt"),
-                    "starts_at_formatted": match_time.strftime("%Y-%m-%d %H:%M:%S UTC"),
-                    "starts_at_local": match_time.astimezone().strftime("%Y-%m-%d %H:%M:%S"),
+                    "starts_at_local": time_formats["local"],
                     "field": match.get("field", {}).get("name")
                 }
-                break
-        
-        return {
-            "total_away_games": len(auswaertsspiele),
-            "next_away_match": next_away_match
-        }
+        return None

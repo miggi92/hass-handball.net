@@ -1,7 +1,8 @@
 from datetime import datetime, timezone
-from typing import Any
+from typing import Any, Optional
 from .base_sensor import HandballBaseSensor
 from ..const import DOMAIN
+from ..utils import format_datetime_for_display
 
 
 class HandballHeimspielSensor(HandballBaseSensor):
@@ -11,28 +12,54 @@ class HandballHeimspielSensor(HandballBaseSensor):
         self._attr_unique_id = f"handball_home_games_{team_id}"
 
     @property
-    def state(self) -> int:
-        return len(self.hass.data[DOMAIN][self._team_id].get("heimspiele", []))
+    def state(self) -> str:
+        next_home_match = self._get_next_home_match()
+        if next_home_match:
+            return f"vs {next_home_match['opponent']} - {next_home_match['starts_at_local']}"
+        return "Kein nächstes Heimspiel"
 
     @property
     def extra_state_attributes(self) -> dict[str, Any]:
         heimspiele = self.hass.data[DOMAIN][self._team_id].get("heimspiele", [])
-        next_home_match = None
+        now = datetime.now(timezone.utc)
+        
+        future_matches = []
+        for match in sorted(heimspiele, key=lambda x: x.get("startsAt", 0)):
+            match_time = datetime.fromtimestamp(match.get("startsAt", 0) / 1000, tz=timezone.utc)
+            if match_time > now:
+                time_formats = format_datetime_for_display(match_time)
+                future_matches.append({
+                    "id": match.get("id"),
+                    "opponent": match.get("awayTeam", {}).get("name"),
+                    "starts_at": match.get("startsAt"),
+                    "starts_at_formatted": time_formats["formatted"],
+                    "starts_at_local": time_formats["local"],
+                    "field": match.get("field", {}).get("name")
+                })
+        
+        attributes = {
+            "total_home_games": len(heimspiele),
+            "next_home_match": future_matches[0] if future_matches else None,
+            "upcoming_home_matches": future_matches[:3]  # Nächste 3 Heimspiele
+        }
+        
+        if len(future_matches) > 1:
+            attributes["second_next_home_match"] = future_matches[1]
+            
+        return attributes
+
+    def _get_next_home_match(self) -> Optional[dict]:
+        """Get next home match info"""
+        heimspiele = self.hass.data[DOMAIN][self._team_id].get("heimspiele", [])
         now = datetime.now(timezone.utc)
         
         for match in sorted(heimspiele, key=lambda x: x.get("startsAt", 0)):
             match_time = datetime.fromtimestamp(match.get("startsAt", 0) / 1000, tz=timezone.utc)
             if match_time > now:
-                next_home_match = {
+                time_formats = format_datetime_for_display(match_time)
+                return {
                     "opponent": match.get("awayTeam", {}).get("name"),
-                    "starts_at": match.get("startsAt"),
-                    "starts_at_formatted": match_time.strftime("%Y-%m-%d %H:%M:%S UTC"),
-                    "starts_at_local": match_time.astimezone().strftime("%Y-%m-%d %H:%M:%S"),
+                    "starts_at_local": time_formats["local"],
                     "field": match.get("field", {}).get("name")
                 }
-                break
-        
-        return {
-            "total_home_games": len(heimspiele),
-            "next_home_match": next_home_match
-        }
+        return None

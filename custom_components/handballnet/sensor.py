@@ -15,6 +15,7 @@ from .sensors import (
     HandballAllGamesSensor,
     HandballHeimspielSensor,
     HandballAuswaertsspielSensor,
+    HandballNextMatchSensor,
     HandballLiveTickerSensor,
     HandballLiveTickerEventsSensor,
     HandballTablePositionSensor,
@@ -34,15 +35,16 @@ async def async_setup_entry(hass: HomeAssistant, entry, async_add_entities):
     all_sensor = HandballAllGamesSensor(hass, entry, team_id, api)
     heim_sensor = HandballHeimspielSensor(hass, entry, team_id)
     aus_sensor = HandballAuswaertsspielSensor(hass, entry, team_id)
+    next_match_sensor = HandballNextMatchSensor(hass, entry, team_id, api)
     live_sensor = HandballLiveTickerSensor(hass, entry, team_id)
     live_events_sensor = HandballLiveTickerEventsSensor(hass, entry, team_id, api)
     table_sensor = HandballTablePositionSensor(hass, entry, team_id, api)
     health_sensor = HandballHealthSensor(hass, entry, team_id, api)
 
     # Store sensor references for device name updates
-    hass.data[DOMAIN][team_id]["sensors"] = [all_sensor, heim_sensor, aus_sensor, live_sensor, live_events_sensor, table_sensor, health_sensor]
+    hass.data[DOMAIN][team_id]["sensors"] = [all_sensor, heim_sensor, aus_sensor, next_match_sensor, live_sensor, live_events_sensor, table_sensor, health_sensor]
 
-    async_add_entities([all_sensor, heim_sensor, aus_sensor, live_sensor, live_events_sensor, table_sensor, health_sensor])
+    async_add_entities([all_sensor, heim_sensor, aus_sensor, next_match_sensor, live_sensor, live_events_sensor, table_sensor, health_sensor])
 
     async def update_all(now=None):
         try:
@@ -59,6 +61,11 @@ async def async_setup_entry(hass: HomeAssistant, entry, async_add_entities):
                         sensor.update_entity_picture(team_logo_url)
         except Exception as e:
             _LOGGER.error("Error updating all games sensor: %s", e)
+
+        try:
+            await next_match_sensor.async_update()
+        except Exception as e:
+            _LOGGER.error("Error updating next match sensor: %s", e)
             
         try:
             await table_sensor.async_update()
@@ -73,6 +80,7 @@ async def async_setup_entry(hass: HomeAssistant, entry, async_add_entities):
         all_sensor.async_write_ha_state()
         heim_sensor.async_write_ha_state()
         aus_sensor.async_write_ha_state()
+        next_match_sensor.async_write_ha_state()
         live_sensor.update_state()
         live_sensor.async_write_ha_state()
         table_sensor.async_write_ha_state()
