@@ -5,7 +5,9 @@ from .const import DOMAIN, CONF_UPDATE_INTERVAL, DEFAULT_UPDATE_INTERVAL, CONF_U
 
 class HandballNetOptionsFlowHandler(config_entries.OptionsFlow):
     def __init__(self, config_entry):
-        self.config_entry = config_entry
+        """Initialize the options flow."""
+        # The parent class constructor handles this properly
+        super().__init__()
 
     async def async_step_init(self, user_input=None):
         errors = {}
