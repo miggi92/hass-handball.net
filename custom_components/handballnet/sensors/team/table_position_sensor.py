@@ -1,5 +1,5 @@
 from typing import Any
-from ..base_sensor import HandballBaseSensor
+from .base_sensor import HandballBaseSensor
 from ...const import DOMAIN
 from ...api import HandballNetAPI
 import logging

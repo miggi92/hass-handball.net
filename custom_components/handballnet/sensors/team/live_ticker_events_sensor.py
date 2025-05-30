@@ -2,7 +2,7 @@ from datetime import datetime, timezone, timedelta
 from typing import Any, Optional
 import logging
 from homeassistant.helpers.event import async_call_later
-from ..base_sensor import HandballBaseSensor
+from .base_sensor import HandballBaseSensor
 from ...const import DOMAIN, CONF_UPDATE_INTERVAL_LIVE, DEFAULT_UPDATE_INTERVAL_LIVE
 from ...api import HandballNetAPI
 

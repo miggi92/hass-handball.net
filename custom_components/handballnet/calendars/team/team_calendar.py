@@ -1,5 +1,5 @@
 from homeassistant.components.calendar import CalendarEvent
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from .base_calendar import HandballBaseCalendar
 from ...const import DOMAIN
 

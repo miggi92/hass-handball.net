@@ -1,6 +1,6 @@
 from datetime import datetime, timezone, timedelta
 from typing import Any, List
-from ..base_sensor import HandballBaseSensor
+from .base_sensor import HandballBaseSensor
 from ...const import (
     DOMAIN, HEALTH_CHECK_STALE_HOURS,
     HEALTH_STATUS_HEALTHY, HEALTH_STATUS_DEGRADED, HEALTH_STATUS_UNHEALTHY,

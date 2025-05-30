@@ -1,6 +1,6 @@
 from datetime import datetime, timezone
 from typing import Any
-from ..base_sensor import HandballBaseSensor
+from .base_sensor import HandballBaseSensor
 from ...const import DOMAIN
 
 class HandballLiveTickerSensor(HandballBaseSensor):

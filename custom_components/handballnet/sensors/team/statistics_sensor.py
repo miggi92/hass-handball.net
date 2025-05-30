@@ -1,5 +1,5 @@
 from typing import Any, Dict, List
-from ..base_sensor import HandballBaseSensor
+from .base_sensor import HandballBaseSensor
 from ...const import DOMAIN
 import logging
 

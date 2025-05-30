@@ -1,6 +1,6 @@
 from datetime import datetime, timezone
 from typing import Any, Optional
-from ..base_sensor import HandballBaseSensor
+from .base_sensor import HandballBaseSensor
 from ...const import DOMAIN
 from ...api import HandballNetAPI
 from ...utils import get_next_match_info, normalize_logo_url
