@@ -9,6 +9,7 @@
   "documentation": "https://github.com/miggi92/hass-handball.net/blob/main/README.md",
   "iot_class": "cloud_polling",
   "issue_tracker": "https://github.com/miggi92/hass-handball.net/issues",
+  "quality_scale": "bronze",
   "requirements": [
     "aiohttp"
   ],
