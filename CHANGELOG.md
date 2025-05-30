@@ -1,6 +1,18 @@
 # Changelog
 
 
+## v0.0.6-1
+
+[compare changes](https://github.com/miggi92/hass-handball.net/compare/v0.0.6-0...v0.0.6-1)
+
+### 🩹 Fixes
+
+- 🐛  fixed config error# ([86fa195](https://github.com/miggi92/hass-handball.net/commit/86fa195))
+
+### ❤️ Contributors
+
+- Miguel ([@miggi92](https://github.com/miggi92))
+
 ## v0.0.6-0
 
 [compare changes](https://github.com/miggi92/hass-handball.net/compare/v0.0.5...v0.0.6-0)
