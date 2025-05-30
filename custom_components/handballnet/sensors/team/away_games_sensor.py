@@ -1,6 +1,6 @@
 from datetime import datetime, timezone
 from typing import Any, Optional
-from ..base_sensor import HandballBaseSensor
+from .base_sensor import HandballBaseSensor
 from ...const import DOMAIN
 from ...utils import format_datetime_for_display
 
