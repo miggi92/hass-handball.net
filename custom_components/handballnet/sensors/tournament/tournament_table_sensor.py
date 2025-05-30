@@ -1,8 +1,8 @@
 from typing import Any, List, Dict
 from .base_sensor import HandballBaseSensor
-from ..const import DOMAIN
-from ..api import HandballNetAPI
-from ..utils import normalize_logo_url
+from ...const import DOMAIN
+from ...api import HandballNetAPI
+from ...utils import normalize_logo_url
 from .tournament_team_position_sensor import HandballTournamentTeamPositionSensor
 import logging
 
