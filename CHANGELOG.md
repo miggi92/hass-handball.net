@@ -1,9 +1,9 @@
 # Changelog
 
 
-## v0.0.6-beta.
+## v0.0.6-beta.1
 
-[compare changes](https://github.com/miggi92/hass-handball.net/compare/v0.0.6-beta.0...v0.0.6-beta.)
+[compare changes](https://github.com/miggi92/hass-handball.net/compare/v0.0.6-beta.0...v0.0.6-beta.1)
 
 ### 🩹 Fixes
 
