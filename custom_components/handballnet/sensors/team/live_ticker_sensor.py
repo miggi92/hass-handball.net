@@ -6,6 +6,7 @@ from ...const import DOMAIN
 class HandballLiveTickerSensor(HandballBaseSensor):
     def __init__(self, hass, entry, team_id):
         super().__init__(hass, entry, team_id)
+        self._team_id = team_id  # Explicitly set _team_id
         self._state = None
         self._attributes = {}
 

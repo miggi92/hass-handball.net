@@ -1,15 +1,19 @@
 from datetime import datetime, timezone
 from typing import Any, Optional
-from ..base_sensor import HandballBaseSensor
+from .base_sensor import HandballBaseSensor
 from ...const import DOMAIN
 from ...utils import format_datetime_for_display
 
 class HandballHeimspielSensor(HandballBaseSensor):
     def __init__(self, hass, entry, team_id):
         super().__init__(hass, entry, team_id)
+        self._team_id = team_id  # Explicitly set _team_id
         self._state = None
         self._attributes = {}
-        self._attr_name = f"{team_id} Heimspiel"
+        
+        # Use team name from config if available, fallback to team_id
+        team_name = entry.data.get("team_name", team_id)
+        self._attr_name = f"{team_name} Heimspiel"
         self._attr_unique_id = f"handball_team_{team_id}_home_game"
         self._attr_icon = "mdi:home"
 
