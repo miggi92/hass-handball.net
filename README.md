@@ -33,8 +33,8 @@ Copy the `custom_components/handball_net` folder to your Home Assistant `custom_
 
 ## Example
 
-<img src="assets/integration_example.png" width="500" alt="Integration Example" />
-<img src="assets/calendar_example.png" width="500" alt="Calendar Example" />
+<img src="https://github.com/miggi92/hass-handball.net/blob/main/assets/integration_example.png" width="500" alt="Integration Example" />
+<img src="https://github.com/miggi92/hass-handball.net/blob/main/assets/calendar_example.png" width="500" alt="Calendar Example" />
 
 ## Features
 
