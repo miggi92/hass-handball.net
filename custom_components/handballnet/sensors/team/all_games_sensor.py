@@ -29,6 +29,42 @@ class HandballAllGamesSensor(HandballBaseSensor):
     def extra_state_attributes(self) -> dict[str, Any]:
         return self._attributes
 
+    def _extract_essential_match_data(self, matches: list) -> list:
+        """Extract only essential match data to reduce memory usage"""
+        essential_matches = []
+        
+        for match in matches:
+            essential_match = {
+                "id": match.get("id"),
+                "startsAt": match.get("startsAt"),
+                "state": match.get("state"),
+                "homeTeam": {
+                    "id": match.get("homeTeam", {}).get("id"),
+                    "name": match.get("homeTeam", {}).get("name"),
+                    "logo": match.get("homeTeam", {}).get("logo")
+                },
+                "awayTeam": {
+                    "id": match.get("awayTeam", {}).get("id"), 
+                    "name": match.get("awayTeam", {}).get("name"),
+                    "logo": match.get("awayTeam", {}).get("logo")
+                },
+                "field": {
+                    "name": match.get("field", {}).get("name")
+                },
+                "homeGoals": match.get("homeGoals"),
+                "awayGoals": match.get("awayGoals"),
+                "tournament": {
+                    "id": match.get("tournament", {}).get("id"),
+                    "name": match.get("tournament", {}).get("name")
+                },
+                # Add computed fields for easier processing
+                "isHomeMatch": match.get("homeTeam", {}).get("id") == self._team_id,
+                "isAway": match.get("awayTeam", {}).get("id") == self._team_id
+            }
+            essential_matches.append(essential_match)
+        
+        return essential_matches
+
     async def async_update(self) -> None:
         try:
             matches = await self._api.get_team_schedule(self._team_id)
@@ -37,23 +73,28 @@ class HandballAllGamesSensor(HandballBaseSensor):
                 self._attributes = {}
                 return
 
-            next_match = get_next_match_info(matches)
-            last_match = get_last_match_info(matches)
+            # Extract only essential data
+            essential_matches = self._extract_essential_match_data(matches)
+            
+            next_match = get_next_match_info(essential_matches)
+            last_match = get_last_match_info(essential_matches)
 
             self._state = f"Nächstes Spiel: {next_match['opponent']}" if next_match else "Kein nächstes Spiel"
             self._attributes = {
                 "next_match": next_match,
                 "last_match": last_match,
-                "total_matches": len(matches),
-                "matches": matches
+                "total_matches": len(essential_matches),
+                # Only store first 5 upcoming and last 5 played matches in attributes
+                "upcoming_matches": [m for m in essential_matches if m.get("startsAt", 0) > 0][:5],
+                "recent_matches": [m for m in essential_matches if m.get("state") == "Post"][-5:]
             }
 
-            # Store matches in hass.data for other sensors
+            # Store essential matches in hass.data for other sensors
             if DOMAIN not in self.hass.data:
                 self.hass.data[DOMAIN] = {}
             if self._team_id not in self.hass.data[DOMAIN]:
                 self.hass.data[DOMAIN][self._team_id] = {}
-            self.hass.data[DOMAIN][self._team_id]["matches"] = matches
+            self.hass.data[DOMAIN][self._team_id]["matches"] = essential_matches
 
         except Exception as e:
             _LOGGER.error("Error updating all games sensor for %s: %s", self._team_id, e)
