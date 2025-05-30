@@ -24,6 +24,11 @@ class HandballAllGamesSensor(HandballBaseSensor):
     def extra_state_attributes(self) -> dict[str, Any]:
         return self._attributes
 
+    def update_entity_picture(self, logo_url: str) -> None:
+        """Update entity picture with team logo"""
+        if logo_url and logo_url.strip():
+            self._attr_entity_picture = logo_url
+
     async def async_update(self) -> None:
         matches = await self._api.get_team_schedule(self._team_id)
         if matches is None:
