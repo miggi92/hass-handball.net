@@ -17,7 +17,8 @@ from .sensors import (
     HandballAuswaertsspielSensor,
     HandballLiveTickerSensor,
     HandballLiveTickerEventsSensor,
-    HandballTablePositionSensor
+    HandballTablePositionSensor,
+    HandballHealthSensor
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -36,11 +37,12 @@ async def async_setup_entry(hass: HomeAssistant, entry, async_add_entities):
     live_sensor = HandballLiveTickerSensor(hass, entry, team_id)
     live_events_sensor = HandballLiveTickerEventsSensor(hass, entry, team_id, api)
     table_sensor = HandballTablePositionSensor(hass, entry, team_id, api)
+    health_sensor = HandballHealthSensor(hass, entry, team_id, api)
 
     # Store sensor references for device name updates
-    hass.data[DOMAIN][team_id]["sensors"] = [all_sensor, heim_sensor, aus_sensor, live_sensor, live_events_sensor, table_sensor]
+    hass.data[DOMAIN][team_id]["sensors"] = [all_sensor, heim_sensor, aus_sensor, live_sensor, live_events_sensor, table_sensor, health_sensor]
 
-    async_add_entities([all_sensor, heim_sensor, aus_sensor, live_sensor, live_events_sensor, table_sensor])
+    async_add_entities([all_sensor, heim_sensor, aus_sensor, live_sensor, live_events_sensor, table_sensor, health_sensor])
 
     async def update_all(now=None):
         try:
@@ -62,12 +64,18 @@ async def async_setup_entry(hass: HomeAssistant, entry, async_add_entities):
         except Exception as e:
             _LOGGER.error("Error updating table position sensor: %s", e)
             
+        try:
+            await health_sensor.async_update()
+        except Exception as e:
+            _LOGGER.error("Error updating health sensor: %s", e)
+            
         all_sensor.async_write_ha_state()
         heim_sensor.async_write_ha_state()
         aus_sensor.async_write_ha_state()
         live_sensor.update_state()
         live_sensor.async_write_ha_state()
         table_sensor.async_write_ha_state()
+        health_sensor.async_write_ha_state()
         await schedule_next_poll()
 
     async def schedule_next_poll():

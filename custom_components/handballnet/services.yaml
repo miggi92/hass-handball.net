@@ -2,3 +2,25 @@ reload_config:
   name: Reload Configuration
   description: Reload the handball.net integration configuration
   fields: {}
+
+refresh_team_data:
+  name: Refresh Team Data
+  description: Force refresh of team data from handball.net
+  fields:
+    team_id:
+      name: Team ID
+      description: The team ID to refresh
+      required: true
+      selector:
+        text:
+
+diagnose_team:
+  name: Diagnose Team
+  description: Run diagnostics for a team and log detailed information
+  fields:
+    team_id:
+      name: Team ID
+      description: The team ID to diagnose
+      required: true
+      selector:
+        text:
