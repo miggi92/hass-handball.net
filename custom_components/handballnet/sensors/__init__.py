@@ -7,6 +7,8 @@ from .live_ticker_sensor import HandballLiveTickerSensor
 from .live_ticker_events_sensor import HandballLiveTickerEventsSensor
 from .table_position_sensor import HandballTablePositionSensor
 from .health_sensor import HandballHealthSensor
+from .tournament_table_sensor import HandballTournamentTableSensor
+from .tournament_team_position_sensor import HandballTournamentTeamPositionSensor
 
 __all__ = [
     "HandballAllGamesSensor",
@@ -17,5 +19,7 @@ __all__ = [
     "HandballLiveTickerSensor",
     "HandballLiveTickerEventsSensor",
     "HandballTablePositionSensor",
-    "HandballHealthSensor"
+    "HandballHealthSensor",
+    "HandballTournamentTableSensor",
+    "HandballTournamentTeamPositionSensor"
 ]

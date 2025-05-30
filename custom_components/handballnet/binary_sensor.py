@@ -1,11 +1,17 @@
 from homeassistant.components.binary_sensor import BinarySensorEntity
 from homeassistant.core import HomeAssistant
 from datetime import datetime, timezone
-from .const import DOMAIN
+from .const import DOMAIN, CONF_ENTITY_TYPE, ENTITY_TYPE_TEAM
+from .sensors.base_sensor import HandballBaseSensor
 
 async def async_setup_entry(hass: HomeAssistant, entry, async_add_entities):
+    # Only create binary sensor for teams, not tournaments
+    entity_type = entry.data.get(CONF_ENTITY_TYPE, ENTITY_TYPE_TEAM)
+    if entity_type != ENTITY_TYPE_TEAM:
+        return
+        
     team_id = entry.data["team_id"]
-    entity = HandballLiveBinarySensor(hass, entry, team_id)
+    entity = HandballTeamLiveBinarySensor(hass, entry, team_id)
     
     # Add binary sensor to sensors list for logo updates
     if "sensors" not in hass.data[DOMAIN][team_id]:
@@ -14,29 +20,15 @@ async def async_setup_entry(hass: HomeAssistant, entry, async_add_entities):
     
     async_add_entities([entity], update_before_add=True)
 
-class HandballLiveBinarySensor(BinarySensorEntity):
+class HandballTeamLiveBinarySensor(HandballBaseSensor, BinarySensorEntity):
     def __init__(self, hass, entry, team_id):
-        self.hass = hass
-        self._team_id = team_id
+        super().__init__(hass, entry, team_id)
         
         # Use team name from config if available, fallback to team_id
         team_name = entry.data.get("team_name", team_id)
         self._attr_name = f"{team_name} Live"
-        self._attr_unique_id = f"handball_{team_id}_live"
-        self._attr_config_entry_id = entry.entry_id
-        self._attr_device_info = {
-            "identifiers": {(DOMAIN, team_id)},
-            "name": f"{team_name}",
-            "manufacturer": "handball.net",
-            "model": "Handball Team",
-            "entry_type": "service"
-        }
+        self._attr_unique_id = f"handball_team_{team_id}_live"
         self._attr_icon = "mdi:handball"
-
-    def update_device_name(self, team_name: str) -> None:
-        """Update device name with actual team name"""
-        if team_name and team_name != "":
-            self._attr_device_info["name"] = f"Handball {team_name}"
 
     @property
     def is_on(self) -> bool:

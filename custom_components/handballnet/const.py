@@ -1,10 +1,16 @@
 DOMAIN = "handballnet"
 CONF_TEAM_ID = "team_id"
 CONF_LEAGUE_ID = "league_id"
+CONF_TOURNAMENT_ID = "tournament_id"  # New
+CONF_ENTITY_TYPE = "entity_type"      # New
 CONF_UPDATE_INTERVAL = "update_interval"
 DEFAULT_UPDATE_INTERVAL = 3600  
 CONF_UPDATE_INTERVAL_LIVE = "update_interval_live"
 DEFAULT_UPDATE_INTERVAL_LIVE = 15
+
+# Entity types
+ENTITY_TYPE_TEAM = "team"
+ENTITY_TYPE_TOURNAMENT = "tournament"
 
 # Game duration and health check constants
 GAME_DURATION_HOURS = 2

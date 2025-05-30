@@ -1,7 +1,7 @@
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import config_validation as cv
-from .const import DOMAIN
+from .const import DOMAIN, CONF_TEAM_ID, CONF_TOURNAMENT_ID, CONF_ENTITY_TYPE, ENTITY_TYPE_TEAM, ENTITY_TYPE_TOURNAMENT
 
 PLATFORMS = ["sensor", "calendar", "binary_sensor"]
 
@@ -56,22 +56,42 @@ async def async_setup(hass: HomeAssistant, config: dict):
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     hass.data.setdefault(DOMAIN, {})
-    hass.data[DOMAIN][entry.data["team_id"]] = {
-        "matches": [],
-        "table_position": None,
-        "team_name": None,
-        "team_logo_url": None,
-        "sensors": []
-    }
+    
+    entity_type = entry.data.get(CONF_ENTITY_TYPE, ENTITY_TYPE_TEAM)
+    
+    if entity_type == ENTITY_TYPE_TEAM:
+        team_id = entry.data[CONF_TEAM_ID]
+        hass.data[DOMAIN][team_id] = {
+            "matches": [],
+            "table_position": None,
+            "team_name": None,
+            "team_logo_url": None,
+            "sensors": []
+        }
+    elif entity_type == ENTITY_TYPE_TOURNAMENT:
+        tournament_id = entry.data[CONF_TOURNAMENT_ID]
+        tournament_key = f"tournament_{tournament_id}"
+        hass.data[DOMAIN][tournament_key] = {
+            "tournament_info": {},
+            "table_rows": [],
+            "sensors": []
+        }
 
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
     return True
 
-
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry):
     unload_ok = await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
     if unload_ok:
-        hass.data[DOMAIN].pop(entry.data["team_id"])
+        entity_type = entry.data.get(CONF_ENTITY_TYPE, ENTITY_TYPE_TEAM)
+        if entity_type == ENTITY_TYPE_TEAM:
+            team_id = entry.data[CONF_TEAM_ID]
+            hass.data[DOMAIN].pop(team_id, None)
+        elif entity_type == ENTITY_TYPE_TOURNAMENT:
+            tournament_id = entry.data[CONF_TOURNAMENT_ID]
+            tournament_key = f"tournament_{tournament_id}"
+            hass.data[DOMAIN].pop(tournament_key, None)
+    
     if not hass.config_entries.async_entries(DOMAIN):
         hass.services.async_remove(DOMAIN, "reload_config")
         hass.services.async_remove(DOMAIN, "refresh_team_data")
