@@ -1,6 +1,18 @@
 # Changelog
 
 
+## v0.0.6-beta
+
+[compare changes](https://github.com/miggi92/hass-handball.net/compare/0.0.6-beta.2...v0.0.6-beta)
+
+### 🚀 Enhancements
+
+- ✨  changed release naming logic ([cd222c4](https://github.com/miggi92/hass-handball.net/commit/cd222c4))
+
+### ❤️ Contributors
+
+- Miguel ([@miggi92](https://github.com/miggi92))
+
 ## v0.0.6-beta.2
 
 [compare changes](https://github.com/miggi92/hass-handball.net/compare/v0.0.6-beta.1...v0.0.6-beta.2)
