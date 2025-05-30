@@ -54,7 +54,8 @@ async def async_setup_entry(hass: HomeAssistant, entry, async_add_entities):
             if team_name:
                 for sensor in hass.data[DOMAIN][team_id]["sensors"]:
                     sensor.update_device_name(team_name)
-                    if team_logo_url:
+                    # Logo nur für den all_sensor (Alle Spiele), nicht für andere
+                    if sensor == all_sensor and team_logo_url:
                         sensor.update_entity_picture(team_logo_url)
         except Exception as e:
             _LOGGER.error("Error updating all games sensor: %s", e)

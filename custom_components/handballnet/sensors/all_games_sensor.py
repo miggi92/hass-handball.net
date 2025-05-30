@@ -95,8 +95,7 @@ class HandballAllGamesSensor(HandballBaseSensor):
         for sensor in sensors:
             if hasattr(sensor, 'update_device_name'):
                 sensor.update_device_name(team_name)
-            if team_logo_url and hasattr(sensor, 'update_entity_picture'):
-                sensor.update_entity_picture(team_logo_url)
+            # Logo nur für den "Alle Spiele" Sensor - nicht für andere Sensoren
 
     def _set_sensor_state(self, team_name: str, total_games: int, match_data: dict) -> None:
         """Set sensor state and attributes"""

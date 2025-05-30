@@ -29,11 +29,6 @@ class HandballCalendar(CalendarEntity):
         }
         self._event = None
 
-    def update_entity_picture(self, logo_url: str) -> None:
-        """Update entity picture with team logo"""
-        if logo_url and logo_url.strip():
-            self._attr_entity_picture = logo_url
-
     def update_device_name(self, team_name: str) -> None:
         """Update device name with actual team name"""
         if team_name and team_name != "":
