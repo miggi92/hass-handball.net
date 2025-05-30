@@ -26,7 +26,36 @@ class HandballNetAPI:
         except Exception as e:
             _LOGGER.error("Error fetching team schedule: %s", e)
             return None
-    
+
+    def extract_team_logo_url(self, matches: List[Dict[str, Any]], team_id: str) -> Optional[str]:
+        """Extract team logo URL from matches data"""
+        if not matches:
+            return None
+            
+        for match in matches:
+            # Check if this team is home team
+            home_team = match.get("homeTeam", {})
+            if home_team.get("id") == team_id:
+                logo_url = home_team.get("logo")
+                if logo_url:
+                    return self._normalize_logo_url(logo_url)
+                    
+            # Check if this team is away team  
+            away_team = match.get("awayTeam", {})
+            if away_team.get("id") == team_id:
+                logo_url = away_team.get("logo")
+                if logo_url:
+                    return self._normalize_logo_url(logo_url)
+                    
+        return None
+
+    def _normalize_logo_url(self, logo_url: str) -> str:
+        """Convert handball-net: logo URL to full HTTPS URL"""
+        if logo_url and logo_url.startswith("handball-net:"):
+            # Convert "handball-net:files/..." to "https://www.handball.net/files/..."
+            return logo_url.replace("handball-net:", "https://www.handball.net/")
+        return logo_url
+
     async def get_league_table(self, league_id: str) -> Optional[List[Dict[str, Any]]]:
         """Get league table"""
         url = f"{self.base_url}/tournaments/{league_id}/table"
@@ -42,7 +71,7 @@ class HandballNetAPI:
             return None
     
     async def get_team_info(self, team_id: str) -> Optional[Dict[str, Any]]:
-        """Get team information"""
+        """Get team information including logo"""
         url = f"{self.base_url}/teams/{team_id}"
         try:
             async with self.session.get(url) as resp:
@@ -50,7 +79,13 @@ class HandballNetAPI:
                     _LOGGER.warning("Error fetching team info from handball.net: %s", resp.status)
                     return None
                 data = await resp.json()
-                return data.get("data")
+                team_data = data.get("data")
+                
+                # Normalize logo URL if present
+                if team_data and team_data.get("logo"):
+                    team_data["logo"] = self._normalize_logo_url(team_data["logo"])
+                
+                return team_data
         except Exception as e:
             _LOGGER.error("Error fetching team info: %s", e)
             return None

@@ -5,6 +5,12 @@ from .const import DOMAIN
 async def async_setup_entry(hass, entry, async_add_entities):
     team_id = entry.data["team_id"]
     entity = HandballCalendar(hass, entry, team_id)
+    
+    # Add calendar to sensors list for logo updates
+    if "sensors" not in hass.data[DOMAIN][team_id]:
+        hass.data[DOMAIN][team_id]["sensors"] = []
+    hass.data[DOMAIN][team_id]["sensors"].append(entity)
+    
     async_add_entities([entity], update_before_add=True)
 
 class HandballCalendar(CalendarEntity):
@@ -22,6 +28,16 @@ class HandballCalendar(CalendarEntity):
             "entry_type": "service"
         }
         self._event = None
+
+    def update_entity_picture(self, logo_url: str) -> None:
+        """Update entity picture with team logo"""
+        if logo_url and logo_url.strip():
+            self._attr_entity_picture = logo_url
+
+    def update_device_name(self, team_name: str) -> None:
+        """Update device name with actual team name"""
+        if team_name and team_name != "":
+            self._attr_device_info["name"] = f"Handball {team_name}"
 
     @property
     def event(self) -> CalendarEvent | None:

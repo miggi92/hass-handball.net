@@ -21,6 +21,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
         "matches": [],
         "table_position": None,
         "team_name": None,
+        "team_logo_url": None,
         "sensors": []
     }
 

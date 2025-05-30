@@ -45,11 +45,15 @@ async def async_setup_entry(hass: HomeAssistant, entry, async_add_entities):
     async def update_all(now=None):
         try:
             await all_sensor.async_update()
-            # Update device names for all sensors after getting team name
+            # Update device names and logos for all sensors after getting team info
             team_name = hass.data.get(DOMAIN, {}).get(team_id, {}).get("team_name")
+            team_logo_url = hass.data.get(DOMAIN, {}).get(team_id, {}).get("team_logo_url")
+            
             if team_name:
                 for sensor in hass.data[DOMAIN][team_id]["sensors"]:
                     sensor.update_device_name(team_name)
+                    if team_logo_url:
+                        sensor.update_entity_picture(team_logo_url)
         except Exception as e:
             _LOGGER.error("Error updating all games sensor: %s", e)
             

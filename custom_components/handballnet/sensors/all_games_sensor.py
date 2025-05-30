@@ -3,6 +3,9 @@ from typing import Any
 from .base_sensor import HandballBaseSensor
 from ..const import DOMAIN
 from ..api import HandballNetAPI
+import logging
+
+_LOGGER = logging.getLogger(__name__)
 
 
 class HandballAllGamesSensor(HandballBaseSensor):
@@ -30,9 +33,13 @@ class HandballAllGamesSensor(HandballBaseSensor):
         heimspiele = []
         auswaertsspiele = []
         team_name = None
+        team_logo_url = None
         next_match = None
         last_match = None
         now = datetime.now(timezone.utc)
+
+        # Extract team logo URL from matches first
+        team_logo_url = self._api.extract_team_logo_url(matches, self._team_id)
 
         for match in matches:
             if match["homeTeam"]["id"] == self._team_id:
@@ -42,13 +49,30 @@ class HandballAllGamesSensor(HandballBaseSensor):
                 auswaertsspiele.append(match)
                 team_name = match["awayTeam"]["name"]
 
-        # Update device name for all sensors if we have team name
+        # If no team info from matches, try to get it from team info API
+        if not team_name or not team_logo_url:
+            try:
+                team_info = await self._api.get_team_info(self._team_id)
+                if team_info:
+                    if not team_name:
+                        team_name = team_info.get("name")
+                    if not team_logo_url:
+                        team_logo_url = team_info.get("logo")
+            except Exception as e:
+                _LOGGER.warning("Could not fetch team info for %s: %s", self._team_id, e)
+
+        # Update device name and logo for all sensors if we have team info
         if team_name:
             self.update_device_name(team_name)
             # Update device name for other sensors in the same device
             if hasattr(self.hass.data[DOMAIN][self._team_id], 'sensors'):
                 for sensor in self.hass.data[DOMAIN][self._team_id]['sensors']:
                     sensor.update_device_name(team_name)
+                    if team_logo_url:
+                        sensor.update_entity_picture(team_logo_url)
+        
+        if team_logo_url:
+            self.update_entity_picture(team_logo_url)
 
         # Find next and last match
         for match in sorted(matches, key=lambda x: x.get("startsAt", 0)):
@@ -80,6 +104,7 @@ class HandballAllGamesSensor(HandballBaseSensor):
         self._state = f"{team_name} ({len(matches)} Spiele)"
         self._attributes = {
             "team_name": team_name,
+            "team_logo_url": team_logo_url,
             "total_games": len(matches),
             "home_games": len(heimspiele),
             "away_games": len(auswaertsspiele),
@@ -91,3 +116,4 @@ class HandballAllGamesSensor(HandballBaseSensor):
         self.hass.data[DOMAIN][self._team_id]["heimspiele"] = heimspiele
         self.hass.data[DOMAIN][self._team_id]["auswaertsspiele"] = auswaertsspiele
         self.hass.data[DOMAIN][self._team_id]["team_name"] = team_name
+        self.hass.data[DOMAIN][self._team_id]["team_logo_url"] = team_logo_url
