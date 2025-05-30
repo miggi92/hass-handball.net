@@ -1,7 +1,6 @@
 from homeassistant.helpers.entity import Entity
 from ..const import DOMAIN
 
-
 class HandballBaseSensor(Entity):
     """Base class for handball sensors"""
     
@@ -27,4 +26,3 @@ class HandballBaseSensor(Entity):
         if team_name and team_name != "":
             self._attr_device_info["name"] = f"{team_name}"
             
-    # update_entity_picture bleibt nur in den Sensoren, die es wirklich brauchen
