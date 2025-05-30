@@ -1,6 +1,18 @@
 # Changelog
 
 
+## v0.0.4
+
+[compare changes](https://github.com/miggi92/hass-handball.net/compare/v0.0.4-3...v0.0.4)
+
+### 🚀 Enhancements
+
+- ✨  changed entity names ([36fb042](https://github.com/miggi92/hass-handball.net/commit/36fb042))
+
+### ❤️ Contributors
+
+- Miguel ([@miggi92](https://github.com/miggi92))
+
 ## v0.0.4-3
 
 [compare changes](https://github.com/miggi92/hass-handball.net/compare/v0.0.4-2...v0.0.4-3)
