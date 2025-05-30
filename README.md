@@ -22,7 +22,7 @@
 
 ### Manual
 
-Copy the `custom_components/handball_net` folder to your Home Assistant `custom_components` folder. Then restart Home Assistant.
+Copy the `custom_components/handballnet` folder to your Home Assistant `custom_components` folder. Then restart Home Assistant.
 
 
 ## Configuration
