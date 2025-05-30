@@ -22,8 +22,8 @@ class HandballTournamentTeamPositionSensor(HandballBaseSensor):
         position = team_data.get("position", 0)
         
         # Set sensor name and unique ID
-        self._attr_name = f"{tournament_name} Platz {position}: {team_name}"
-        self._attr_unique_id = f"handball_tournament_{tournament_id}_position_{position}_{team_id}"
+        self._attr_name = f"{tournament_name} Platz {position}"
+        self._attr_unique_id = f"handball_tournament_{tournament_id}_position_{position}"
         self._attr_icon = "mdi:trophy-outline"
         
         # Set team logo as entity picture
@@ -58,7 +58,7 @@ class HandballTournamentTeamPositionSensor(HandballBaseSensor):
             self._attr_entity_picture = normalize_logo_url(team_logo)
         
         # Update state and attributes
-        self._state = team_data.get("position")
+        self._state = team_data.get("team_name")
         
         # Calculate additional stats
         games_played = team_data.get("games_played", 0)
