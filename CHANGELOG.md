@@ -3,144 +3,42 @@
 
 ## v0.0.6
 
-[compare changes](https://github.com/miggi92/hass-handball.net/compare/v0.0.6-3.beta...v0.0.6)
-
-## v0.0.6-3.beta
-
-[compare changes](https://github.com/miggi92/hass-handball.net/compare/v0.0.6-2.beta...v0.0.6-3.beta)
+[compare changes](https://github.com/miggi92/hass-handball.net/compare/v0.0.5...v0.0.6)
 
 ### 🚀 Enhancements
 
 - ✨  move team name to state ([edfe9b7](https://github.com/miggi92/hass-handball.net/commit/edfe9b7))
-
-### 🩹 Fixes
-
-- 🐛  fixed duplicate events in calendar ([54dd95a](https://github.com/miggi92/hass-handball.net/commit/54dd95a))
-
-### 💅 Refactors
-
-- 🔥  removed "liga" from device names ([e60b628](https://github.com/miggi92/hass-handball.net/commit/e60b628))
-
-### ❤️ Contributors
-
-- Miguel ([@miggi92](https://github.com/miggi92))
-
-## v0.0.6-2.beta
-
-[compare changes](https://github.com/miggi92/hass-handball.net/compare/0.0.6-1.beta...v0.0.6-2.beta)
-
-### 🩹 Fixes
-
-- 🐛  fixed logos not showing ([e5caea9](https://github.com/miggi92/hass-handball.net/commit/e5caea9))
-- 🐛  fixed stats ([4e05ead](https://github.com/miggi92/hass-handball.net/commit/4e05ead))
-
-### ❤️ Contributors
-
-- Miguel ([@miggi92](https://github.com/miggi92))
-
-## v0.0.6-1.beta
-
-[compare changes](https://github.com/miggi92/hass-handball.net/compare/v0.0.6-0.beta...v0.0.6-1.beta)
-
-### 🩹 Fixes
-
-- 🐛  fixed deprecation warning ([86ff437](https://github.com/miggi92/hass-handball.net/commit/86ff437))
-- 🐛  fixed error ([477c22e](https://github.com/miggi92/hass-handball.net/commit/477c22e))
-
-### ❤️ Contributors
-
-- Miguel ([@miggi92](https://github.com/miggi92))
-
-## v0.0.6-0.beta
-
-[compare changes](https://github.com/miggi92/hass-handball.net/compare/0.0.6-beta.2...0.0.6-0.beta)
-
-### 🚀 Enhancements
-
 - ✨  changed release naming logic ([cd222c4](https://github.com/miggi92/hass-handball.net/commit/cd222c4))
-
-### ❤️ Contributors
-
-- Miguel ([@miggi92](https://github.com/miggi92))
-
-## v0.0.6-beta.2
-
-[compare changes](https://github.com/miggi92/hass-handball.net/compare/v0.0.6-beta.1...v0.0.6-beta.2)
-
-### 🚀 Enhancements
-
 - ✨  reduced size ([efdb160](https://github.com/miggi92/hass-handball.net/commit/efdb160))
-
-### 🩹 Fixes
-
-- 🐛  fixed error ([e664c11](https://github.com/miggi92/hass-handball.net/commit/e664c11))
-
-### ❤️ Contributors
-
-- Miguel ([@miggi92](https://github.com/miggi92))
-
-## v0.0.6-beta.1
-
-[compare changes](https://github.com/miggi92/hass-handball.net/compare/v0.0.6-beta.0...v0.0.6-beta.1)
-
-### 🩹 Fixes
-
-- 🐛  fixed home assistant errors ([43bb2a2](https://github.com/miggi92/hass-handball.net/commit/43bb2a2))
-- 🐛  fix errors ([b928eb6](https://github.com/miggi92/hass-handball.net/commit/b928eb6))
-- 🐛  fixed import ([e467ab5](https://github.com/miggi92/hass-handball.net/commit/e467ab5))
-
-### 📖 Documentation
-
-- 📝  updated changelog ([fd21232](https://github.com/miggi92/hass-handball.net/commit/fd21232))
-
-### 🏡 Chore
-
-- **release:** V0.0.6-beta.0 ([7b3537a](https://github.com/miggi92/hass-handball.net/commit/7b3537a))
-
-### ❤️ Contributors
-
-- Miguel ([@miggi92](https://github.com/miggi92))
-
-## v0.0.6-beta.0
-
-[compare changes](https://github.com/miggi92/hass-handball.net/compare/v0.0.6-1...v0.0.6-beta.0)
-
-### 🩹 Fixes
-
-- 🐛  fixed home assistant errors ([43bb2a2](https://github.com/miggi92/hass-handball.net/commit/43bb2a2))
-- 🐛  fixed error ([b69d271](https://github.com/miggi92/hass-handball.net/commit/b69d271))
-- 🐛  fixed team id error ([ac3ef29](https://github.com/miggi92/hass-handball.net/commit/ac3ef29))
-
-### ❤️ Contributors
-
-- Miguel ([@miggi92](https://github.com/miggi92))
-
-## v0.0.6-1
-
-[compare changes](https://github.com/miggi92/hass-handball.net/compare/v0.0.6-0...v0.0.6-1)
-
-### 🩹 Fixes
-
-- 🐛  fixed config error# ([86fa195](https://github.com/miggi92/hass-handball.net/commit/86fa195))
-
-### ❤️ Contributors
-
-- Miguel ([@miggi92](https://github.com/miggi92))
-
-## v0.0.6-0
-
-[compare changes](https://github.com/miggi92/hass-handball.net/compare/v0.0.5...v0.0.6-0)
-
-### 🚀 Enhancements
-
 - ✨  added tournament sensors ([b5d404e](https://github.com/miggi92/hass-handball.net/commit/b5d404e))
 - ✨  added base sensors ([868135c](https://github.com/miggi92/hass-handball.net/commit/868135c))
 - ✨  added tournament calendar ([a264e46](https://github.com/miggi92/hass-handball.net/commit/a264e46))
 
+### 🩹 Fixes
+
+- 🐛  fixed duplicate events in calendar ([54dd95a](https://github.com/miggi92/hass-handball.net/commit/54dd95a))
+- 🐛  fixed logos not showing ([e5caea9](https://github.com/miggi92/hass-handball.net/commit/e5caea9))
+- 🐛  fixed stats ([4e05ead](https://github.com/miggi92/hass-handball.net/commit/4e05ead))
+- 🐛  fixed deprecation warning ([86ff437](https://github.com/miggi92/hass-handball.net/commit/86ff437))
+- 🐛  fixed error ([477c22e](https://github.com/miggi92/hass-handball.net/commit/477c22e))
+- 🐛  fixed error ([e664c11](https://github.com/miggi92/hass-handball.net/commit/e664c11))
+- 🐛  fixed home assistant errors ([43bb2a2](https://github.com/miggi92/hass-handball.net/commit/43bb2a2))
+- 🐛  fix errors ([b928eb6](https://github.com/miggi92/hass-handball.net/commit/b928eb6))
+- 🐛  fixed import ([e467ab5](https://github.com/miggi92/hass-handball.net/commit/e467ab5))
+- 🐛  fixed home assistant errors ([43bb2a2](https://github.com/miggi92/hass-handball.net/commit/43bb2a2))
+- 🐛  fixed error ([b69d271](https://github.com/miggi92/hass-handball.net/commit/b69d271))
+- 🐛  fixed team id error ([ac3ef29](https://github.com/miggi92/hass-handball.net/commit/ac3ef29))
+- 🐛  fixed config error# ([86fa195](https://github.com/miggi92/hass-handball.net/commit/86fa195))
+
 ### 💅 Refactors
 
+- 🔥  removed "liga" from device names ([e60b628](https://github.com/miggi92/hass-handball.net/commit/e60b628))
 - ♻️  removed comment ([737a04c](https://github.com/miggi92/hass-handball.net/commit/737a04c))
 - ♻️  refactor file structure ([235cc2d](https://github.com/miggi92/hass-handball.net/commit/235cc2d))
+
+### 📖 Documentation
+
+- 📝  updated changelog ([fd21232](https://github.com/miggi92/hass-handball.net/commit/fd21232))
 
 ### ❤️ Contributors
 
