@@ -1,11 +1,11 @@
 {
     "name": "hass-handball.net",
-    "version": "0.0.6-0.beta",
+    "version": "0.0.6-1.beta",
     "packageManager": "pnpm@10.11.0",
     "repository": "miggi92/hass-handball.net",
     "scripts": {
         "release": "changelogen --release",
-        "release:beta": "changelogen --release --prerelease --versionSuffix 0.beta"
+        "release:beta": "changelogen --bump --prerelease"
     },
     "devDependencies": {
         "changelogen": "^0.6.1"

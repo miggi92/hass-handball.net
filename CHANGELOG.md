@@ -1,6 +1,19 @@
 # Changelog
 
 
+## v0.0.6-1.beta
+
+[compare changes](https://github.com/miggi92/hass-handball.net/compare/v0.0.6-0.beta...v0.0.6-1.beta)
+
+### 🩹 Fixes
+
+- 🐛  fixed deprecation warning ([86ff437](https://github.com/miggi92/hass-handball.net/commit/86ff437))
+- 🐛  fixed error ([477c22e](https://github.com/miggi92/hass-handball.net/commit/477c22e))
+
+### ❤️ Contributors
+
+- Miguel ([@miggi92](https://github.com/miggi92))
+
 ## v0.0.6-0.beta
 
 [compare changes](https://github.com/miggi92/hass-handball.net/compare/0.0.6-beta.2...0.0.6-0.beta)
