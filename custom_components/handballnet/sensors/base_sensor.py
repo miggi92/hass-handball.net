@@ -12,7 +12,7 @@ class HandballBaseSensor(Entity):
         self._attr_config_entry_id = entry.entry_id
         self._attr_device_info = {
             "identifiers": {(DOMAIN, self._team_id)},
-            "name": f"Handball Team {self._team_id}",
+            "name": f"{self._team_id}",
             "manufacturer": "handball.net",
             "model": "Handball Team",
             "entry_type": "service"

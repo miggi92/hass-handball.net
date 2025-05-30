@@ -56,7 +56,7 @@ class HandballNetConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     else:
                         # Store team name in the config data
                         user_input["team_name"] = team_name
-                        title = f"Handball {team_name}" if team_name else f"Team {team_id}"
+                        title = f"{team_name}" if team_name else f"Team {team_id}"
                         return self.async_create_entry(title=title, data=user_input)
 
         data_schema = vol.Schema({
