@@ -8,7 +8,10 @@ from ..utils import format_datetime_for_display
 class HandballAuswaertsspielSensor(HandballBaseSensor):
     def __init__(self, hass, entry, team_id):
         super().__init__(hass, entry, team_id)
-        self._attr_name = f"Handball Auswärtsspiele {team_id}"
+        
+        # Use team name from config if available, fallback to team_id
+        team_name = entry.data.get("team_name", team_id)
+        self._attr_name = f"Auswärtsspiele {team_name}"
         self._attr_unique_id = f"handball_away_games_{team_id}"
         self._attr_icon = "mdi:bus-side"
 

@@ -18,18 +18,21 @@ class HandballNetConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         from .options_flow import HandballNetOptionsFlowHandler
         return HandballNetOptionsFlowHandler(config_entry)
 
-    async def _validate_team_id(self, team_id: str) -> bool:
-        """Validate team ID against handball.net API"""
+    async def _validate_team_id(self, team_id: str) -> tuple[bool, str | None]:
+        """Validate team ID against handball.net API and return team name"""
         session = async_get_clientsession(self.hass)
         url = f"https://www.handball.net/a/sportdata/1/teams/{team_id}"
         try:
             async with session.get(url) as resp:
                 if resp.status == 200:
                     data = await resp.json()
-                    return data.get("data") is not None
-                return False
+                    team_data = data.get("data")
+                    if team_data:
+                        team_name = team_data.get("name", team_id)
+                        return True, team_name
+                return False, None
         except Exception:
-            return False
+            return False, None
 
     async def async_step_user(self, user_input=None):
         errors = {}
@@ -45,13 +48,16 @@ class HandballNetConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                         errors[CONF_TEAM_ID] = "already_configured"
                         break
 
-                # Validate team ID against API
+                # Validate team ID against API and get team name
                 if not errors:
-                    if not await self._validate_team_id(team_id):
+                    is_valid, team_name = await self._validate_team_id(team_id)
+                    if not is_valid:
                         errors[CONF_TEAM_ID] = "team_not_found"
-
-                if not errors:
-                    return self.async_create_entry(title=f"Team {team_id}", data=user_input)
+                    else:
+                        # Store team name in the config data
+                        user_input["team_name"] = team_name
+                        title = f"Handball {team_name}" if team_name else f"Team {team_id}"
+                        return self.async_create_entry(title=title, data=user_input)
 
         data_schema = vol.Schema({
             vol.Required(CONF_TEAM_ID): str,

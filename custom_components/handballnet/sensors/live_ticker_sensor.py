@@ -7,7 +7,10 @@ from ..const import DOMAIN
 class HandballLiveTickerSensor(HandballBaseSensor):
     def __init__(self, hass, entry, team_id):
         super().__init__(hass, entry, team_id)
-        self._attr_name = f"Liveticker aktiv {self._team_id}"
+        
+        # Use team name from config if available, fallback to team_id
+        team_name = entry.data.get("team_name", team_id)
+        self._attr_name = f"Liveticker {team_name}"
         self._attr_unique_id = f"handball_live_ticker_{team_id}"
         self._attr_icon = "mdi:clock-alert"
         self._attr_should_poll = False

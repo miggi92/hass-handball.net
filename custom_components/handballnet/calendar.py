@@ -17,12 +17,15 @@ class HandballCalendar(CalendarEntity):
     def __init__(self, hass, entry, team_id):
         self.hass = hass
         self._team_id = team_id
-        self._attr_name = f"Handball Spielplan {team_id}"
+        
+        # Use team name from config if available, fallback to team_id
+        team_name = entry.data.get("team_name", team_id)
+        self._attr_name = f"Spielplan {team_name}"
         self._attr_unique_id = f"handball_calendar_{team_id}"
         self._attr_config_entry_id = entry.entry_id
         self._attr_device_info = {
             "identifiers": {(DOMAIN, team_id)},
-            "name": f"Handball Team {team_id}",
+            "name": f"Handball {team_name}",
             "manufacturer": "handball.net",
             "model": "Handball Team",
             "entry_type": "service"

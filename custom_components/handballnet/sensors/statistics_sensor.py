@@ -10,7 +10,10 @@ class HandballStatisticsSensor(HandballBaseSensor):
         super().__init__(hass, entry, team_id)
         self._state = None
         self._attributes = {}
-        self._attr_name = f"Handball Statistiken {team_id}"
+        
+        # Use team name from config if available, fallback to team_id
+        team_name = entry.data.get("team_name", team_id)
+        self._attr_name = f"Statistiken {team_name}"
         self._attr_unique_id = f"handball_statistics_{team_id}"
         self._attr_icon = "mdi:chart-line"
 

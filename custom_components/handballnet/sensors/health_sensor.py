@@ -17,7 +17,10 @@ class HandballHealthSensor(HandballBaseSensor):
         self._api = api
         self._state = HEALTH_STATUS_UNKNOWN
         self._attributes = {}
-        self._attr_name = f"Handball API Status {team_id}"
+        
+        # Use team name from config if available, fallback to team_id
+        team_name = entry.data.get("team_name", team_id)
+        self._attr_name = f"API Status {team_name}"
         self._attr_unique_id = f"handball_health_{team_id}"
         self._attr_icon = "mdi:heart-pulse"
         self._last_successful_update = None

@@ -13,7 +13,10 @@ class HandballLiveTickerEventsSensor(HandballBaseSensor):
         super().__init__(hass, entry, team_id)
         self._api = api
         self._entry = entry
-        self._attr_name = f"Handball Live Ticker {team_id}"
+        
+        # Use team name from config if available, fallback to team_id
+        team_name = entry.data.get("team_name", team_id)
+        self._attr_name = f"Live Ticker Events {team_name}"
         self._attr_unique_id = f"handball_live_ticker_events_{team_id}"
         self._attr_icon = "mdi:television-play"
         self._attr_should_poll = False

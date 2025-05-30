@@ -13,7 +13,10 @@ class HandballAllGamesSensor(HandballBaseSensor):
         self._api = api
         self._state = None
         self._attributes = {}
-        self._attr_name = f"Alle Spiele {team_id}"
+        
+        # Use team name from config if available, fallback to team_id
+        team_name = entry.data.get("team_name", team_id)
+        self._attr_name = f"Alle Spiele {team_name}"
         self._attr_unique_id = f"handball_all_games_{team_id}"
 
     @property
