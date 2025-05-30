@@ -1,6 +1,29 @@
 # Changelog
 
 
+## v0.0.7
+
+[compare changes](https://github.com/miggi92/hass-handball.net/compare/v0.0.6...v0.0.7)
+
+### 🩹 Fixes
+
+- ✏️  fixed typo ([5d0cfb2](https://github.com/miggi92/hass-handball.net/commit/5d0cfb2))
+
+### 📖 Documentation
+
+- 📝  added open in hacs button ([644dc73](https://github.com/miggi92/hass-handball.net/commit/644dc73))
+- 📝  added download badge ([8b1a2f6](https://github.com/miggi92/hass-handball.net/commit/8b1a2f6))
+
+### 🏡 Chore
+
+- 🔧  added release zips ([e5e95fc](https://github.com/miggi92/hass-handball.net/commit/e5e95fc))
+- 🔧  added quality scale ([d2cbded](https://github.com/miggi92/hass-handball.net/commit/d2cbded))
+- 🔧  changed quality scale to custom ([6c719a6](https://github.com/miggi92/hass-handball.net/commit/6c719a6))
+
+### ❤️ Contributors
+
+- Miguel ([@miggi92](https://github.com/miggi92))
+
 ## v0.0.6
 
 [compare changes](https://github.com/miggi92/hass-handball.net/compare/v0.0.5...v0.0.6)
