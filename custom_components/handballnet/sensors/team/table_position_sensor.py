@@ -33,24 +33,24 @@ class HandballTablePositionSensor(HandballBaseSensor):
             # First get team info to find the tournament ID
             team_info = await self._api.get_team_info(self._team_id)
             if not team_info:
-                _LOGGER.warning("Could not get team info for %s", self._team_id)
-                self._state = None
-                self._attributes = {}
+                _LOGGER.debug("Could not get team info for %s", self._team_id)
+                self._state = "Nicht verfügbar"
+                self._attributes = {"info": "Team-Informationen nicht verfügbar"}
                 return
             
             # Try to extract tournament ID from team info
             tournament_id = team_info.get("tournament", {}).get("id")
             if not tournament_id:
-                _LOGGER.warning("No tournament ID found for team %s", self._team_id)
-                self._state = None
-                self._attributes = {}
+                _LOGGER.debug("No tournament ID found for team %s - team might not be in an active league", self._team_id)
+                self._state = "Nicht in Liga"
+                self._attributes = {"info": "Team ist derzeit nicht in einer aktiven Liga"}
                 return
             
             # Get table position using the tournament ID
             table_position = await self._api.get_team_table_position(self._team_id, tournament_id)
             if not table_position:
-                self._state = None
-                self._attributes = {}
+                self._state = "Nicht verfügbar"
+                self._attributes = {"info": "Tabellenposition konnte nicht ermittelt werden"}
                 return
 
             self._state = table_position.get("position")
@@ -68,5 +68,5 @@ class HandballTablePositionSensor(HandballBaseSensor):
 
         except Exception as e:
             _LOGGER.error("Error updating table position for %s: %s", self._team_id, e)
-            self._state = None
+            self._state = "Fehler"
             self._attributes = {"error": str(e)}
