@@ -5,9 +5,10 @@ from ..const import DOMAIN
 class HandballBaseSensor(Entity):
     """Base class for handball sensors"""
     
-    def __init__(self, hass, entry, team_id):
+    def __init__(self, hass, entry, team_id, category=None):
         self.hass = hass
         self._team_id = team_id
+        self._category = category
         self._attr_config_entry_id = entry.entry_id
         self._attr_device_info = {
             "identifiers": {(DOMAIN, self._team_id)},
@@ -16,6 +17,10 @@ class HandballBaseSensor(Entity):
             "model": "Handball Team",
             "entry_type": "service"
         }
+        
+        # Setze entity_category für bessere Gruppierung
+        if category:
+            self._attr_entity_category = category
 
     def update_device_name(self, team_name: str) -> None:
         """Update device name with actual team name"""
