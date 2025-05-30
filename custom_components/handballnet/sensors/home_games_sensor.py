@@ -10,6 +10,7 @@ class HandballHeimspielSensor(HandballBaseSensor):
         super().__init__(hass, entry, team_id)
         self._attr_name = f"Handball Heimspiele {team_id}"
         self._attr_unique_id = f"handball_home_games_{team_id}"
+        self._attr_icon = "mdi:home"
 
     @property
     def state(self) -> str:
