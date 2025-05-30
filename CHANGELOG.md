@@ -1,6 +1,20 @@
 # Changelog
 
 
+## v0.0.4-1
+
+[compare changes](https://github.com/miggi92/hass-handball.net/compare/v0.0.4-0...v0.0.4-1)
+
+### 🚀 Enhancements
+
+- 🔥  show picture only on all games sensor ([2d81ab9](https://github.com/miggi92/hass-handball.net/commit/2d81ab9))
+- ✨  changed games sensors ([c7e80a3](https://github.com/miggi92/hass-handball.net/commit/c7e80a3))
+- ✨  added statistics ([9c6e377](https://github.com/miggi92/hass-handball.net/commit/9c6e377))
+
+### ❤️ Contributors
+
+- Miguel ([@miggi92](https://github.com/miggi92))
+
 ## v0.0.4-0
 
 [compare changes](https://github.com/miggi92/hass-handball.net/compare/v0.0.3...v0.0.4-0)
