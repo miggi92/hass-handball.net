@@ -1,8 +1,9 @@
 from datetime import datetime, timezone, timedelta
 from typing import Any, Optional
 import logging
+from homeassistant.helpers.event import async_call_later
 from .base_sensor import HandballBaseSensor
-from ..const import DOMAIN
+from ..const import DOMAIN, CONF_UPDATE_INTERVAL_LIVE, DEFAULT_UPDATE_INTERVAL_LIVE
 from ..api import HandballNetAPI
 
 _LOGGER = logging.getLogger(__name__)
@@ -11,12 +12,14 @@ class HandballLiveTickerEventsSensor(HandballBaseSensor):
     def __init__(self, hass, entry, team_id, api: HandballNetAPI):
         super().__init__(hass, entry, team_id)
         self._api = api
+        self._entry = entry
         self._attr_name = f"Handball Live Ticker {team_id}"
         self._attr_unique_id = f"handball_live_ticker_events_{team_id}"
         self._attr_icon = "mdi:television-play"
         self._attr_should_poll = False
         self._state = "Kein Live-Spiel"
         self._attributes = {}
+        self._update_handle = None
 
     @property
     def state(self) -> str:
@@ -45,6 +48,10 @@ class HandballLiveTickerEventsSensor(HandballBaseSensor):
                 return match
         return None
 
+    def is_live_game_active(self) -> bool:
+        """Check if there's currently a live game"""
+        return self.get_current_live_game() is not None
+
     async def async_update_live_ticker(self) -> None:
         """Update live ticker data"""
         current_game = self.get_current_live_game()
@@ -55,17 +62,21 @@ class HandballLiveTickerEventsSensor(HandballBaseSensor):
                 "game_state": "no_live_game",
                 "last_updated": datetime.now().isoformat()
             }
+            # Schedule next check with normal interval when no live game
+            await self._schedule_next_update(is_live=False)
             return
 
         game_id = current_game.get("id")
         if not game_id:
             _LOGGER.warning("No game ID found for current game")
+            await self._schedule_next_update(is_live=True)
             return
 
         try:
             live_data = await self._api.get_live_ticker(game_id)
             if not live_data:
                 _LOGGER.warning("No live ticker data received for game %s", game_id)
+                await self._schedule_next_update(is_live=True)
                 return
 
             summary = live_data.get("summary", {})
@@ -122,6 +133,9 @@ class HandballLiveTickerEventsSensor(HandballBaseSensor):
                 "last_event": latest_events[0] if latest_events else None
             }
 
+            # Schedule next update with live interval
+            await self._schedule_next_update(is_live=True)
+
         except Exception as e:
             _LOGGER.error("Error updating live ticker for game %s: %s", game_id, e)
             self._state = "Fehler beim Laden"
@@ -129,3 +143,43 @@ class HandballLiveTickerEventsSensor(HandballBaseSensor):
                 "error": str(e),
                 "last_updated": datetime.now().isoformat()
             }
+            # Still schedule next update even on error
+            await self._schedule_next_update(is_live=True)
+
+    async def _schedule_next_update(self, is_live: bool = False) -> None:
+        """Schedule the next update based on live status"""
+        # Cancel existing update handle
+        if self._update_handle:
+            self._update_handle()
+            self._update_handle = None
+
+        # Get update interval
+        if is_live:
+            interval = self._entry.options.get(
+                CONF_UPDATE_INTERVAL_LIVE, 
+                self._entry.data.get(CONF_UPDATE_INTERVAL_LIVE, DEFAULT_UPDATE_INTERVAL_LIVE)
+            )
+        else:
+            # Use longer interval when no live game (60 seconds to check for new games)
+            interval = 60
+
+        # Schedule next update
+        async def next_update(now=None):
+            await self.async_update_live_ticker()
+            self.async_write_ha_state()
+
+        self._update_handle = async_call_later(self.hass, interval, next_update)
+
+    async def async_added_to_hass(self) -> None:
+        """When entity is added to hass, start the update cycle"""
+        await super().async_added_to_hass()
+        # Start initial update
+        await self.async_update_live_ticker()
+        self.async_write_ha_state()
+
+    async def async_will_remove_from_hass(self) -> None:
+        """When entity is removed, cancel scheduled updates"""
+        if self._update_handle:
+            self._update_handle()
+            self._update_handle = None
+        await super().async_will_remove_from_hass()

@@ -57,18 +57,12 @@ async def async_setup_entry(hass: HomeAssistant, entry, async_add_entities):
             await table_sensor.async_update()
         except Exception as e:
             _LOGGER.error("Error updating table position sensor: %s", e)
-
-        try:
-            await live_events_sensor.async_update_live_ticker()
-        except Exception as e:
-            _LOGGER.error("Error updating live ticker events: %s", e)
             
         all_sensor.async_write_ha_state()
         heim_sensor.async_write_ha_state()
         aus_sensor.async_write_ha_state()
         live_sensor.update_state()
         live_sensor.async_write_ha_state()
-        live_events_sensor.async_write_ha_state()
         table_sensor.async_write_ha_state()
         await schedule_next_poll()
 
