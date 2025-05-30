@@ -1,5 +1,6 @@
 import voluptuous as vol
 from homeassistant import config_entries
+from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from .const import (
     DOMAIN,
     CONF_TEAM_ID,
@@ -17,6 +18,19 @@ class HandballNetConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         from .options_flow import HandballNetOptionsFlowHandler
         return HandballNetOptionsFlowHandler(config_entry)
 
+    async def _validate_team_id(self, team_id: str) -> bool:
+        """Validate team ID against handball.net API"""
+        session = async_get_clientsession(self.hass)
+        url = f"https://www.handball.net/a/sportdata/1/teams/{team_id}"
+        try:
+            async with session.get(url) as resp:
+                if resp.status == 200:
+                    data = await resp.json()
+                    return data.get("data") is not None
+                return False
+        except Exception:
+            return False
+
     async def async_step_user(self, user_input=None):
         errors = {}
         if user_input is not None:
@@ -25,10 +39,16 @@ class HandballNetConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             if not team_id:
                 errors[CONF_TEAM_ID] = "invalid_team_id"
             else:
+                # Check if already configured
                 for entry in self._async_current_entries():
                     if entry.data[CONF_TEAM_ID] == team_id:
                         errors[CONF_TEAM_ID] = "already_configured"
                         break
+
+                # Validate team ID against API
+                if not errors:
+                    if not await self._validate_team_id(team_id):
+                        errors[CONF_TEAM_ID] = "team_not_found"
 
                 if not errors:
                     return self.async_create_entry(title=f"Team {team_id}", data=user_input)
