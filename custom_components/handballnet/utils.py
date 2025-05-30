@@ -11,8 +11,18 @@ def timestamp_to_datetime(timestamp: int) -> Optional[datetime]:
     except (ValueError, OSError):
         return None
 
-def format_datetime_for_display(dt: datetime) -> Dict[str, str]:
-    """Format datetime for display in attributes"""
+def format_datetime_for_display(dt_or_timestamp) -> Dict[str, str]:
+    """Format datetime or timestamp for display in attributes"""
+    # Handle both datetime objects and timestamps
+    if isinstance(dt_or_timestamp, int):
+        dt = timestamp_to_datetime(dt_or_timestamp)
+        if not dt:
+            return {"formatted": "Invalid timestamp", "local": "Invalid timestamp"}
+    elif isinstance(dt_or_timestamp, datetime):
+        dt = dt_or_timestamp
+    else:
+        return {"formatted": "Invalid input", "local": "Invalid input"}
+    
     return {
         "formatted": dt.strftime(DATE_FORMAT_UTC),
         "local": dt.astimezone().strftime(DATE_FORMAT_LOCAL)

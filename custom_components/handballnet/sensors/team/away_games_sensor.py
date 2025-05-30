@@ -38,12 +38,24 @@ class HandballAuswaertsspielSensor(HandballBaseSensor):
                 break
         
         if next_away_match:
-            self._state = format_datetime_for_display(next_away_match.get("startsAt"))
+            # Get the timestamp and format it properly
+            starts_at = next_away_match.get("startsAt")
+            time_formats = format_datetime_for_display(starts_at)
+            
+            # Determine opponent team
+            home_team = next_away_match.get("homeTeam", {}).get("name", "")
+            away_team = next_away_match.get("awayTeam", {}).get("name", "")
+            opponent = home_team if away_team else away_team  # If this is an away match, opponent is home team
+            
+            self._state = time_formats["formatted"]
             self._attributes = {
-                "opponent": next_away_match.get("opponent"),
-                "location": next_away_match.get("location"),
-                "startsAt": next_away_match.get("startsAt"),
-                "competition": next_away_match.get("competition"),
+                "opponent": opponent,
+                "home_team": home_team,
+                "away_team": away_team,
+                "location": next_away_match.get("field", {}).get("name", ""),
+                "startsAt": starts_at,
+                "starts_at_local": time_formats["local"],
+                "competition": next_away_match.get("tournament", {}).get("name", ""),
                 "match_id": next_away_match.get("id"),
             }
         else:

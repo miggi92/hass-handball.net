@@ -36,11 +36,23 @@ class HandballHeimspielSensor(HandballBaseSensor):
                 break
 
         if next_home_game:
-            self._state = format_datetime_for_display(next_home_game.get("startsAt"))
+            # Get the timestamp and format it properly
+            starts_at = next_home_game.get("startsAt")
+            time_formats = format_datetime_for_display(starts_at)
+            
+            # Determine opponent team
+            home_team = next_home_game.get("homeTeam", {}).get("name", "")
+            away_team = next_home_game.get("awayTeam", {}).get("name", "")
+            opponent = away_team if home_team else home_team  # If this is a home match, opponent is away team
+            
+            self._state = time_formats["formatted"]
             self._attributes = {
-                "opponent": next_home_game.get("opponent"),
-                "location": next_home_game.get("location"),
-                "startsAt": next_home_game.get("startsAt"),
+                "opponent": opponent,
+                "home_team": home_team,
+                "away_team": away_team,
+                "location": next_home_game.get("field", {}).get("name", ""),
+                "startsAt": starts_at,
+                "starts_at_local": time_formats["local"],
             }
         else:
             self._state = "Kein Heimspiel geplant"
