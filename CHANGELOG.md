@@ -1,6 +1,19 @@
 # Changelog
 
 
+## v0.0.6-2.beta
+
+[compare changes](https://github.com/miggi92/hass-handball.net/compare/0.0.6-1.beta...v0.0.6-2.beta)
+
+### 🩹 Fixes
+
+- 🐛  fixed logos not showing ([e5caea9](https://github.com/miggi92/hass-handball.net/commit/e5caea9))
+- 🐛  fixed stats ([4e05ead](https://github.com/miggi92/hass-handball.net/commit/4e05ead))
+
+### ❤️ Contributors
+
+- Miguel ([@miggi92](https://github.com/miggi92))
+
 ## v0.0.6-1.beta
 
 [compare changes](https://github.com/miggi92/hass-handball.net/compare/v0.0.6-0.beta...v0.0.6-1.beta)
