@@ -39,10 +39,14 @@ def get_next_match_info(matches: list, now: Optional[datetime] = None) -> Option
         start_dt = timestamp_to_datetime(match.get("startsAt", 0))
         if start_dt and start_dt > now:
             time_formats = format_datetime_for_display(start_dt)
+            home_team = match.get("homeTeam", {}).get("name", "")
+            away_team = match.get("awayTeam", {}).get("name", "")
+            
             return {
                 "id": match.get("id"),
-                "home_team": match.get("homeTeam", {}).get("name"),
-                "away_team": match.get("awayTeam", {}).get("name"),
+                "home_team": home_team,
+                "away_team": away_team,
+                "opponent": away_team if match.get("homeTeam", {}).get("name") else home_team,
                 "starts_at": match.get("startsAt"),
                 "starts_at_formatted": time_formats["formatted"],
                 "starts_at_local": time_formats["local"],
@@ -60,10 +64,14 @@ def get_last_match_info(matches: list, now: Optional[datetime] = None) -> Option
         start_dt = timestamp_to_datetime(match.get("startsAt", 0))
         if start_dt and start_dt <= now:
             time_formats = format_datetime_for_display(start_dt)
+            home_team = match.get("homeTeam", {}).get("name", "")
+            away_team = match.get("awayTeam", {}).get("name", "")
+            
             last_match = {
                 "id": match.get("id"),
-                "home_team": match.get("homeTeam", {}).get("name"),
-                "away_team": match.get("awayTeam", {}).get("name"),
+                "home_team": home_team,
+                "away_team": away_team,
+                "opponent": away_team if match.get("homeTeam", {}).get("name") else home_team,
                 "starts_at": match.get("startsAt"),
                 "starts_at_formatted": time_formats["formatted"],
                 "starts_at_local": time_formats["local"],

@@ -2,6 +2,9 @@ from typing import Any
 from ..base_sensor import HandballBaseSensor
 from ...const import DOMAIN
 from ...api import HandballNetAPI
+import logging
+
+_LOGGER = logging.getLogger(__name__)
 
 class HandballTablePositionSensor(HandballBaseSensor):
     def __init__(self, hass, entry, team_id, api: HandballNetAPI):
@@ -27,34 +30,43 @@ class HandballTablePositionSensor(HandballBaseSensor):
 
     async def async_update(self) -> None:
         try:
-            table_data = await self._api.get_league_table(self._team_id)
-            if not table_data:
+            # First get team info to find the tournament ID
+            team_info = await self._api.get_team_info(self._team_id)
+            if not team_info:
+                _LOGGER.warning("Could not get team info for %s", self._team_id)
+                self._state = None
+                self._attributes = {}
+                return
+            
+            # Try to extract tournament ID from team info
+            tournament_id = team_info.get("tournament", {}).get("id")
+            if not tournament_id:
+                _LOGGER.warning("No tournament ID found for team %s", self._team_id)
+                self._state = None
+                self._attributes = {}
+                return
+            
+            # Get table position using the tournament ID
+            table_position = await self._api.get_team_table_position(self._team_id, tournament_id)
+            if not table_position:
                 self._state = None
                 self._attributes = {}
                 return
 
-            team_data = next(
-                (team for team in table_data.get("rows", []) if team.get("team", {}).get("id") == self._team_id),
-                None
-            )
-            if not team_data:
-                self._state = None
-                self._attributes = {}
-                return
-
-            self._state = team_data.get("rank")
+            self._state = table_position.get("position")
             self._attributes = {
-                "team_name": team_data.get("team", {}).get("name"),
-                "points": team_data.get("points"),
-                "games_played": team_data.get("games"),
-                "wins": team_data.get("wins"),
-                "draws": team_data.get("draws"),
-                "losses": team_data.get("losses"),
-                "goals_scored": team_data.get("goals"),
-                "goals_conceded": team_data.get("goalsAgainst"),
-                "goal_difference": team_data.get("goalDifference"),
+                "team_name": table_position.get("team_name"),
+                "points": table_position.get("points"),
+                "games_played": table_position.get("games_played"),
+                "wins": table_position.get("wins"),
+                "draws": table_position.get("draws"),
+                "losses": table_position.get("losses"),
+                "goals_scored": table_position.get("goals_scored"),
+                "goals_conceded": table_position.get("goals_conceded"),
+                "goal_difference": table_position.get("goal_difference"),
             }
 
         except Exception as e:
+            _LOGGER.error("Error updating table position for %s: %s", self._team_id, e)
             self._state = None
             self._attributes = {"error": str(e)}

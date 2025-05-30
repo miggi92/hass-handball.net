@@ -32,20 +32,27 @@ class HandballNextMatchSensor(HandballBaseSensor):
 
     async def async_update(self) -> None:
         try:
-            next_match = await get_next_match_info(self._api, self._team_id)
-            if not next_match:
-                self._state = "Kein Spiel gefunden"
+            # Get matches from hass.data instead of calling API directly
+            matches = self.hass.data.get(DOMAIN, {}).get(self._team_id, {}).get("matches", [])
+            if not matches:
+                self._state = "Keine Spiele gefunden"
                 self._attributes = {}
                 return
 
-            self._state = next_match.get("opponent_name", "Unbekannter Gegner")
+            next_match = get_next_match_info(matches)
+            if not next_match:
+                self._state = "Kein nächstes Spiel"
+                self._attributes = {}
+                return
+
+            self._state = next_match.get("opponent", "Unbekannter Gegner")
             self._attributes = {
-                "match_date": next_match.get("match_date"),
-                "match_time": next_match.get("match_time"),
-                "location": next_match.get("location"),
-                "opponent_logo": normalize_logo_url(next_match.get("opponent_logo")),
-                "competition": next_match.get("competition"),
-                "home_or_away": next_match.get("home_or_away"),
+                "match_date": next_match.get("starts_at_formatted"),
+                "match_time": next_match.get("starts_at_local"),
+                "home_team": next_match.get("home_team"),
+                "away_team": next_match.get("away_team"),
+                "field": next_match.get("field"),
+                "starts_at": next_match.get("starts_at")
             }
 
         except Exception as e:

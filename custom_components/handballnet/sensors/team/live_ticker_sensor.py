@@ -24,7 +24,8 @@ class HandballLiveTickerSensor(HandballBaseSensor):
     def extra_state_attributes(self) -> dict[str, Any]:
         return self._attributes
 
-    async def async_update(self) -> None:
+    def update_state(self) -> None:
+        """Update the sensor state based on current matches"""
         now_ts = datetime.now(timezone.utc).timestamp()
         matches = self.hass.data.get(DOMAIN, {}).get(self._team_id, {}).get("matches", [])
         live_matches = [
@@ -41,3 +42,7 @@ class HandballLiveTickerSensor(HandballBaseSensor):
         else:
             self._state = "Kein Live-Spiel"
             self._attributes = {}
+
+    async def async_update(self) -> None:
+        """Async update method"""
+        self.update_state()

@@ -19,7 +19,10 @@ class HandballLiveTickerEventsSensor(HandballBaseSensor):
             CONF_UPDATE_INTERVAL_LIVE,
             entry.data.get(CONF_UPDATE_INTERVAL_LIVE, DEFAULT_UPDATE_INTERVAL_LIVE)
         )
-        self._attr_name = f"{team_id} Live Events"
+        
+        # Use team name from config if available, fallback to team_id
+        team_name = entry.data.get("team_name", team_id)
+        self._attr_name = f"{team_name} Live Events"
         self._attr_unique_id = f"handball_team_{team_id}_live_events"
         self._attr_icon = "mdi:alert-circle-outline"
 
@@ -33,21 +36,41 @@ class HandballLiveTickerEventsSensor(HandballBaseSensor):
 
     async def async_update(self) -> None:
         try:
-            live_events = await self._api.get_live_events(self._team_id)
-            if not live_events:
-                self._state = "Keine Live-Daten verfügbar"
+            # Check if there are any live matches
+            now_ts = datetime.now(timezone.utc).timestamp()
+            matches = self.hass.data.get(DOMAIN, {}).get(self._team_id, {}).get("matches", [])
+            live_matches = [
+                match for match in matches
+                if match.get("startsAt", 0) / 1000 <= now_ts <= match.get("startsAt", 0) / 1000 + 7200
+            ]
+            
+            if not live_matches:
+                self._state = "Keine Live-Spiele"
                 self._attributes = {}
                 return
 
-            self._state = f"{len(live_events)} Ereignisse"
-            self._attributes = {
-                "events": live_events,
-                "last_update": datetime.now(timezone.utc).isoformat()
-            }
+            # Get live ticker for the first live match
+            live_match = live_matches[0]
+            game_id = live_match.get("id")
+            if game_id:
+                live_ticker = await self._api.get_live_ticker(game_id)
+                if live_ticker:
+                    events = live_ticker.get("events", [])
+                    self._state = f"{len(events)} Ereignisse"
+                    self._attributes = {
+                        "events": events[:10],  # Last 10 events
+                        "total_events": len(events),
+                        "game_id": game_id,
+                        "last_update": datetime.now(timezone.utc).isoformat()
+                    }
+                else:
+                    self._state = "Keine Live-Daten verfügbar"
+                    self._attributes = {}
+            else:
+                self._state = "Keine Spiel-ID gefunden"
+                self._attributes = {}
+                
         except Exception as e:
             _LOGGER.error("Error updating live ticker events for %s: %s", self._team_id, e)
             self._state = "Fehler beim Laden"
             self._attributes = {"error": str(e)}
-
-    async def schedule_next_update(self):
-        async_call_later(self.hass, self._update_interval, self.async_update)
