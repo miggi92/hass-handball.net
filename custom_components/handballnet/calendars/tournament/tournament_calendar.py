@@ -44,20 +44,28 @@ class HandballTournamentCalendar(HandballBaseCalendar):
         # Get all team IDs from tournament
         team_ids = [row.get("team_id") for row in table_rows if row.get("team_id")]
         
-        # Collect all matches from tournament teams
-        all_matches = []
+        # Collect all matches from tournament teams with deduplication
+        unique_matches = {}  # Use dict to deduplicate by match ID
         for team_id in team_ids:
             try:
                 matches = await self._api.get_team_schedule(team_id)
                 if matches:
-                    all_matches.extend(matches)
+                    for match in matches:
+                        match_id = match.get("id")
+                        if match_id and match_id not in unique_matches:
+                            # Only add matches where both teams are in this tournament
+                            home_team_id = match.get("homeTeam", {}).get("id")
+                            away_team_id = match.get("awayTeam", {}).get("id")
+                            
+                            if home_team_id in team_ids and away_team_id in team_ids:
+                                unique_matches[match_id] = match
             except Exception as e:
                 _LOGGER.debug("Could not get matches for team %s: %s", team_id, e)
         
         events: list[CalendarEvent] = []
         now = datetime.now(timezone.utc)
         
-        for match in all_matches:
+        for match in unique_matches.values():
             ts = match.get("startsAt")
             if not isinstance(ts, int):
                 continue
