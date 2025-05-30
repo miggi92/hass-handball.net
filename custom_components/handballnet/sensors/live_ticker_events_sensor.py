@@ -16,8 +16,8 @@ class HandballLiveTickerEventsSensor(HandballBaseSensor):
         
         # Use team name from config if available, fallback to team_id
         team_name = entry.data.get("team_name", team_id)
-        self._attr_name = f"Live Ticker Events {team_name}"
-        self._attr_unique_id = f"handball_live_ticker_events_{team_id}"
+        self._attr_name = f"{team_name} Live Ticker Events"
+        self._attr_unique_id = f"handball_{team_id}_live_ticker_events"
         self._attr_icon = "mdi:television-play"
         self._attr_should_poll = False
         self._state = "Kein Live-Spiel"

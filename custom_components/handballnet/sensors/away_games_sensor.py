@@ -11,8 +11,8 @@ class HandballAuswaertsspielSensor(HandballBaseSensor):
         
         # Use team name from config if available, fallback to team_id
         team_name = entry.data.get("team_name", team_id)
-        self._attr_name = f"Auswärtsspiele {team_name}"
-        self._attr_unique_id = f"handball_away_games_{team_id}"
+        self._attr_name = f"{team_name} Auswärtsspiele"
+        self._attr_unique_id = f"handball_{team_name}_away_games"
         self._attr_icon = "mdi:bus-side"
 
     @property

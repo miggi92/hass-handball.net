@@ -17,8 +17,8 @@ class HandballNextMatchSensor(HandballBaseSensor):
         
         # Use team name from config if available, fallback to team_id
         team_name = entry.data.get("team_name", team_id)
-        self._attr_name = f"Nächstes Spiel {team_name}"
-        self._attr_unique_id = f"handball_next_match_{team_id}"
+        self._attr_name = f"{team_name} Nächstes Spiel"
+        self._attr_unique_id = f"handball_{team_id}_next_match"
         self._attr_icon = "mdi:calendar-clock"
 
     @property

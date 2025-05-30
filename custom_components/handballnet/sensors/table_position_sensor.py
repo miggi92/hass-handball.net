@@ -14,8 +14,8 @@ class HandballTablePositionSensor(HandballBaseSensor):
         
         # Use team name from config if available, fallback to team_id
         team_name = entry.data.get("team_name", team_id)
-        self._attr_name = f"Tabellenplatz {team_name}"
-        self._attr_unique_id = f"handball_table_position_{team_id}"
+        self._attr_name = f"{team_name} Tabellenplatz"
+        self._attr_unique_id = f"handball_{team_id}_table_position"
         self._attr_icon = "mdi:trophy"
 
     @property

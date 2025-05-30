@@ -11,8 +11,8 @@ class HandballHeimspielSensor(HandballBaseSensor):
         
         # Use team name from config if available, fallback to team_id
         team_name = entry.data.get("team_name", team_id)
-        self._attr_name = f"Heimspiele {team_name}"
-        self._attr_unique_id = f"handball_home_games_{team_id}"
+        self._attr_name = f"{team_name} Heimspiele"
+        self._attr_unique_id = f"handball_{team_id}_home_games"
         self._attr_icon = "mdi:home"
 
     @property

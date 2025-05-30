@@ -10,8 +10,8 @@ class HandballLiveTickerSensor(HandballBaseSensor):
         
         # Use team name from config if available, fallback to team_id
         team_name = entry.data.get("team_name", team_id)
-        self._attr_name = f"Liveticker {team_name}"
-        self._attr_unique_id = f"handball_live_ticker_{team_id}"
+        self._attr_name = f"{team_name} Liveticker"
+        self._attr_unique_id = f"handball_{team_id}_live_ticker"
         self._attr_icon = "mdi:clock-alert"
         self._attr_should_poll = False
         self._attr_native_value = "off"
