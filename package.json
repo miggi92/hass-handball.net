@@ -1,6 +1,6 @@
 {
     "name": "hass-handball.net",
-    "version": "0.0.6-beta.1",
+    "version": "0.0.6-beta.0",
     "packageManager": "pnpm@10.11.0",
     "repository": "miggi92/hass-handball.net",
     "scripts": {
