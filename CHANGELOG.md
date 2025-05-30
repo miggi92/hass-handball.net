@@ -7,6 +7,18 @@
 
 ### 🩹 Fixes
 
+- 🐛  fixed home assistant errors ([43bb2a2](https://github.com/miggi92/hass-handball.net/commit/43bb2a2))
+
+### ❤️ Contributors
+
+- Miguel ([@miggi92](https://github.com/miggi92))
+
+## v0.0.6-beta.0
+
+[compare changes](https://github.com/miggi92/hass-handball.net/compare/v0.0.6-beta.0...v0.0.6-beta.0)
+
+### 🩹 Fixes
+
 - 🐛  fixed error ([b69d271](https://github.com/miggi92/hass-handball.net/commit/b69d271))
 - 🐛  fixed team id error ([ac3ef29](https://github.com/miggi92/hass-handball.net/commit/ac3ef29))
 
