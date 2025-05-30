@@ -6,7 +6,7 @@ class HandballBaseSensor(BaseHandballSensor):
     
     def __init__(self, hass, entry, team_id, category=None):
         super().__init__(hass, entry, team_id, category)
-        self._team_id = team_id
+        self._team_id = team_id  # Explicitly set _team_id for team sensors
         
         # Create team-specific device info
         team_name = entry.data.get("team_name", team_id)
