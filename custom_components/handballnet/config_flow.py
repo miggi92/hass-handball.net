@@ -17,6 +17,12 @@ from .const import (
 class HandballNetConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     VERSION = 1
 
+    def __init__(self):
+        """Initialize the config flow."""
+        self._entity_type = None
+        self._update_interval = DEFAULT_UPDATE_INTERVAL
+        self._update_interval_live = DEFAULT_UPDATE_INTERVAL_LIVE
+
     @staticmethod
     def async_get_options_flow(config_entry):
         from .options_flow import HandballNetOptionsFlowHandler
@@ -55,101 +61,114 @@ class HandballNetConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             return False, None
 
     async def async_step_user(self, user_input=None):
+        """Handle the initial step."""
         errors = {}
+        
         if user_input is not None:
-            entity_type = user_input.get(CONF_ENTITY_TYPE)
+            self._entity_type = user_input[CONF_ENTITY_TYPE]
+            self._update_interval = user_input.get(CONF_UPDATE_INTERVAL, DEFAULT_UPDATE_INTERVAL)
+            self._update_interval_live = user_input.get(CONF_UPDATE_INTERVAL_LIVE, DEFAULT_UPDATE_INTERVAL_LIVE)
             
-            if entity_type == ENTITY_TYPE_TEAM:
-                return await self._handle_team_config(user_input, errors)
-            elif entity_type == ENTITY_TYPE_TOURNAMENT:
-                return await self._handle_tournament_config(user_input, errors)
+            if self._entity_type == ENTITY_TYPE_TEAM:
+                return await self.async_step_team()
+            elif self._entity_type == ENTITY_TYPE_TOURNAMENT:
+                return await self.async_step_tournament()
 
         data_schema = vol.Schema({
-            vol.Required(CONF_ENTITY_TYPE): vol.In([ENTITY_TYPE_TEAM, ENTITY_TYPE_TOURNAMENT]),
+            vol.Required(CONF_ENTITY_TYPE): vol.In({
+                ENTITY_TYPE_TEAM: "Team",
+                ENTITY_TYPE_TOURNAMENT: "Tournament"
+            }),
             vol.Optional(CONF_UPDATE_INTERVAL, default=DEFAULT_UPDATE_INTERVAL): int,
             vol.Optional(CONF_UPDATE_INTERVAL_LIVE, default=DEFAULT_UPDATE_INTERVAL_LIVE): int
         })
 
         return self.async_show_form(
-            step_id="user", data_schema=data_schema, errors=errors
+            step_id="user", 
+            data_schema=data_schema, 
+            errors=errors
         )
 
-    async def _handle_team_config(self, user_input, errors):
-        """Handle team configuration"""
-        if CONF_TEAM_ID not in user_input:
-            return await self.async_step_team(user_input)
+    async def async_step_team(self, user_input=None):
+        """Handle team configuration step."""
+        errors = {}
         
-        team_id = user_input.get(CONF_TEAM_ID)
-        if not team_id:
-            errors[CONF_TEAM_ID] = "invalid_team_id"
-        else:
-            # Check if already configured
-            for entry in self._async_current_entries():
-                if (entry.data.get(CONF_TEAM_ID) == team_id and 
-                    entry.data.get(CONF_ENTITY_TYPE) == ENTITY_TYPE_TEAM):
-                    errors[CONF_TEAM_ID] = "already_configured"
-                    break
+        if user_input is not None:
+            team_id = user_input.get(CONF_TEAM_ID)
+            if not team_id:
+                errors[CONF_TEAM_ID] = "invalid_team_id"
+            else:
+                # Check if already configured
+                for entry in self._async_current_entries():
+                    if (entry.data.get(CONF_TEAM_ID) == team_id and 
+                        entry.data.get(CONF_ENTITY_TYPE) == ENTITY_TYPE_TEAM):
+                        errors[CONF_TEAM_ID] = "already_configured"
+                        break
 
-            if not errors:
-                is_valid, team_name = await self._validate_team_id(team_id)
-                if not is_valid:
-                    errors[CONF_TEAM_ID] = "team_not_found"
-                else:
-                    user_input["team_name"] = team_name
-                    title = f"Team: {team_name}" if team_name else f"Team {team_id}"
-                    return self.async_create_entry(title=title, data=user_input)
-
-        return await self.async_step_team(user_input, errors)
-
-    async def _handle_tournament_config(self, user_input, errors):
-        """Handle tournament configuration"""
-        if CONF_TOURNAMENT_ID not in user_input:
-            return await self.async_step_tournament(user_input)
-        
-        tournament_id = user_input.get(CONF_TOURNAMENT_ID)
-        if not tournament_id:
-            errors[CONF_TOURNAMENT_ID] = "invalid_tournament_id"
-        else:
-            # Check if already configured
-            for entry in self._async_current_entries():
-                if (entry.data.get(CONF_TOURNAMENT_ID) == tournament_id and 
-                    entry.data.get(CONF_ENTITY_TYPE) == ENTITY_TYPE_TOURNAMENT):
-                    errors[CONF_TOURNAMENT_ID] = "already_configured"
-                    break
-
-            if not errors:
-                is_valid, tournament_name = await self._validate_tournament_id(tournament_id)
-                if not is_valid:
-                    errors[CONF_TOURNAMENT_ID] = "tournament_not_found"
-                else:
-                    user_input["tournament_name"] = tournament_name
-                    title = f"Tournament: {tournament_name}" if tournament_name else f"Tournament {tournament_id}"
-                    return self.async_create_entry(title=title, data=user_input)
-
-        return await self.async_step_tournament(user_input, errors)
-
-    async def async_step_team(self, user_input=None, errors=None):
-        """Team configuration step"""
-        if errors is None:
-            errors = {}
+                if not errors:
+                    is_valid, team_name = await self._validate_team_id(team_id)
+                    if not is_valid:
+                        errors[CONF_TEAM_ID] = "team_not_found"
+                    else:
+                        # Create the final data dictionary
+                        data = {
+                            CONF_ENTITY_TYPE: ENTITY_TYPE_TEAM,
+                            CONF_TEAM_ID: team_id,
+                            "team_name": team_name,
+                            CONF_UPDATE_INTERVAL: self._update_interval,
+                            CONF_UPDATE_INTERVAL_LIVE: self._update_interval_live
+                        }
+                        title = f"Team: {team_name}" if team_name else f"Team {team_id}"
+                        return self.async_create_entry(title=title, data=data)
 
         data_schema = vol.Schema({
             vol.Required(CONF_TEAM_ID): str,
         })
 
         return self.async_show_form(
-            step_id="team", data_schema=data_schema, errors=errors
+            step_id="team", 
+            data_schema=data_schema, 
+            errors=errors
         )
 
-    async def async_step_tournament(self, user_input=None, errors=None):
-        """Tournament configuration step"""
-        if errors is None:
-            errors = {}
+    async def async_step_tournament(self, user_input=None):
+        """Handle tournament configuration step."""
+        errors = {}
+        
+        if user_input is not None:
+            tournament_id = user_input.get(CONF_TOURNAMENT_ID)
+            if not tournament_id:
+                errors[CONF_TOURNAMENT_ID] = "invalid_tournament_id"
+            else:
+                # Check if already configured
+                for entry in self._async_current_entries():
+                    if (entry.data.get(CONF_TOURNAMENT_ID) == tournament_id and 
+                        entry.data.get(CONF_ENTITY_TYPE) == ENTITY_TYPE_TOURNAMENT):
+                        errors[CONF_TOURNAMENT_ID] = "already_configured"
+                        break
+
+                if not errors:
+                    is_valid, tournament_name = await self._validate_tournament_id(tournament_id)
+                    if not is_valid:
+                        errors[CONF_TOURNAMENT_ID] = "tournament_not_found"
+                    else:
+                        # Create the final data dictionary
+                        data = {
+                            CONF_ENTITY_TYPE: ENTITY_TYPE_TOURNAMENT,
+                            CONF_TOURNAMENT_ID: tournament_id,
+                            "tournament_name": tournament_name,
+                            CONF_UPDATE_INTERVAL: self._update_interval,
+                            CONF_UPDATE_INTERVAL_LIVE: self._update_interval_live
+                        }
+                        title = f"Tournament: {tournament_name}" if tournament_name else f"Tournament {tournament_id}"
+                        return self.async_create_entry(title=title, data=data)
 
         data_schema = vol.Schema({
             vol.Required(CONF_TOURNAMENT_ID): str,
         })
 
         return self.async_show_form(
-            step_id="tournament", data_schema=data_schema, errors=errors
+            step_id="tournament", 
+            data_schema=data_schema, 
+            errors=errors
         )

@@ -2,28 +2,45 @@
   "config": {
     "step": {
       "user": {
+        "title": "Add Handball.net Entity",
+        "description": "Choose whether to add a team or tournament",
+        "data": {
+          "entity_type": "Entity Type",
+          "update_interval": "Update interval (seconds)",
+          "update_interval_live": "Interval during live games (seconds)"
+        }
+      },
+      "team": {
         "title": "Add Handball.net Team",
         "description": "Please enter the team ID. You can find it in the URL: handball.net/mannschaften/TEAM-ID",
         "data": {
-          "team_id": "Team ID",
-          "update_interval": "Update interval (seconds)",
-          "update_interval_live": "Interval during live games (seconds)"
+          "team_id": "Team ID"
+        }
+      },
+      "tournament": {
+        "title": "Add Handball.net Tournament",
+        "description": "Please enter the tournament ID. You can find it in the URL: handball.net/ligen/TOURNAMENT-ID",
+        "data": {
+          "tournament_id": "Tournament ID"
         }
       }
     },
     "error": {
       "invalid_team_id": "Invalid team ID",
+      "invalid_tournament_id": "Invalid tournament ID",
       "team_not_found": "Team was not found. Please check the team ID.",
-      "cannot_connect": "Connection to handball.net failed"
+      "tournament_not_found": "Tournament was not found. Please check the tournament ID.",
+      "cannot_connect": "Connection to handball.net failed",
+      "already_configured": "This entity is already configured."
     },
     "abort": {
-      "already_configured": "This team is already configured."
+      "already_configured": "This entity is already configured."
     }
   },
   "options": {
     "step": {
       "init": {
-        "title": "Options for Handball Team",
+        "title": "Options for Handball Entity",
         "description": "Adjust the update intervals",
         "data": {
           "update_interval": "Update interval (seconds)",

@@ -2,28 +2,45 @@
   "config": {
     "step": {
       "user": {
+        "title": "Handball.net Entität hinzufügen",
+        "description": "Wählen Sie, ob Sie ein Team oder Turnier hinzufügen möchten",
+        "data": {
+          "entity_type": "Entitätstyp",
+          "update_interval": "Aktualisierungsintervall (Sekunden)",
+          "update_interval_live": "Intervall während Spielen (Sekunden)"
+        }
+      },
+      "team": {
         "title": "Handball.net Team hinzufügen",
         "description": "Bitte gib die Team-ID ein. Du findest sie in der URL: handball.net/mannschaften/TEAM-ID",
         "data": {
-          "team_id": "Team-ID",
-          "update_interval": "Aktualisierungsintervall (Sekunden)",
-          "update_interval_live": "Intervall während Spielen (Sekunden)"
+          "team_id": "Team-ID"
+        }
+      },
+      "tournament": {
+        "title": "Handball.net Turnier hinzufügen",
+        "description": "Bitte gib die Turnier-ID ein. Du findest sie in der URL: handball.net/ligen/TURNIER-ID",
+        "data": {
+          "tournament_id": "Turnier-ID"
         }
       }
     },
     "error": {
       "invalid_team_id": "Ungültige Team-ID",
+      "invalid_tournament_id": "Ungültige Turnier-ID",
       "team_not_found": "Team wurde nicht gefunden. Überprüfe die Team-ID.",
-      "cannot_connect": "Verbindung zu handball.net fehlgeschlagen"
+      "tournament_not_found": "Turnier wurde nicht gefunden. Überprüfe die Turnier-ID.",
+      "cannot_connect": "Verbindung zu handball.net fehlgeschlagen",
+      "already_configured": "Diese Entität ist bereits konfiguriert."
     },
     "abort": {
-      "already_configured": "Dieses Team ist bereits konfiguriert."
+      "already_configured": "Diese Entität ist bereits konfiguriert."
     }
   },
   "options": {
     "step": {
       "init": {
-        "title": "Optionen für Handball-Team",
+        "title": "Optionen für Handball-Entität",
         "description": "Passe die Aktualisierungsintervalle an",
         "data": {
           "update_interval": "Aktualisierungsintervall (Sekunden)",
