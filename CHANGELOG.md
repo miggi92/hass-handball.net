@@ -1,6 +1,26 @@
 # Changelog
 
 
+## v0.0.6-3.beta
+
+[compare changes](https://github.com/miggi92/hass-handball.net/compare/v0.0.6-2.beta...v0.0.6-3.beta)
+
+### 🚀 Enhancements
+
+- ✨  move team name to state ([edfe9b7](https://github.com/miggi92/hass-handball.net/commit/edfe9b7))
+
+### 🩹 Fixes
+
+- 🐛  fixed duplicate events in calendar ([54dd95a](https://github.com/miggi92/hass-handball.net/commit/54dd95a))
+
+### 💅 Refactors
+
+- 🔥  removed "liga" from device names ([e60b628](https://github.com/miggi92/hass-handball.net/commit/e60b628))
+
+### ❤️ Contributors
+
+- Miguel ([@miggi92](https://github.com/miggi92))
+
 ## v0.0.6-2.beta
 
 [compare changes](https://github.com/miggi92/hass-handball.net/compare/0.0.6-1.beta...v0.0.6-2.beta)
