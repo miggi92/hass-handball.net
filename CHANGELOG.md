@@ -1,6 +1,18 @@
 # Changelog
 
 
+## v0.0.4-2
+
+[compare changes](https://github.com/miggi92/hass-handball.net/compare/v0.0.4-1...v0.0.4-2)
+
+### 🩹 Fixes
+
+- 🐛  fixed sensor not working ([9bd6fd8](https://github.com/miggi92/hass-handball.net/commit/9bd6fd8))
+
+### ❤️ Contributors
+
+- Miguel ([@miggi92](https://github.com/miggi92))
+
 ## v0.0.4-1
 
 [compare changes](https://github.com/miggi92/hass-handball.net/compare/v0.0.4-0...v0.0.4-1)
