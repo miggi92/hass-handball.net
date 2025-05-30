@@ -99,22 +99,48 @@ class HandballLiveTickerEventsSensor(HandballBaseSensor):
             else:
                 self._state = f"{home_team} vs {away_team}"
 
-            # Get latest events (last 10)
+            # Get latest events (last 10) with formatted timestamps
             latest_events = []
             for event in events[:10]:  # First 10 events (newest first)
+                timestamp = event.get("timestamp", 0)
                 event_data = {
                     "type": event.get("type", "Unknown"),
                     "time": event.get("time", ""),
                     "message": event.get("message", ""),
                     "score": event.get("score", ""),
                     "team": event.get("team", ""),
-                    "timestamp": event.get("timestamp", 0)
+                    "timestamp": timestamp
                 }
+                
+                # Add formatted timestamps if timestamp exists
+                if timestamp and isinstance(timestamp, (int, float)) and timestamp > 0:
+                    try:
+                        event_time = datetime.fromtimestamp(timestamp / 1000, tz=timezone.utc)
+                        event_data.update({
+                            "timestamp_formatted": event_time.strftime("%Y-%m-%d %H:%M:%S UTC"),
+                            "timestamp_local": event_time.astimezone().strftime("%Y-%m-%d %H:%M:%S")
+                        })
+                    except Exception:
+                        pass
+                
                 latest_events.append(event_data)
 
             # Get half-time scores
             home_goals_half = summary.get("homeGoalsHalf")
             away_goals_half = summary.get("awayGoalsHalf")
+            
+            # Format game start time
+            starts_at = summary.get("startsAt")
+            starts_at_formatted = None
+            starts_at_local = None
+            
+            if starts_at and isinstance(starts_at, (int, float)) and starts_at > 0:
+                try:
+                    start_time = datetime.fromtimestamp(starts_at / 1000, tz=timezone.utc)
+                    starts_at_formatted = start_time.strftime("%Y-%m-%d %H:%M:%S UTC")
+                    starts_at_local = start_time.astimezone().strftime("%Y-%m-%d %H:%M:%S")
+                except Exception:
+                    pass
 
             self._attributes = {
                 "game_id": game_id,
@@ -126,7 +152,9 @@ class HandballLiveTickerEventsSensor(HandballBaseSensor):
                 "home_goals_half": home_goals_half,
                 "away_goals_half": away_goals_half,
                 "field": summary.get("field", {}).get("name", ""),
-                "starts_at": summary.get("startsAt"),
+                "starts_at": starts_at,
+                "starts_at_formatted": starts_at_formatted,
+                "starts_at_local": starts_at_local,
                 "latest_events": latest_events,
                 "total_events": len(events),
                 "last_updated": datetime.now().isoformat(),
