@@ -1,25 +1,20 @@
-from homeassistant.helpers.entity import Entity
+from ..base_sensor import HandballBaseSensor as BaseHandballSensor
 from ...const import DOMAIN
 
-class HandballBaseSensor(Entity):
-    """Base class for handball sensors"""
+class HandballBaseSensor(BaseHandballSensor):
+    """Base class for handball team sensors"""
     
     def __init__(self, hass, entry, team_id, category=None):
-        self.hass = hass
+        super().__init__(hass, entry, team_id, category)
         self._team_id = team_id
-        self._category = category
-        self._attr_config_entry_id = entry.entry_id
-        self._attr_device_info = {
-            "identifiers": {(DOMAIN, self._team_id)},
-            "name": f"{self._team_id}",
-            "manufacturer": "handball.net",
-            "model": "Handball Team",
-            "entry_type": "service"
-        }
         
-        # Setze entity_category für bessere Gruppierung
-        if category:
-            self._attr_entity_category = category
+        # Create team-specific device info
+        team_name = entry.data.get("team_name", team_id)
+        self._attr_device_info = self._create_device_info(
+            identifiers={(DOMAIN, self._team_id)},
+            name=f"{team_name}",
+            model="Handball Team"
+        )
 
     def update_device_name(self, team_name: str) -> None:
         """Update device name with actual team name"""

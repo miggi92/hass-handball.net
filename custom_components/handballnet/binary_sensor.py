@@ -2,7 +2,7 @@ from homeassistant.components.binary_sensor import BinarySensorEntity
 from homeassistant.core import HomeAssistant
 from datetime import datetime, timezone
 from .const import DOMAIN, CONF_ENTITY_TYPE, ENTITY_TYPE_TEAM
-from .sensors.base_sensor import HandballBaseSensor
+from .sensors.team.base_sensor import HandballBaseSensor
 
 async def async_setup_entry(hass: HomeAssistant, entry, async_add_entities):
     # Only create binary sensor for teams, not tournaments
