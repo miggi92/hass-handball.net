@@ -3,61 +3,16 @@
 
 ## v0.0.4
 
-[compare changes](https://github.com/miggi92/hass-handball.net/compare/v0.0.4-3...v0.0.4)
+[compare changes](https://github.com/miggi92/hass-handball.net/compare/v0.0.3...v0.0.4)
 
 ### 🚀 Enhancements
 
 - ✨  changed entity names ([36fb042](https://github.com/miggi92/hass-handball.net/commit/36fb042))
-
-### ❤️ Contributors
-
-- Miguel ([@miggi92](https://github.com/miggi92))
-
-## v0.0.4-3
-
-[compare changes](https://github.com/miggi92/hass-handball.net/compare/v0.0.4-2...v0.0.4-3)
-
-### 🚀 Enhancements
-
 - ✨  added icon ([61ace9d](https://github.com/miggi92/hass-handball.net/commit/61ace9d))
 - ✨  update entity names ([e2f8ae1](https://github.com/miggi92/hass-handball.net/commit/e2f8ae1))
-
-### ❤️ Contributors
-
-- Miguel ([@miggi92](https://github.com/miggi92))
-
-## v0.0.4-2
-
-[compare changes](https://github.com/miggi92/hass-handball.net/compare/v0.0.4-1...v0.0.4-2)
-
-### 🩹 Fixes
-
-- 🐛  fixed sensor not working ([9bd6fd8](https://github.com/miggi92/hass-handball.net/commit/9bd6fd8))
-
-### ❤️ Contributors
-
-- Miguel ([@miggi92](https://github.com/miggi92))
-
-## v0.0.4-1
-
-[compare changes](https://github.com/miggi92/hass-handball.net/compare/v0.0.4-0...v0.0.4-1)
-
-### 🚀 Enhancements
-
 - 🔥  show picture only on all games sensor ([2d81ab9](https://github.com/miggi92/hass-handball.net/commit/2d81ab9))
 - ✨  changed games sensors ([c7e80a3](https://github.com/miggi92/hass-handball.net/commit/c7e80a3))
 - ✨  added statistics ([9c6e377](https://github.com/miggi92/hass-handball.net/commit/9c6e377))
-
-### ❤️ Contributors
-
-- Miguel ([@miggi92](https://github.com/miggi92))
-
-## v0.0.4-0
-
-[compare changes](https://github.com/miggi92/hass-handball.net/compare/v0.0.3...v0.0.4-0)
-
-### 🚀 Enhancements
-
 - ✨  added formatted timestamps ([26d49ac](https://github.com/miggi92/hass-handball.net/commit/26d49ac))
 - ✨  added team logo ([7ad1cf2](https://github.com/miggi92/hass-handball.net/commit/7ad1cf2))
 - ✨  validate team id ([ae3e522](https://github.com/miggi92/hass-handball.net/commit/ae3e522))
@@ -65,6 +20,7 @@
 
 ### 🩹 Fixes
 
+- 🐛  fixed sensor not working ([9bd6fd8](https://github.com/miggi92/hass-handball.net/commit/9bd6fd8))
 - 🐛  liveticker not starting at game start ([869968e](https://github.com/miggi92/hass-handball.net/commit/869968e))
 
 ### 💅 Refactors
@@ -83,6 +39,7 @@
 ### ❤️ Contributors
 
 - Miguel ([@miggi92](https://github.com/miggi92))
+
 
 ## v0.0.3
 
