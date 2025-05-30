@@ -3,14 +3,18 @@
     "step": {
       "user": {
         "title": "Handball.net Team hinzufügen",
-        "description": "Bitte gib die Team-ID ein.",
+        "description": "Bitte gib die Team-ID ein. Du findest sie in der URL: handball.net/mannschaften/TEAM-ID",
         "data": {
-          "team_id": "Team-ID"
+          "team_id": "Team-ID",
+          "update_interval": "Aktualisierungsintervall (Sekunden)",
+          "update_interval_live": "Intervall während Spielen (Sekunden)"
         }
       }
     },
     "error": {
-      "invalid_team_id": "Ungültige Team-ID"
+      "invalid_team_id": "Ungültige Team-ID",
+      "team_not_found": "Team wurde nicht gefunden. Überprüfe die Team-ID.",
+      "cannot_connect": "Verbindung zu handball.net fehlgeschlagen"
     },
     "abort": {
       "already_configured": "Dieses Team ist bereits konfiguriert."
@@ -20,6 +24,7 @@
     "step": {
       "init": {
         "title": "Optionen für Handball-Team",
+        "description": "Passe die Aktualisierungsintervalle an",
         "data": {
           "update_interval": "Aktualisierungsintervall (Sekunden)",
           "update_interval_live": "Intervall während Spielen (Sekunden)"
@@ -28,4 +33,3 @@
     }
   }
 }
-  

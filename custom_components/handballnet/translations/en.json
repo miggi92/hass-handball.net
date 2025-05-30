@@ -1,20 +1,35 @@
 {
-    "config": {
-      "step": {
-        "user": {
-          "title": "Add Handball.net Team",
-          "description": "Please enter the team ID.",
-          "data": {
-            "team_id": "Team ID"
-          }
+  "config": {
+    "step": {
+      "user": {
+        "title": "Add Handball.net Team",
+        "description": "Please enter the team ID. You can find it in the URL: handball.net/mannschaften/TEAM-ID",
+        "data": {
+          "team_id": "Team ID",
+          "update_interval": "Update interval (seconds)",
+          "update_interval_live": "Interval during live games (seconds)"
         }
-      },
-      "error": {
-        "invalid_team_id": "Invalid team ID"
-      },
-      "abort": {
-        "already_configured": "This team is already configured."
+      }
+    },
+    "error": {
+      "invalid_team_id": "Invalid team ID",
+      "team_not_found": "Team was not found. Please check the team ID.",
+      "cannot_connect": "Connection to handball.net failed"
+    },
+    "abort": {
+      "already_configured": "This team is already configured."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Options for Handball Team",
+        "description": "Adjust the update intervals",
+        "data": {
+          "update_interval": "Update interval (seconds)",
+          "update_interval_live": "Interval during live games (seconds)"
+        }
       }
     }
   }
-  
+}
