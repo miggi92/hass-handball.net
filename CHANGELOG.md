@@ -3,23 +3,12 @@
 
 ## v0.0.6-beta.0
 
-[compare changes](https://github.com/miggi92/hass-handball.net/compare/v0.0.6-1...v0.0.6-beta.0)
-
-### 🚀 Enhancements
-
-- ✨  added release scripts ([c100ab1](https://github.com/miggi92/hass-handball.net/commit/c100ab1))
+[compare changes](https://github.com/miggi92/hass-handball.net/compare/v0.0.6-beta.0...v0.0.6-beta.0)
 
 ### 🩹 Fixes
 
-- 🐛  fixed imports ([5daf6f7](https://github.com/miggi92/hass-handball.net/commit/5daf6f7))
-
-### 📖 Documentation
-
-- 📝  changed url path of the images in the readme file ([7af6038](https://github.com/miggi92/hass-handball.net/commit/7af6038))
-
-### 🏡 Chore
-
-- Updated lockfile ([87da0b0](https://github.com/miggi92/hass-handball.net/commit/87da0b0))
+- 🐛  fixed error ([b69d271](https://github.com/miggi92/hass-handball.net/commit/b69d271))
+- 🐛  fixed team id error ([ac3ef29](https://github.com/miggi92/hass-handball.net/commit/ac3ef29))
 
 ### ❤️ Contributors
 
