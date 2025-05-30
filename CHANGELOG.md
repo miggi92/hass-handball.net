@@ -1,6 +1,28 @@
 # Changelog
 
 
+## v0.0.6-beta.
+
+[compare changes](https://github.com/miggi92/hass-handball.net/compare/v0.0.6-beta.0...v0.0.6-beta.)
+
+### 🩹 Fixes
+
+- 🐛  fixed home assistant errors ([43bb2a2](https://github.com/miggi92/hass-handball.net/commit/43bb2a2))
+- 🐛  fix errors ([b928eb6](https://github.com/miggi92/hass-handball.net/commit/b928eb6))
+- 🐛  fixed import ([e467ab5](https://github.com/miggi92/hass-handball.net/commit/e467ab5))
+
+### 📖 Documentation
+
+- 📝  updated changelog ([fd21232](https://github.com/miggi92/hass-handball.net/commit/fd21232))
+
+### 🏡 Chore
+
+- **release:** V0.0.6-beta.0 ([7b3537a](https://github.com/miggi92/hass-handball.net/commit/7b3537a))
+
+### ❤️ Contributors
+
+- Miguel ([@miggi92](https://github.com/miggi92))
+
 ## v0.0.6-beta.0
 
 [compare changes](https://github.com/miggi92/hass-handball.net/compare/v0.0.6-1...v0.0.6-beta.0)
