@@ -5,7 +5,7 @@
     "repository": "miggi92/hass-handball.net",
     "scripts": {
         "release": "changelogen --release",
-        "release:beta": "changelogen --release --versionSuffix beta.0"
+        "release:beta": "changelogen --release --prerelease --versionSuffix beta"
     },
     "devDependencies": {
         "changelogen": "^0.6.1"
