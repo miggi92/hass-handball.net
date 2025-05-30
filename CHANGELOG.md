@@ -1,6 +1,18 @@
 # Changelog
 
 
+## v0.0.5
+
+[compare changes](https://github.com/miggi92/hass-handball.net/compare/v0.0.4...v0.0.5)
+
+### 🩹 Fixes
+
+- 🐛  Fixed naming ([de27817](https://github.com/miggi92/hass-handball.net/commit/de27817))
+
+### ❤️ Contributors
+
+- Miguel ([@miggi92](https://github.com/miggi92))
+
 ## v0.0.4
 
 [compare changes](https://github.com/miggi92/hass-handball.net/compare/v0.0.3...v0.0.4)
