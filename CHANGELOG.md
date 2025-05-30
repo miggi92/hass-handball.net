@@ -1,6 +1,38 @@
 # Changelog
 
 
+## v0.0.4-0
+
+[compare changes](https://github.com/miggi92/hass-handball.net/compare/v0.0.3...v0.0.4-0)
+
+### 🚀 Enhancements
+
+- ✨  added formatted timestamps ([26d49ac](https://github.com/miggi92/hass-handball.net/commit/26d49ac))
+- ✨  added team logo ([7ad1cf2](https://github.com/miggi92/hass-handball.net/commit/7ad1cf2))
+- ✨  validate team id ([ae3e522](https://github.com/miggi92/hass-handball.net/commit/ae3e522))
+- ✨  added health sensor ([4abbe6d](https://github.com/miggi92/hass-handball.net/commit/4abbe6d))
+
+### 🩹 Fixes
+
+- 🐛  liveticker not starting at game start ([869968e](https://github.com/miggi92/hass-handball.net/commit/869968e))
+
+### 💅 Refactors
+
+- ♻️  refactor code ([e5664fa](https://github.com/miggi92/hass-handball.net/commit/e5664fa))
+
+### 📖 Documentation
+
+- 📝  resized pictures ([d4ec9fe](https://github.com/miggi92/hass-handball.net/commit/d4ec9fe))
+
+### 🏡 Chore
+
+- 🍱  updated integration example picture ([cadea3e](https://github.com/miggi92/hass-handball.net/commit/cadea3e))
+- 🌐  updated translations ([c452271](https://github.com/miggi92/hass-handball.net/commit/c452271))
+
+### ❤️ Contributors
+
+- Miguel ([@miggi92](https://github.com/miggi92))
+
 ## v0.0.3
 
 [compare changes](https://github.com/miggi92/hass-handball.net/compare/v0.0.2...v0.0.3)
