@@ -1,5 +1,5 @@
 from homeassistant.helpers.entity import Entity
-from ..const import DOMAIN
+from ...const import DOMAIN
 
 class HandballBaseSensor(Entity):
     """Base class for handball sensors"""
@@ -25,4 +25,3 @@ class HandballBaseSensor(Entity):
         """Update device name with actual team name"""
         if team_name and team_name != "":
             self._attr_device_info["name"] = f"{team_name}"
-            

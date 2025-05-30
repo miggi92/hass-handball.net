@@ -3,6 +3,7 @@ from .base_sensor import HandballBaseSensor
 from ..const import DOMAIN
 from ..api import HandballNetAPI
 from ..utils import normalize_logo_url
+from .tournament_team_position_sensor import HandballTournamentTeamPositionSensor
 import logging
 
 _LOGGER = logging.getLogger(__name__)
@@ -164,7 +165,6 @@ class HandballTournamentTableSensor(HandballBaseSensor):
         sensors = self.hass.data.get(DOMAIN, {}).get(tournament_key, {}).get("sensors", [])
         
         # Find team position sensors
-        from .tournament_team_position_sensor import HandballTournamentTeamPositionSensor
         team_position_sensors = [s for s in sensors if isinstance(s, HandballTournamentTeamPositionSensor)]
         
         # Update existing sensors with new data

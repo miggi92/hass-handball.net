@@ -25,10 +25,10 @@ from .sensors import (
     HandballLiveTickerSensor,
     HandballLiveTickerEventsSensor,
     HandballTablePositionSensor,
-    HandballHealthSensor
+    HandballHealthSensor,
+    HandballTournamentTableSensor,
+    HandballTournamentTeamPositionSensor
 )
-from .sensors.tournament_table_sensor import HandballTournamentTableSensor
-from .sensors.tournament_team_position_sensor import HandballTournamentTeamPositionSensor
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -171,7 +171,6 @@ async def _create_team_position_sensors_if_needed(hass: HomeAssistant, entry, to
     existing_sensors = hass.data.get(DOMAIN, {}).get(tournament_key, {}).get("sensors", [])
     
     # Check if we already have team position sensors
-    from .sensors.tournament_team_position_sensor import HandballTournamentTeamPositionSensor
     existing_position_sensors = [s for s in existing_sensors if isinstance(s, HandballTournamentTeamPositionSensor)]
     
     # If we already have position sensors, don't create new ones

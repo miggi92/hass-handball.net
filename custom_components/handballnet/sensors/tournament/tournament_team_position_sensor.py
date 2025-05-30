@@ -1,7 +1,7 @@
 from typing import Any, Dict
 from .base_sensor import HandballBaseSensor
-from ..const import DOMAIN
-from ..utils import normalize_logo_url
+from ...const import DOMAIN
+from ...utils import normalize_logo_url
 import logging
 
 _LOGGER = logging.getLogger(__name__)
