@@ -1,5 +1,6 @@
 from ..base_sensor import HandballBaseSensor as BaseHandballSensor
 from ...const import DOMAIN
+from ...utils import normalize_logo_url
 
 class HandballBaseSensor(BaseHandballSensor):
     """Base class for handball team sensors"""
@@ -20,3 +21,8 @@ class HandballBaseSensor(BaseHandballSensor):
         """Update device name with actual team name"""
         if team_name and team_name != "":
             self._attr_device_info["name"] = f"{team_name}"
+
+    def update_entity_picture(self, logo_url: str) -> None:
+        """Update entity picture with logo URL"""
+        if logo_url:
+            self._attr_entity_picture = normalize_logo_url(logo_url)

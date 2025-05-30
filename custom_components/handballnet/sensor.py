@@ -102,6 +102,17 @@ async def _setup_team_sensors(hass: HomeAssistant, entry, async_add_entities):
         except Exception as e:
             _LOGGER.error("Error updating health sensor: %s", e)
             
+        # Update home and away sensors which read from stored data
+        try:
+            await heim_sensor.async_update()
+        except Exception as e:
+            _LOGGER.error("Error updating home games sensor: %s", e)
+            
+        try:
+            await aus_sensor.async_update()
+        except Exception as e:
+            _LOGGER.error("Error updating away games sensor: %s", e)
+            
         all_sensor.async_write_ha_state()
         heim_sensor.async_write_ha_state()
         aus_sensor.async_write_ha_state()

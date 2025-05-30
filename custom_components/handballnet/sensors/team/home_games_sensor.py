@@ -2,7 +2,7 @@ from datetime import datetime, timezone
 from typing import Any, Optional
 from .base_sensor import HandballBaseSensor
 from ...const import DOMAIN
-from ...utils import format_datetime_for_display
+from ...utils import format_datetime_for_display, normalize_logo_url
 
 class HandballHeimspielSensor(HandballBaseSensor):
     def __init__(self, hass, entry, team_id):
@@ -25,6 +25,11 @@ class HandballHeimspielSensor(HandballBaseSensor):
     def extra_state_attributes(self) -> dict[str, Any]:
         return self._attributes
 
+    def update_entity_picture(self, logo_url: str) -> None:
+        """Update entity picture with logo URL"""
+        if logo_url:
+            self._attr_entity_picture = normalize_logo_url(logo_url)
+
     async def async_update(self) -> None:
         matches = self.hass.data.get(DOMAIN, {}).get(self._team_id, {}).get("matches", [])
         now_ts = datetime.now(timezone.utc).timestamp()
@@ -40,12 +45,18 @@ class HandballHeimspielSensor(HandballBaseSensor):
             starts_at = next_home_game.get("startsAt")
             time_formats = format_datetime_for_display(starts_at)
             
-            # Determine opponent team
+            # Determine opponent team (for home match, opponent is away team)
             home_team = next_home_game.get("homeTeam", {}).get("name", "")
             away_team = next_home_game.get("awayTeam", {}).get("name", "")
-            opponent = away_team if home_team else home_team  # If this is a home match, opponent is away team
+            opponent = away_team  # For home match, opponent is away team
             
-            self._state = time_formats["formatted"]
+            # Set opponent logo as entity picture
+            opponent_logo = next_home_game.get("awayTeam", {}).get("logo")
+            if opponent_logo:
+                self.update_entity_picture(opponent_logo)
+            
+            # Set opponent name as state
+            self._state = f"vs {opponent}" if opponent else time_formats["formatted"]
             self._attributes = {
                 "opponent": opponent,
                 "home_team": home_team,
@@ -53,7 +64,11 @@ class HandballHeimspielSensor(HandballBaseSensor):
                 "location": next_home_game.get("field", {}).get("name", ""),
                 "startsAt": starts_at,
                 "starts_at_local": time_formats["local"],
+                "starts_at_formatted": time_formats["formatted"],
+                "match_date": time_formats["formatted"]
             }
         else:
             self._state = "Kein Heimspiel geplant"
             self._attributes = {}
+            # Clear entity picture when no home game
+            self._attr_entity_picture = None
