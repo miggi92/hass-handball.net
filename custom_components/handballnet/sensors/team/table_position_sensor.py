@@ -30,31 +30,27 @@ class HandballTablePositionSensor(HandballBaseSensor):
 
     async def async_update(self) -> None:
         try:
-            # First get team info to find the tournament ID
-            team_info = await self._api.get_team_info(self._team_id)
-            if not team_info:
-                _LOGGER.debug("Could not get team info for %s", self._team_id)
-                self._state = "Nicht verfügbar"
-                self._attributes = {"info": "Team-Informationen nicht verfügbar"}
-                return
+            # Try multiple approaches to get tournament ID
+            tournament_id = await self._find_tournament_id()
             
-            # Try to extract tournament ID from team info
-            tournament_id = team_info.get("tournament", {}).get("id")
             if not tournament_id:
-                _LOGGER.debug("No tournament ID found for team %s - team might not be in an active league", self._team_id)
-                self._state = "Nicht in Liga"
-                self._attributes = {"info": "Team ist derzeit nicht in einer aktiven Liga"}
+                self._state = "Kein Turnier gefunden"
+                self._attributes = {"info": "Team ist derzeit nicht in einer aktiven Liga oder Turnier-ID konnte nicht ermittelt werden"}
                 return
             
             # Get table position using the tournament ID
             table_position = await self._api.get_team_table_position(self._team_id, tournament_id)
             if not table_position:
-                self._state = "Nicht verfügbar"
-                self._attributes = {"info": "Tabellenposition konnte nicht ermittelt werden"}
+                self._state = "Nicht in Tabelle"
+                self._attributes = {
+                    "info": "Team nicht in der Tabelle gefunden",
+                    "tournament_id": tournament_id
+                }
                 return
 
             self._state = table_position.get("position")
             self._attributes = {
+                "tournament_id": tournament_id,
                 "team_name": table_position.get("team_name"),
                 "points": table_position.get("points"),
                 "games_played": table_position.get("games_played"),
@@ -70,3 +66,45 @@ class HandballTablePositionSensor(HandballBaseSensor):
             _LOGGER.error("Error updating table position for %s: %s", self._team_id, e)
             self._state = "Fehler"
             self._attributes = {"error": str(e)}
+
+    async def _find_tournament_id(self) -> str | None:
+        """Try different methods to find the tournament ID"""
+        
+        # Method 1: Get from team info
+        try:
+            team_info = await self._api.get_team_info(self._team_id)
+            if team_info:
+                tournament_id = team_info.get("tournament", {}).get("id")
+                if tournament_id:
+                    _LOGGER.debug("Found tournament ID from team info: %s", tournament_id)
+                    return tournament_id
+        except Exception as e:
+            _LOGGER.debug("Could not get tournament ID from team info: %s", e)
+
+        # Method 2: Extract from match data
+        try:
+            matches = self.hass.data.get(DOMAIN, {}).get(self._team_id, {}).get("matches", [])
+            if matches:
+                # Look for tournament ID in recent matches
+                for match in matches:
+                    tournament_id = match.get("tournament", {}).get("id")
+                    if tournament_id:
+                        _LOGGER.debug("Found tournament ID from matches: %s", tournament_id)
+                        return tournament_id
+        except Exception as e:
+            _LOGGER.debug("Could not get tournament ID from matches: %s", e)
+
+        # Method 3: Get from team schedule if available
+        try:
+            schedule = await self._api.get_team_schedule(self._team_id)
+            if schedule:
+                for match in schedule:
+                    tournament_id = match.get("tournament", {}).get("id")
+                    if tournament_id:
+                        _LOGGER.debug("Found tournament ID from schedule: %s", tournament_id)
+                        return tournament_id
+        except Exception as e:
+            _LOGGER.debug("Could not get tournament ID from schedule: %s", e)
+
+        _LOGGER.warning("No tournament ID found for team %s", self._team_id)
+        return None

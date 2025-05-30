@@ -96,6 +96,17 @@ class HandballAllGamesSensor(HandballBaseSensor):
                 self.hass.data[DOMAIN][self._team_id] = {}
             self.hass.data[DOMAIN][self._team_id]["matches"] = essential_matches
 
+            # Try to get and store team info for other sensors
+            try:
+                team_info = await self._api.get_team_info(self._team_id)
+                if team_info:
+                    self.hass.data[DOMAIN][self._team_id]["team_name"] = team_info.get("name")
+                    logo_url = self._api.extract_team_logo_url(matches, self._team_id)
+                    if logo_url:
+                        self.hass.data[DOMAIN][self._team_id]["team_logo_url"] = logo_url
+            except Exception as e:
+                _LOGGER.debug("Could not update team info: %s", e)
+
         except Exception as e:
             _LOGGER.error("Error updating all games sensor for %s: %s", self._team_id, e)
             self._state = "Fehler beim Laden"

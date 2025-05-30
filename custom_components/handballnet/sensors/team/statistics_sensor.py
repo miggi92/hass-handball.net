@@ -42,24 +42,76 @@ class HandballStatisticsSensor(HandballBaseSensor):
 
     def _calculate_statistics(self, matches: List[Dict[str, Any]]) -> None:
         """Calculate statistics from match data"""
-        total_matches = len(matches)
-        wins = sum(1 for match in matches if match.get("result") == "win")
-        draws = sum(1 for match in matches if match.get("result") == "draw")
-        losses = sum(1 for match in matches if match.get("result") == "loss")
+        # Filter only finished matches (those with results)
+        finished_matches = []
+        upcoming_matches = []
+        
+        for match in matches:
+            if match.get("state") == "Post" or (match.get("homeGoals") is not None and match.get("awayGoals") is not None):
+                finished_matches.append(match)
+            else:
+                upcoming_matches.append(match)
+        
+        total_matches = len(finished_matches)
+        wins = 0
+        draws = 0
+        losses = 0
+        goals_scored = 0
+        goals_conceded = 0
+        
+        for match in finished_matches:
+            home_goals = match.get("homeGoals", 0) or 0
+            away_goals = match.get("awayGoals", 0) or 0
+            
+            # Determine if this team is home or away
+            is_home = match.get("isHomeMatch", False)
+            
+            if is_home:
+                team_goals = home_goals
+                opponent_goals = away_goals
+            else:
+                team_goals = away_goals
+                opponent_goals = home_goals
+            
+            goals_scored += team_goals
+            goals_conceded += opponent_goals
+            
+            # Determine result
+            if team_goals > opponent_goals:
+                wins += 1
+            elif team_goals == opponent_goals:
+                draws += 1
+            else:
+                losses += 1
 
-        goals_scored = sum(match.get("goals_scored", 0) for match in matches)
-        goals_conceded = sum(match.get("goals_conceded", 0) for match in matches)
-
-        self._state = f"{wins} Siege, {draws} Unentschieden, {losses} Niederlagen"
-        self._attributes = {
-            "total_matches": total_matches,
-            "wins": wins,
-            "draws": draws,
-            "losses": losses,
-            "goals_scored": goals_scored,
-            "goals_conceded": goals_conceded,
-            "goal_difference": goals_scored - goals_conceded,
-            "win_percentage": round((wins / total_matches) * 100, 1) if total_matches > 0 else 0.0,
-            "draw_percentage": round((draws / total_matches) * 100, 1) if total_matches > 0 else 0.0,
-            "loss_percentage": round((losses / total_matches) * 100, 1) if total_matches > 0 else 0.0,
-        }
+        if total_matches == 0:
+            self._state = "Noch keine beendeten Spiele"
+            self._attributes = {
+                "total_matches": 0,
+                "finished_matches": 0,
+                "upcoming_matches": len(upcoming_matches),
+                "wins": 0,
+                "draws": 0,
+                "losses": 0,
+                "goals_scored": 0,
+                "goals_conceded": 0,
+                "goal_difference": 0
+            }
+        else:
+            self._state = f"{wins} Siege, {draws} Unentschieden, {losses} Niederlagen"
+            self._attributes = {
+                "total_matches": len(matches),
+                "finished_matches": total_matches,
+                "upcoming_matches": len(upcoming_matches),
+                "wins": wins,
+                "draws": draws,
+                "losses": losses,
+                "goals_scored": goals_scored,
+                "goals_conceded": goals_conceded,
+                "goal_difference": goals_scored - goals_conceded,
+                "win_percentage": round((wins / total_matches) * 100, 1) if total_matches > 0 else 0.0,
+                "draw_percentage": round((draws / total_matches) * 100, 1) if total_matches > 0 else 0.0,
+                "loss_percentage": round((losses / total_matches) * 100, 1) if total_matches > 0 else 0.0,
+                "avg_goals_scored": round(goals_scored / total_matches, 2) if total_matches > 0 else 0.0,
+                "avg_goals_conceded": round(goals_conceded / total_matches, 2) if total_matches > 0 else 0.0
+            }
