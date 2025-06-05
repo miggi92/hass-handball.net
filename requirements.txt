@@ -2,3 +2,11 @@ requests
 voluptuous
 homeassistant
 pytest
+pytest-asyncio
+pytest-cov
+pytest-mock
+aiohttp
+aioresponses
+black
+flake8
+mypy
