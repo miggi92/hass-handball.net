@@ -1,7 +1,7 @@
 {
     "name": "hass-handball.net",
     "version": "0.0.7",
-    "packageManager": "pnpm@10.11.1",
+    "packageManager": "pnpm@10.12.1",
     "repository": "miggi92/hass-handball.net",
     "scripts": {
         "release": "changelogen --release",
