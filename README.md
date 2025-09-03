@@ -34,7 +34,7 @@ Copy the `custom_components/handballnet` folder to your Home Assistant `custom_c
 5. Enter the team ID of your team (e.g. `id.12345` for `https://handball.net/mannschaften/id.12345`)
 6. Click on `Submit`
 
-## Example
+## Screenshots
 
 <img src="https://github.com/miggi92/hass-handball.net/blob/main/assets/integration_example.png" width="500" alt="Integration Example" />
 <img src="https://github.com/miggi92/hass-handball.net/blob/main/assets/calendar_example.png" width="500" alt="Calendar Example" />
@@ -70,6 +70,80 @@ content: |
   | {{ p }}. | <img src="{{ pic }}" height="20"> | {{ s }} | {{ points }} |
   {%- endfor %}
 title: HBL
+```
+### Team
+
+#### Next Match
+
+Using [Button-Card](https://github.com/custom-cards/button-card)
+
+```yaml
+button_card_templates:
+  handballnet_next_game_card:
+    show_name: false
+    show_state: false
+    show_icon: false
+    styles:
+      card:
+        - padding: 12px
+        - font-size: 14px
+        - text-align: center
+        - border-radius: 12px
+        - box-shadow: 0 2px 6px rgba(0,0,0,0.3)
+      grid:
+        - grid-template-areas: |
+            "home vs away"
+            "homeName date awayName"
+            "homeRecord info awayRecord"
+            "bottom bottom bottom"
+        - grid-template-columns: 1fr auto 1fr
+        - grid-template-rows: auto auto auto auto
+    custom_fields:
+      home: |
+        [[[
+          const m = states[entity.entity_id].attributes.upcoming_matches[0];
+          return `<img src="${m.homeTeam.logo}" height="50">`;
+        ]]]
+      away: |
+        [[[
+          const m = states[entity.entity_id].attributes.upcoming_matches[0];
+          return `<img src="${m.awayTeam.logo}" height="50">`;
+        ]]]
+      vs: |
+        🆚
+      homeName: |
+        [[[
+          const m = states[entity.entity_id].attributes.upcoming_matches[0];
+          return `<b>${m.homeTeam.name}</b>`;
+        ]]]
+      awayName: |
+        [[[
+          const m = states[entity.entity_id].attributes.upcoming_matches[0];
+          return `<b>${m.awayTeam.name}</b>`;
+        ]]]
+      date: |
+        [[[
+          const m = states[entity.entity_id].attributes.next_match;
+          const ts = new Date(m.starts_at_local);
+          return ts.toLocaleDateString('de-DE', { weekday: 'long', day: '2-digit', month: '2-digit', year:'numeric' })
+            + '<br>' + ts.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+        ]]]
+      info: |
+        [[[
+          const m = states[entity.entity_id].attributes.next_match;
+          return `📍 ${m.field}`;
+        ]]]
+      bottom: |
+        [[[
+          const m = states[entity.entity_id].attributes.upcoming_matches[0];
+          return `🏆 ${m.tournament.name}`;
+        ]]]
+```
+
+```yaml
+type: custom:button-card
+template: handballnet_next_game_card
+entity: sensor.thw_kiel_alle_spiele
 ```
 
 ## Sponsors
