@@ -1,6 +1,37 @@
 # Changelog
 
 
+## v0.0.8
+
+[compare changes](https://github.com/miggi92/hass-handball.net/compare/v0.0.7...v0.0.8)
+
+### 🚀 Enhancements
+
+- ✨  added team card with next matches ([672db10](https://github.com/miggi92/hass-handball.net/commit/672db10))
+- ✨  normalize logo url ([7f4a009](https://github.com/miggi92/hass-handball.net/commit/7f4a009))
+
+### 📖 Documentation
+
+- 📝  added lovelace card for tournament ([3cb3772](https://github.com/miggi92/hass-handball.net/commit/3cb3772))
+
+### 🏡 Chore
+
+- 🔧  added devcontainer json ([78d32f6](https://github.com/miggi92/hass-handball.net/commit/78d32f6))
+- ✏️  changed '..' to '.' ([705a05d](https://github.com/miggi92/hass-handball.net/commit/705a05d))
+- Added setup script for dev container ([dd126ef](https://github.com/miggi92/hass-handball.net/commit/dd126ef))
+- Added scripts from blueprint ([0b4c81a](https://github.com/miggi92/hass-handball.net/commit/0b4c81a))
+- Updated files added config ([67eb619](https://github.com/miggi92/hass-handball.net/commit/67eb619))
+- Upgrade devcontainer with corepack ([e8e222b](https://github.com/miggi92/hass-handball.net/commit/e8e222b))
+
+### ✅ Tests
+
+- 🧪  init pytest ([f879cf6](https://github.com/miggi92/hass-handball.net/commit/f879cf6))
+
+### ❤️ Contributors
+
+- Miguel ([@miggi92](https://github.com/miggi92))
+- Miggi92 ([@miggi92](https://github.com/miggi92))
+
 ## v0.0.7
 
 [compare changes](https://github.com/miggi92/hass-handball.net/compare/v0.0.6...v0.0.7)
