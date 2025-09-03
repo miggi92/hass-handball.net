@@ -2,7 +2,7 @@ from typing import Any
 from .base_sensor import HandballBaseSensor
 from ...const import DOMAIN
 from ...api import HandballNetAPI
-from ...utils import get_next_match_info, get_last_match_info
+from ...utils import get_next_match_info, get_last_match_info, normalize_logo_url
 import logging
 
 _LOGGER = logging.getLogger(__name__)
@@ -32,8 +32,12 @@ class HandballAllGamesSensor(HandballBaseSensor):
     def _extract_essential_match_data(self, matches: list) -> list:
         """Extract only essential match data to reduce memory usage"""
         essential_matches = []
-        
+
         for match in matches:
+            # Get logo URLs and normalize them
+            home_logo = match.get("homeTeam", {}).get("logo")
+            away_logo = match.get("awayTeam", {}).get("logo")
+
             essential_match = {
                 "id": match.get("id"),
                 "startsAt": match.get("startsAt"),
@@ -41,12 +45,14 @@ class HandballAllGamesSensor(HandballBaseSensor):
                 "homeTeam": {
                     "id": match.get("homeTeam", {}).get("id"),
                     "name": match.get("homeTeam", {}).get("name"),
-                    "logo": match.get("homeTeam", {}).get("logo")
+                    "logo": match.get("homeTeam", {}).get("logo"),
+                    "logo_url": normalize_logo_url(home_logo) if home_logo else None
                 },
                 "awayTeam": {
-                    "id": match.get("awayTeam", {}).get("id"), 
+                    "id": match.get("awayTeam", {}).get("id"),
                     "name": match.get("awayTeam", {}).get("name"),
-                    "logo": match.get("awayTeam", {}).get("logo")
+                    "logo": match.get("awayTeam", {}).get("logo"),
+                    "logo_url": normalize_logo_url(away_logo) if away_logo else None
                 },
                 "field": {
                     "name": match.get("field", {}).get("name")
@@ -62,7 +68,7 @@ class HandballAllGamesSensor(HandballBaseSensor):
                 "isAway": match.get("awayTeam", {}).get("id") == self._team_id
             }
             essential_matches.append(essential_match)
-        
+
         return essential_matches
 
     async def async_update(self) -> None:
@@ -75,7 +81,7 @@ class HandballAllGamesSensor(HandballBaseSensor):
 
             # Extract only essential data
             essential_matches = self._extract_essential_match_data(matches)
-            
+
             next_match = get_next_match_info(essential_matches)
             last_match = get_last_match_info(essential_matches)
 
