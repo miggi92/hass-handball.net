@@ -1,6 +1,6 @@
 # hass-handball.net
 
-[![Static Badge](https://img.shields.io/badge/HACS-Custom-41BDF5?style=for-the-badge&logo=homeassistantcommunitystore&logoColor=white)](https://github.com/hacs/integration) 
+[![Static Badge](https://img.shields.io/badge/HACS-Custom-41BDF5?style=for-the-badge&logo=homeassistantcommunitystore&logoColor=white)](https://github.com/hacs/integration)
 ![GitHub Downloads (all assets, all releases)](https://img.shields.io/github/downloads/miggi92/hass-handball.net/total?style=for-the-badge)
 ![GitHub Release](https://img.shields.io/github/v/release/miggi92/hass-handball.net?style=for-the-badge)
 ![GitHub License](https://img.shields.io/github/license/miggi92/hass-handball.net?style=for-the-badge)
@@ -46,6 +46,31 @@ Copy the `custom_components/handballnet` folder to your Home Assistant `custom_c
 - Creates calendar events for games
 - Supports multiple teams
 
+## Lovelace / Dashboard
+
+### Tournament
+
+```yaml
+type: markdown
+content: |
+  {% set sensors = states.sensor
+     | selectattr('entity_id','search','^sensor\\.daikin_hbl_platz_\\d+$')
+     | map(attribute='entity_id')
+     | map('regex_replace','^sensor\\.daikin_hbl_platz_(\\d+)$','\\1')
+     | map('int')
+     | list
+     | sort %}
+  | Platz | Logo | Verein | Punkte |
+  | --- |:---:|:---:| ---:|
+  {%- for p in sensors %}
+  {%- set eid = 'sensor.daikin_hbl_platz_' ~ p %}
+  {%- set s = states(eid) %}
+  {%- set pic = state_attr(eid, 'entity_picture') %}
+  {%- set points = state_attr(eid, 'points') %}
+  | {{ p }}. | <img src="{{ pic }}" height="20"> | {{ s }} | {{ points }} |
+  {%- endfor %}
+title: HBL
+```
 
 ## Sponsors
 
