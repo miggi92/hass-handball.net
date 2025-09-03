@@ -45,14 +45,12 @@ class HandballAllGamesSensor(HandballBaseSensor):
                 "homeTeam": {
                     "id": match.get("homeTeam", {}).get("id"),
                     "name": match.get("homeTeam", {}).get("name"),
-                    "logo": match.get("homeTeam", {}).get("logo"),
-                    "logo_url": normalize_logo_url(home_logo) if home_logo else None
+                    "logo": normalize_logo_url(home_logo) if home_logo else None
                 },
                 "awayTeam": {
                     "id": match.get("awayTeam", {}).get("id"),
                     "name": match.get("awayTeam", {}).get("name"),
-                    "logo": match.get("awayTeam", {}).get("logo"),
-                    "logo_url": normalize_logo_url(away_logo) if away_logo else None
+                    "logo": normalize_logo_url(away_logo) if away_logo else None
                 },
                 "field": {
                     "name": match.get("field", {}).get("name")
