@@ -1,14 +1,15 @@
 from ..base_sensor import HandballBaseSensor as BaseHandballSensor
 from ...const import DOMAIN
-from ...utils import normalize_logo_url
+from ...utils import HandballNetUtils
 
 class HandballBaseSensor(BaseHandballSensor):
     """Base class for handball team sensors"""
-    
+
     def __init__(self, hass, entry, team_id, category=None):
         super().__init__(hass, entry, team_id, category)
+        self.utils = HandballNetUtils()
         self._team_id = team_id  # Explicitly set _team_id for team sensors
-        
+
         # Create team-specific device info
         team_name = entry.data.get("team_name", team_id)
         self._attr_device_info = self._create_device_info(
@@ -25,4 +26,4 @@ class HandballBaseSensor(BaseHandballSensor):
     def update_entity_picture(self, logo_url: str) -> None:
         """Update entity picture with logo URL"""
         if logo_url:
-            self._attr_entity_picture = normalize_logo_url(logo_url)
+            self._attr_entity_picture = self.utils.normalize_logo_url(logo_url)

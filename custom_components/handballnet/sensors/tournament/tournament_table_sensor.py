@@ -2,7 +2,7 @@ from typing import Any, List, Dict
 from .base_sensor import HandballBaseSensor
 from ...const import DOMAIN
 from ...api import HandballNetAPI
-from ...utils import normalize_logo_url
+from ...utils import HandballNetUtils
 from .tournament_team_position_sensor import HandballTournamentTeamPositionSensor
 import logging
 
@@ -11,11 +11,12 @@ _LOGGER = logging.getLogger(__name__)
 class HandballTournamentTableSensor(HandballBaseSensor):
     def __init__(self, hass, entry, tournament_id, api: HandballNetAPI):
         super().__init__(hass, entry, tournament_id)
+        self.utils = HandballNetUtils()
         self._api = api
         self._tournament_id = tournament_id
         self._state = None
         self._attributes = {}
-        
+
         # Use tournament name from config if available, fallback to tournament_id
         tournament_name = entry.data.get("tournament_name", tournament_id)
         self._attr_name = f"{tournament_name} Tabelle"
@@ -40,10 +41,10 @@ class HandballTournamentTableSensor(HandballBaseSensor):
 
             tournament_info = await self._get_tournament_info()
             table_rows = await self._extract_table_rows_with_logos(table_data)
-            
+
             self._set_sensor_state(tournament_info, table_rows)
             self._store_tournament_data(tournament_info, table_rows)
-            
+
             # Update individual team position sensors
             await self._update_team_position_sensors(table_rows)
 
@@ -56,7 +57,7 @@ class HandballTournamentTableSensor(HandballBaseSensor):
         """Get tournament information"""
         url = f"tournaments/{self._tournament_id}/table"
         data = await self._api._make_request(url)
-        
+
         if data and "data" in data:
             tournament_data = data["data"].get("tournament", {})
             return {
@@ -78,14 +79,14 @@ class HandballTournamentTableSensor(HandballBaseSensor):
 
         formatted_rows = []
         total_teams = len(rows)
-        
+
         for row in rows:
             if not isinstance(row, dict):
                 continue
-                
+
             team_info = row.get("team", {})
             team_id = team_info.get("id")
-            
+
             # Get team logo
             team_logo = None
             if team_id:
@@ -95,11 +96,11 @@ class HandballTournamentTableSensor(HandballBaseSensor):
                         team_logo = team_data.get("logo")
                 except Exception as e:
                     _LOGGER.debug("Could not fetch logo for team %s: %s", team_id, e)
-            
+
             # Fallback to team logo from table data
             if not team_logo:
                 team_logo = team_info.get("logo")
-            
+
             position = row.get("rank", 0)
             formatted_row = {
                 "position": position,
@@ -127,7 +128,7 @@ class HandballTournamentTableSensor(HandballBaseSensor):
         """Set sensor state and attributes"""
         tournament_name = tournament_info["name"]
         total_teams = len(table_rows)
-        
+
         if table_rows:
             leader = table_rows[0]
             self._state = f"{leader['team_name']} führt mit {leader['points']} Punkten"
@@ -148,11 +149,11 @@ class HandballTournamentTableSensor(HandballBaseSensor):
         """Store data in hass.data for other sensors"""
         if DOMAIN not in self.hass.data:
             self.hass.data[DOMAIN] = {}
-        
+
         tournament_key = f"tournament_{self._tournament_id}"
         if tournament_key not in self.hass.data[DOMAIN]:
             self.hass.data[DOMAIN][tournament_key] = {}
-            
+
         self.hass.data[DOMAIN][tournament_key].update({
             "tournament_info": tournament_info,
             "table_rows": table_rows,
@@ -163,23 +164,23 @@ class HandballTournamentTableSensor(HandballBaseSensor):
         """Update individual team position sensors"""
         tournament_key = f"tournament_{self._tournament_id}"
         sensors = self.hass.data.get(DOMAIN, {}).get(tournament_key, {}).get("sensors", [])
-        
+
         # Find team position sensors
         team_position_sensors = [s for s in sensors if isinstance(s, HandballTournamentTeamPositionSensor)]
-        
+
         # Update existing sensors with new data
         for team_data in table_rows:
             position = team_data.get("position")
             team_id = team_data.get("team_id")
-            
+
             # Find matching sensor
             matching_sensor = None
             for sensor in team_position_sensors:
-                if (sensor._team_data.get("position") == position or 
+                if (sensor._team_data.get("position") == position or
                     sensor._team_data.get("team_id") == team_id):
                     matching_sensor = sensor
                     break
-            
+
             if matching_sensor:
                 matching_sensor.update_team_data(team_data)
                 matching_sensor.async_write_ha_state()

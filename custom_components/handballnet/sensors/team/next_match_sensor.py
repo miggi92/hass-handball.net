@@ -3,7 +3,7 @@ from typing import Any, Optional
 from .base_sensor import HandballBaseSensor
 from ...const import DOMAIN
 from ...api import HandballNetAPI
-from ...utils import get_next_match_info, normalize_logo_url
+from ...utils import HandballNetUtils
 import logging
 
 _LOGGER = logging.getLogger(__name__)
@@ -11,6 +11,7 @@ _LOGGER = logging.getLogger(__name__)
 class HandballNextMatchSensor(HandballBaseSensor):
     def __init__(self, hass, entry, team_id, api: HandballNetAPI):
         super().__init__(hass, entry, team_id)
+        self.utils = HandballNetUtils()
         self._api = api
         self._team_id = team_id  # Explicitly set _team_id
         self._state = None
@@ -39,7 +40,7 @@ class HandballNextMatchSensor(HandballBaseSensor):
                 self._attributes = {}
                 return
 
-            next_match = get_next_match_info(matches)
+            next_match = self.utils.get_next_match_info(matches)
             if not next_match:
                 self._state = "Kein nächstes Spiel"
                 self._attributes = {}
