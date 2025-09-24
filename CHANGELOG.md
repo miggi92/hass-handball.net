@@ -1,6 +1,23 @@
 # Changelog
 
 
+## v0.0.11
+
+[compare changes](https://github.com/miggi92/hass-handball.net/compare/v0.0.10...v0.0.11)
+
+### 🩹 Fixes
+
+- 🐛  fixed state showing json instead of name ([da9716c](https://github.com/miggi92/hass-handball.net/commit/da9716c))
+- 🐛  fixed next game sensor shows json in state ([2001625](https://github.com/miggi92/hass-handball.net/commit/2001625))
+
+### 🏡 Chore
+
+- **release:** V0.0.10 ([9b335e4](https://github.com/miggi92/hass-handball.net/commit/9b335e4))
+
+### ❤️ Contributors
+
+- Miguel ([@miggi92](https://github.com/miggi92))
+
 ## v0.0.10
 
 [compare changes](https://github.com/miggi92/hass-handball.net/compare/v0.0.9...v0.0.10)
