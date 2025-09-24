@@ -1,6 +1,22 @@
 # Changelog
 
 
+## v0.0.10
+
+[compare changes](https://github.com/miggi92/hass-handball.net/compare/v0.0.9...v0.0.10)
+
+### 🩹 Fixes
+
+- 🐛  fixed utils not working ([117b447](https://github.com/miggi92/hass-handball.net/commit/117b447))
+
+### 🏡 Chore
+
+- **release:** V0.0.9 ([d60096f](https://github.com/miggi92/hass-handball.net/commit/d60096f))
+
+### ❤️ Contributors
+
+- Miguel ([@miggi92](https://github.com/miggi92))
+
 ## v0.0.9
 
 [compare changes](https://github.com/miggi92/hass-handball.net/compare/v0.0.8...v0.0.9)
