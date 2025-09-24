@@ -45,8 +45,8 @@ class HandballNextMatchSensor(HandballBaseSensor):
                 self._state = "Kein nächstes Spiel"
                 self._attributes = {}
                 return
-
-            self._state = next_match.get("opponent", "Unbekannter Gegner")
+            opponent = next_match.get("opponent", {"name": "Unbekannter Gegner"})
+            self._state = opponent["name"]
             self._attributes = {
                 "match_date": next_match.get("starts_at_formatted"),
                 "match_time": next_match.get("starts_at_local"),
