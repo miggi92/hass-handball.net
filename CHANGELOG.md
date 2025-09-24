@@ -1,6 +1,33 @@
 # Changelog
 
 
+## v0.0.9
+
+[compare changes](https://github.com/miggi92/hass-handball.net/compare/v0.0.8...v0.0.9)
+
+### 🚀 Enhancements
+
+- ✨  added more team information for next match attribute ([4fd8b5d](https://github.com/miggi92/hass-handball.net/commit/4fd8b5d))
+
+### 💅 Refactors
+
+- ♻️  changed logo ([8e83c33](https://github.com/miggi92/hass-handball.net/commit/8e83c33))
+- ♻️  moved utils to seperate files ([54c4b21](https://github.com/miggi92/hass-handball.net/commit/54c4b21))
+- ♻️  calling new utils class ([34fd2e8](https://github.com/miggi92/hass-handball.net/commit/34fd2e8))
+
+### 📖 Documentation
+
+- 📝  changed lovelace next game with current changes ([0f4abe7](https://github.com/miggi92/hass-handball.net/commit/0f4abe7))
+
+### 🏡 Chore
+
+- **release:** V0.0.8 ([e8b0a11](https://github.com/miggi92/hass-handball.net/commit/e8b0a11))
+- ➕  added conventional commits to devcontainer extensions ([2d5e850](https://github.com/miggi92/hass-handball.net/commit/2d5e850))
+
+### ❤️ Contributors
+
+- Miguel ([@miggi92](https://github.com/miggi92))
+
 ## v0.0.8
 
 [compare changes](https://github.com/miggi92/hass-handball.net/compare/v0.0.7...v0.0.8)
