@@ -84,7 +84,7 @@ class HandballAllGamesSensor(HandballBaseSensor):
             next_match = self.utils.get_next_match_info(essential_matches)
             last_match = self.utils.get_last_match_info(essential_matches)
 
-            self._state = f"Nächstes Spiel: {next_match['opponent']}" if next_match else "Kein nächstes Spiel"
+            self._state = f"Nächstes Spiel: {next_match['opponent']['name']}" if next_match else "Kein nächstes Spiel"
             self._attributes = {
                 "next_match": next_match,
                 "last_match": last_match,
