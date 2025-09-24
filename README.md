@@ -101,24 +101,24 @@ button_card_templates:
     custom_fields:
       home: |
         [[[
-          const m = states[entity.entity_id].attributes.upcoming_matches[0];
+          const m = states[entity.entity_id].attributes.next_match;
           return `<img src="${m.homeTeam.logo}" height="50">`;
         ]]]
       away: |
         [[[
-          const m = states[entity.entity_id].attributes.upcoming_matches[0];
+          const m = states[entity.entity_id].attributes.next_match;
           return `<img src="${m.awayTeam.logo}" height="50">`;
         ]]]
       vs: |
         🆚
       homeName: |
         [[[
-          const m = states[entity.entity_id].attributes.upcoming_matches[0];
+          const m = states[entity.entity_id].attributes.next_match;
           return `<b>${m.homeTeam.name}</b>`;
         ]]]
       awayName: |
         [[[
-          const m = states[entity.entity_id].attributes.upcoming_matches[0];
+          const m = states[entity.entity_id].attributes.next_match;
           return `<b>${m.awayTeam.name}</b>`;
         ]]]
       date: |
