@@ -1,4 +1,5 @@
 import logging
+import time
 from typing import Dict, List, Any, Optional
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.core import HomeAssistant
@@ -10,11 +11,14 @@ _LOGGER = logging.getLogger(__name__)
 class HandballNetAPI:
     """API client for handball.net"""
 
+    LEAGUE_TABLE_CACHE_TTL = 3600  # 1 hour
+
     def __init__(self, hass: HomeAssistant):
         self.hass = hass
         self.base_url = HANDBALL_NET_BASE_URL
         self.utils = HandballNetUtils()
         self.session = async_get_clientsession(hass)
+        self._league_table_cache = {}
 
     async def _make_request(self, endpoint: str) -> Optional[Dict[str, Any]]:
         """Make HTTP request to handball.net API"""
@@ -48,8 +52,23 @@ class HandballNetAPI:
 
     async def get_league_table(self, league_id: str) -> Optional[List[Dict[str, Any]]]:
         """Get league table"""
+        now = time.time()
+
+        if league_id in self._league_table_cache:
+            timestamp, cached_data = self._league_table_cache[league_id]
+            if now - timestamp < self.LEAGUE_TABLE_CACHE_TTL:
+                return cached_data
+
         data = await self._make_request(f"tournaments/{league_id}/table")
-        return data.get("data", []) if data else None
+        result = data.get("data", []) if data else None
+
+        if result is not None:
+            # Prevent unbounded growth
+            if len(self._league_table_cache) >= 20:
+                self._league_table_cache.clear()
+            self._league_table_cache[league_id] = (now, result)
+
+        return result
 
     async def get_live_ticker(self, game_id: str) -> Optional[Dict[str, Any]]:
         """Get live ticker events for a game"""
