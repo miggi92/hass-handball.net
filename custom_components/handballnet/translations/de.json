@@ -12,9 +12,25 @@
       },
       "team": {
         "title": "Handball.net Team hinzufügen",
-        "description": "Bitte gib die Team-ID ein. Du findest sie in der URL: handball.net/mannschaften/TEAM-ID",
+        "description": "Wähle, ob du die Team-ID direkt eingibst oder über einen Verein suchst",
         "data": {
-          "team_id": "Team-ID"
+          "team_input_mode": "Eingabemodus",
+          "team_id": "Team-ID",
+          "club_query": "Vereinsname (Suche)"
+        }
+      },
+      "team_select_club": {
+        "title": "Verein auswählen",
+        "description": "Wähle einen Verein aus den Suchergebnissen",
+        "data": {
+          "club_id": "Verein"
+        }
+      },
+      "team_select_team": {
+        "title": "Team auswählen",
+        "description": "Wähle das Team, das hinzugefügt werden soll",
+        "data": {
+          "selected_team_id": "Team"
         }
       },
       "tournament": {
@@ -27,8 +43,13 @@
     },
     "error": {
       "invalid_team_id": "Ungültige Team-ID",
+      "invalid_club_query": "Bitte mindestens 2 Zeichen für die Vereinssuche eingeben",
+      "invalid_club_selection": "Ungültiger Verein ausgewählt",
+      "invalid_team_selection": "Ungültiges Team ausgewählt",
       "invalid_tournament_id": "Ungültige Turnier-ID",
       "team_not_found": "Team wurde nicht gefunden. Überprüfe die Team-ID.",
+      "club_not_found": "Kein Verein zur Suche gefunden.",
+      "no_teams_found": "Für diesen Verein wurden keine Teams gefunden.",
       "tournament_not_found": "Turnier wurde nicht gefunden. Überprüfe die Turnier-ID.",
       "cannot_connect": "Verbindung zu handball.net fehlgeschlagen",
       "already_configured": "Diese Entität ist bereits konfiguriert."

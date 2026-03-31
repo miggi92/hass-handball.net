@@ -12,9 +12,25 @@
       },
       "team": {
         "title": "Add Handball.net Team",
-        "description": "Please enter the team ID. You can find it in the URL: handball.net/mannschaften/TEAM-ID",
+        "description": "Choose whether to enter the team ID directly or search by club",
         "data": {
-          "team_id": "Team ID"
+          "team_input_mode": "Input mode",
+          "team_id": "Team ID",
+          "club_query": "Club name (search)"
+        }
+      },
+      "team_select_club": {
+        "title": "Select club",
+        "description": "Choose a club from the search results",
+        "data": {
+          "club_id": "Club"
+        }
+      },
+      "team_select_team": {
+        "title": "Select team",
+        "description": "Choose the team to add",
+        "data": {
+          "selected_team_id": "Team"
         }
       },
       "tournament": {
@@ -27,8 +43,13 @@
     },
     "error": {
       "invalid_team_id": "Invalid team ID",
+      "invalid_club_query": "Please enter at least 2 characters for club search",
+      "invalid_club_selection": "Invalid club selection",
+      "invalid_team_selection": "Invalid team selection",
       "invalid_tournament_id": "Invalid tournament ID",
       "team_not_found": "Team was not found. Please check the team ID.",
+      "club_not_found": "No club found for this search.",
+      "no_teams_found": "No teams were found for this club.",
       "tournament_not_found": "Tournament was not found. Please check the tournament ID.",
       "cannot_connect": "Connection to handball.net failed",
       "already_configured": "This entity is already configured."
