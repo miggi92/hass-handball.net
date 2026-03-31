@@ -9,19 +9,24 @@ from .utils import HandballNetUtils
 _LOGGER = logging.getLogger(__name__)
 
 class HandballNetAPI:
-    """API client for handball.net"""
+    """API client for handball.net."""
 
     LEAGUE_TABLE_CACHE_TTL = 3600  # 1 hour
+    TEAM_INFO_CACHE_TTL = 86400  # 24 hours
+    MAX_CACHE_SIZE = 50
+    MAX_LEAGUE_CACHE_SIZE = 20
 
     def __init__(self, hass: HomeAssistant):
+        """Initialize the API client."""
         self.hass = hass
         self.base_url = HANDBALL_NET_BASE_URL
         self.utils = HandballNetUtils()
         self.session = async_get_clientsession(hass)
         self._league_table_cache = {}
+        self._team_info_cache = {}
 
     async def _make_request(self, endpoint: str) -> Optional[Dict[str, Any]]:
-        """Make HTTP request to handball.net API"""
+        """Make HTTP request to handball.net API."""
         url = f"{self.base_url}/{endpoint}"
         try:
             async with self.session.get(url) as resp:
@@ -34,24 +39,37 @@ class HandballNetAPI:
             return None
 
     async def get_team_schedule(self, team_id: str) -> Optional[List[Dict[str, Any]]]:
-        """Get team schedule/matches"""
+        """Get team schedule/matches."""
         data = await self._make_request(f"teams/{team_id}/schedule")
         return data.get("data", []) if data else None
 
     async def get_team_info(self, team_id: str) -> Optional[Dict[str, Any]]:
-        """Get team information including logo"""
+        """Get team information including logo."""
+        now = time.time()
+
+        if team_id in self._team_info_cache:
+            timestamp, cached_data = self._team_info_cache[team_id]
+            if now - timestamp < self.TEAM_INFO_CACHE_TTL:
+                return cached_data
+
         data = await self._make_request(f"teams/{team_id}")
         if not data:
             return None
 
         team_data = data.get("data")
-        if team_data and team_data.get("logo"):
-            team_data["logo"] = self.utils.normalize_logo_url(team_data["logo"])
+        if team_data:
+            if team_data.get("logo"):
+                team_data["logo"] = self.utils.normalize_logo_url(team_data["logo"])
+
+            # Prevent unbounded growth
+            if len(self._team_info_cache) >= self.MAX_CACHE_SIZE:
+                self._team_info_cache.clear()
+            self._team_info_cache[team_id] = (now, team_data)
 
         return team_data
 
     async def get_league_table(self, league_id: str) -> Optional[List[Dict[str, Any]]]:
-        """Get league table"""
+        """Get league table."""
         now = time.time()
 
         if league_id in self._league_table_cache:
@@ -64,19 +82,19 @@ class HandballNetAPI:
 
         if result is not None:
             # Prevent unbounded growth
-            if len(self._league_table_cache) >= 20:
+            if len(self._league_table_cache) >= self.MAX_LEAGUE_CACHE_SIZE:
                 self._league_table_cache.clear()
             self._league_table_cache[league_id] = (now, result)
 
         return result
 
     async def get_live_ticker(self, game_id: str) -> Optional[Dict[str, Any]]:
-        """Get live ticker events for a game"""
+        """Get live ticker events for a game."""
         data = await self._make_request(f"games/{game_id}/combined")
         return data.get("data", {}) if data else None
 
     def extract_team_logo_url(self, matches: List[Dict[str, Any]], team_id: str) -> Optional[str]:
-        """Extract team logo URL from matches data"""
+        """Extract team logo URL from matches data."""
         if not matches:
             return None
 
@@ -90,7 +108,7 @@ class HandballNetAPI:
         return None
 
     async def get_team_table_position(self, team_id: str, tournament_id: str) -> Optional[Dict[str, Any]]:
-        """Get team position in league table"""
+        """Get team position in league table."""
         table_data = await self.get_league_table(tournament_id)
         if not table_data:
             _LOGGER.warning("No table data received for tournament %s", tournament_id)
@@ -99,7 +117,7 @@ class HandballNetAPI:
         return self._find_team_in_table(table_data, team_id, tournament_id)
 
     def _find_team_in_table(self, table_data: Any, team_id: str, tournament_id: str) -> Optional[Dict[str, Any]]:
-        """Find team in league table data"""
+        """Find team in league table data."""
         rows = self._extract_table_rows(table_data)
         if not rows:
             return None
@@ -119,7 +137,7 @@ class HandballNetAPI:
         return None
 
     def _extract_table_rows(self, table_data: Any) -> Optional[List[Dict[str, Any]]]:
-        """Extract rows from table data structure"""
+        """Extract rows from table data structure."""
         if isinstance(table_data, dict):
             return table_data.get("rows", [])
         elif isinstance(table_data, list):
@@ -129,7 +147,7 @@ class HandballNetAPI:
             return None
 
     def _create_table_position_dict(self, team_entry: Dict[str, Any], team_info: Dict[str, Any]) -> Dict[str, Any]:
-        """Create standardized table position dictionary"""
+        """Create standardized table position dictionary."""
         return {
             "position": team_entry.get("rank"),
             "team_name": team_info.get("name", ""),
