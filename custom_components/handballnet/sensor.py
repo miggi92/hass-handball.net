@@ -165,6 +165,15 @@ async def _setup_tournament_sensors(hass: HomeAssistant, entry, async_add_entiti
             # Create team position sensors if they don't exist
             if table_rows:
                 await _create_team_position_sensors_if_needed(hass, entry, tournament_id, table_rows, async_add_entities)
+
+            # Refresh dependent entities like calendars after table data is current.
+            sensors = hass.data.get(DOMAIN, {}).get(tournament_key, {}).get("sensors", [])
+            for sensor in sensors:
+                if sensor is tournament_table_sensor or not hasattr(sensor, "async_update"):
+                    continue
+
+                await sensor.async_update()
+                sensor.async_write_ha_state()
             
         except Exception as e:
             _LOGGER.error("Error updating tournament table sensor: %s", e)

@@ -74,6 +74,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
         hass.data[DOMAIN][tournament_key] = {
             "tournament_info": {},
             "table_rows": [],
+            "matches": [],
             "sensors": []
         }
 

@@ -54,3 +54,41 @@ class HandballBaseCalendar(CalendarEntity):
             description=description,
             location=match_data.get("field", {}).get("name", "")
         )
+
+    def _get_match_window(self, match_data: dict) -> tuple[datetime, datetime] | None:
+        """Return the start and end timestamps for a match."""
+        ts = match_data.get("startsAt")
+        if not isinstance(ts, int):
+            return None
+
+        try:
+            start = datetime.fromtimestamp(ts / 1000, tz=timezone.utc)
+            end = start + timedelta(hours=2)
+        except Exception:
+            return None
+
+        return start, end
+
+    def _get_current_or_next_event(self, matches: list[dict]) -> CalendarEvent | None:
+        """Return the active match event, otherwise the next upcoming event."""
+        now = datetime.now(timezone.utc)
+
+        for match in matches:
+            match_window = self._get_match_window(match)
+            if not match_window:
+                continue
+
+            start, end = match_window
+            if start <= now <= end:
+                return self._create_calendar_event(match, is_live=True)
+
+        for match in sorted(matches, key=lambda item: item.get("startsAt", 0)):
+            match_window = self._get_match_window(match)
+            if not match_window:
+                continue
+
+            start, _ = match_window
+            if start > now:
+                return self._create_calendar_event(match)
+
+        return None
