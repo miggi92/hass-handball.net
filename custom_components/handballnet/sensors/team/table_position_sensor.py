@@ -70,18 +70,7 @@ class HandballTablePositionSensor(HandballBaseSensor):
     async def _find_tournament_id(self) -> str | None:
         """Try different methods to find the tournament ID"""
         
-        # Method 1: Get from team info
-        try:
-            team_info = await self._api.get_team_info(self._team_id)
-            if team_info:
-                tournament_id = team_info.get("tournament", {}).get("id")
-                if tournament_id:
-                    _LOGGER.debug("Found tournament ID from team info: %s", tournament_id)
-                    return tournament_id
-        except Exception as e:
-            _LOGGER.debug("Could not get tournament ID from team info: %s", e)
-
-        # Method 2: Extract from match data
+        # Method 1: Extract from match data (Memory Cache - FAST)
         try:
             matches = self.hass.data.get(DOMAIN, {}).get(self._team_id, {}).get("matches", [])
             if matches:
@@ -93,6 +82,17 @@ class HandballTablePositionSensor(HandballBaseSensor):
                         return tournament_id
         except Exception as e:
             _LOGGER.debug("Could not get tournament ID from matches: %s", e)
+
+        # Method 2: Get from team info (API Call - SLOWER)
+        try:
+            team_info = await self._api.get_team_info(self._team_id)
+            if team_info:
+                tournament_id = team_info.get("tournament", {}).get("id")
+                if tournament_id:
+                    _LOGGER.debug("Found tournament ID from team info: %s", tournament_id)
+                    return tournament_id
+        except Exception as e:
+            _LOGGER.debug("Could not get tournament ID from team info: %s", e)
 
         # Method 3: Get from team schedule if available
         try:
