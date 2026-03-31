@@ -12,6 +12,7 @@ class HandballNetAPI:
     """API client for handball.net"""
 
     LEAGUE_TABLE_CACHE_TTL = 3600  # 1 hour
+    TEAM_SCHEDULE_CACHE_TTL = 3600  # 1 hour
 
     def __init__(self, hass: HomeAssistant):
         self.hass = hass
@@ -19,6 +20,7 @@ class HandballNetAPI:
         self.utils = HandballNetUtils()
         self.session = async_get_clientsession(hass)
         self._league_table_cache = {}
+        self._team_schedule_cache = {}
 
     async def _make_request(self, endpoint: str) -> Optional[Dict[str, Any]]:
         """Make HTTP request to handball.net API"""
@@ -35,8 +37,23 @@ class HandballNetAPI:
 
     async def get_team_schedule(self, team_id: str) -> Optional[List[Dict[str, Any]]]:
         """Get team schedule/matches"""
+        now = time.time()
+
+        if team_id in self._team_schedule_cache:
+            timestamp, cached_data = self._team_schedule_cache[team_id]
+            if now - timestamp < self.TEAM_SCHEDULE_CACHE_TTL:
+                return cached_data
+
         data = await self._make_request(f"teams/{team_id}/schedule")
-        return data.get("data", []) if data else None
+        result = data.get("data", []) if data else None
+
+        if result is not None:
+            # Prevent unbounded growth
+            if len(self._team_schedule_cache) >= 20:
+                self._team_schedule_cache.clear()
+            self._team_schedule_cache[team_id] = (now, result)
+
+        return result
 
     async def get_team_info(self, team_id: str) -> Optional[Dict[str, Any]]:
         """Get team information including logo"""
