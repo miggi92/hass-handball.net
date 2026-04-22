@@ -1,6 +1,26 @@
 # Changelog
 
 
+## v0.0.15
+
+[compare changes](https://github.com/miggi92/hass-handball.net/compare/v0.0.14...v0.0.15)
+
+### 🚀 Enhancements
+
+- ✨  added tournament to club teams ([8cc17a8](https://github.com/miggi92/hass-handball.net/commit/8cc17a8))
+
+### 🩹 Fixes
+
+- 🐛  fixed version numbers ([5b7685e](https://github.com/miggi92/hass-handball.net/commit/5b7685e))
+
+### 🏡 Chore
+
+- **release:** V0.0.12 ([a133fc5](https://github.com/miggi92/hass-handball.net/commit/a133fc5))
+
+### ❤️ Contributors
+
+- Miguel ([@miggi92](https://github.com/miggi92))
+
 ## v0.0.12
 
 [compare changes](https://github.com/miggi92/hass-handball.net/compare/v0.0.14...v0.0.12)
