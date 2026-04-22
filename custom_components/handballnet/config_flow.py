@@ -98,7 +98,8 @@ class HandballNetConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             team_id = team.get("id")
             team_name = team.get("name")
             if team_id and team_name:
-                acronym = team.get("acronym")
+                default_tournament = team.get("defaultTournament")
+                acronym = default_tournament.get("acronym") if default_tournament else None
                 if acronym:
                     team_options[team_id] = f"{team_name} ({acronym})"
                 else:
@@ -140,12 +141,12 @@ class HandballNetConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     async def async_step_user(self, user_input=None):
         """Handle the initial step."""
         errors = {}
-        
+
         if user_input is not None:
             self._entity_type = user_input[CONF_ENTITY_TYPE]
             self._update_interval = user_input.get(CONF_UPDATE_INTERVAL, DEFAULT_UPDATE_INTERVAL)
             self._update_interval_live = user_input.get(CONF_UPDATE_INTERVAL_LIVE, DEFAULT_UPDATE_INTERVAL_LIVE)
-            
+
             if self._entity_type == ENTITY_TYPE_TEAM:
                 return await self.async_step_team()
             elif self._entity_type == ENTITY_TYPE_TOURNAMENT:
@@ -161,15 +162,15 @@ class HandballNetConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         })
 
         return self.async_show_form(
-            step_id="user", 
-            data_schema=data_schema, 
+            step_id="user",
+            data_schema=data_schema,
             errors=errors
         )
 
     async def async_step_team(self, user_input=None):
         """Handle team configuration step."""
         errors = {}
-        
+
         if user_input is not None:
             input_mode = user_input.get(CONF_TEAM_INPUT_MODE, TEAM_INPUT_MODE_MANUAL)
 
@@ -207,8 +208,8 @@ class HandballNetConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         })
 
         return self.async_show_form(
-            step_id="team", 
-            data_schema=data_schema, 
+            step_id="team",
+            data_schema=data_schema,
             errors=errors
         )
 
@@ -270,7 +271,7 @@ class HandballNetConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     async def async_step_tournament(self, user_input=None):
         """Handle tournament configuration step."""
         errors = {}
-        
+
         if user_input is not None:
             tournament_id = user_input.get(CONF_TOURNAMENT_ID)
             if not tournament_id:
@@ -278,7 +279,7 @@ class HandballNetConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             else:
                 # Check if already configured
                 for entry in self._async_current_entries():
-                    if (entry.data.get(CONF_TOURNAMENT_ID) == tournament_id and 
+                    if (entry.data.get(CONF_TOURNAMENT_ID) == tournament_id and
                         entry.data.get(CONF_ENTITY_TYPE) == ENTITY_TYPE_TOURNAMENT):
                         errors[CONF_TOURNAMENT_ID] = "already_configured"
                         break
@@ -304,7 +305,7 @@ class HandballNetConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         })
 
         return self.async_show_form(
-            step_id="tournament", 
-            data_schema=data_schema, 
+            step_id="tournament",
+            data_schema=data_schema,
             errors=errors
         )
