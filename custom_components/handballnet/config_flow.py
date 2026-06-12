@@ -175,7 +175,12 @@ class HandballNetConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             if club_id and club_name:
                 clean_club_name, _ = self._split_trailing_parentheses(club_name)
                 self._club_clean_names[club_id] = clean_club_name or club_name
-                club_options[club_id] = clean_club_name or club_name
+
+                acronym = club.get("acronym")
+                if acronym:
+                    club_options[club_id] = f"{clean_club_name or club_name} ({acronym})"
+                else:
+                    club_options[club_id] = clean_club_name or club_name
 
         return club_options
 
@@ -198,7 +203,10 @@ class HandballNetConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 if team_variant:
                     self._team_variants[team_id] = team_variant
 
-                team_options[team_id] = base_team_name or team_name
+                if acronym:
+                    team_options[team_id] = f"{base_team_name or team_name} ({acronym})"
+                else:
+                    team_options[team_id] = base_team_name or team_name
 
         return team_options
 
