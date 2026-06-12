@@ -1,6 +1,36 @@
 # Changelog
 
 
+## v0.0.20
+
+[compare changes](https://github.com/miggi92/hass-handball.net/compare/v0.0.19...v0.0.20)
+
+### 🚀 Enhancements
+
+- ✨  init ha container ([1629d13](https://github.com/miggi92/hass-handball.net/commit/1629d13))
+
+### 🩹 Fixes
+
+- 🐛  fixed config flow error ([e7124da](https://github.com/miggi92/hass-handball.net/commit/e7124da))
+- 🐛  fixed naming ([67f1582](https://github.com/miggi92/hass-handball.net/commit/67f1582))
+- 🐛  fixed error ([e7208ac](https://github.com/miggi92/hass-handball.net/commit/e7208ac))
+- 🐛  fixed naming ([d0c5c4d](https://github.com/miggi92/hass-handball.net/commit/d0c5c4d))
+- 🐛  fixed dropdown ([3a17a9d](https://github.com/miggi92/hass-handball.net/commit/3a17a9d))
+
+### 💅 Refactors
+
+- ♻️  changed naming ([b6cee79](https://github.com/miggi92/hass-handball.net/commit/b6cee79))
+
+### 🏡 Chore
+
+- ⬆️  upgrade deps ([647bea0](https://github.com/miggi92/hass-handball.net/commit/647bea0))
+- 🙈  ignore some home assistant files ([551a09c](https://github.com/miggi92/hass-handball.net/commit/551a09c))
+- 🙈  ignore folders ([31437b6](https://github.com/miggi92/hass-handball.net/commit/31437b6))
+
+### ❤️ Contributors
+
+- Miguel
+
 ## v0.0.19
 
 [compare changes](https://github.com/miggi92/hass-handball.net/compare/v0.0.18...v0.0.19)
