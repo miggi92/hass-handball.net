@@ -1,6 +1,31 @@
 # Changelog
 
 
+## v0.0.19
+
+[compare changes](https://github.com/miggi92/hass-handball.net/compare/v0.0.18...v0.0.19)
+
+### 🚀 Enhancements
+
+- ✨  changed id handling ([9867b74](https://github.com/miggi92/hass-handball.net/commit/9867b74))
+
+### 🩹 Fixes
+
+- 🐛  fixed league ids not showing ([12cfd13](https://github.com/miggi92/hass-handball.net/commit/12cfd13))
+
+### 💅 Refactors
+
+- ♻️  optimize code ([16ebaf2](https://github.com/miggi92/hass-handball.net/commit/16ebaf2))
+
+### 🏡 Chore
+
+- Updated version ([30bfded](https://github.com/miggi92/hass-handball.net/commit/30bfded))
+- ⬆️  upgrade version ([9511220](https://github.com/miggi92/hass-handball.net/commit/9511220))
+
+### ❤️ Contributors
+
+- Miguel
+
 ## v0.0.18
 
 [compare changes](https://github.com/miggi92/hass-handball.net/compare/v0.0.17...v0.0.18)
