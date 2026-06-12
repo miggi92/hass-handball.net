@@ -1,5 +1,5 @@
-# https://www.home-assistant.io/integrations/default_config/
-default_config:
+# default_config:  <-- Diese Zeile löschen oder auskommentieren
+frontend:          # <-- Stattdessen nur das Frontend laden
 
 # https://www.home-assistant.io/integrations/homeassistant/
 homeassistant:
@@ -9,4 +9,4 @@ homeassistant:
 logger:
   default: info
   logs:
-    custom_components.integration_blueprint: debug
+    custom_components.handballnet: debug

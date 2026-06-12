@@ -1,0 +1,9 @@
+{
+  "features": {
+    "ghcr.io/devcontainers-extra/features/corepack:1": {
+      "version": "1.0.2",
+      "resolved": "ghcr.io/devcontainers-extra/features/corepack@sha256:5142e3f736841bf4cd1b9d8e6a2e51885cab510d5f014eac10be9b0627a9bf97",
+      "integrity": "sha256:5142e3f736841bf4cd1b9d8e6a2e51885cab510d5f014eac10be9b0627a9bf97"
+    }
+  }
+}
