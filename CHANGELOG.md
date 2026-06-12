@@ -1,6 +1,22 @@
 # Changelog
 
 
+## v0.0.17
+
+[compare changes](https://github.com/miggi92/hass-handball.net/compare/v0.0.16...v0.0.17)
+
+### 🚀 Enhancements
+
+- ✨  changed device name ([a7cfe58](https://github.com/miggi92/hass-handball.net/commit/a7cfe58))
+
+### 🏡 Chore
+
+- **release:** V0.0.16 ([2f32985](https://github.com/miggi92/hass-handball.net/commit/2f32985))
+
+### ❤️ Contributors
+
+- Miguel
+
 ## v0.0.16
 
 [compare changes](https://github.com/miggi92/hass-handball.net/compare/v0.0.15...v0.0.16)
