@@ -42,9 +42,25 @@
       },
       "reconfigure": {
         "title": "Handball.net Team neu konfigurieren",
-        "description": "Aktualisiere die Team-ID für dieses konfigurierte Team",
+        "description": "Aktualisiere die Team-ID für dieses konfigurierte Team, entweder manuell oder über die Teamsuche",
         "data": {
-          "team_id": "Team-ID"
+          "team_input_mode": "Eingabemodus",
+          "team_id": "Team-ID",
+          "club_query": "Vereinsname (Suche)"
+        }
+      },
+      "reconfigure_select_club": {
+        "title": "Verein auswählen",
+        "description": "Wähle einen Verein aus den Suchergebnissen",
+        "data": {
+          "club_id": "Verein"
+        }
+      },
+      "reconfigure_select_team": {
+        "title": "Team auswählen",
+        "description": "Wähle das Team, das für diese Neu-Konfiguration verwendet werden soll",
+        "data": {
+          "selected_team_id": "Team"
         }
       }
     },

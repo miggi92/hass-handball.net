@@ -211,6 +211,39 @@ class HandballNetConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
         return False, None
 
+    async def _update_team_entry(
+        self,
+        entry,
+        team_id: str,
+        team_name: str | None,
+        club_id: str | None = None,
+        club_name: str | None = None,
+        team_variant: str | None = None,
+    ):
+        """Update an existing team config entry and reload it."""
+        current_team_id = entry.data.get(CONF_TEAM_ID, "")
+        data_updates = {
+            CONF_TEAM_ID: team_id,
+            "team_name": team_name,
+            "team_variant": team_variant,
+        }
+
+        if club_id:
+            data_updates[CONF_CLUB_ID] = club_id
+        if club_name:
+            data_updates["club_name"] = club_name
+
+        title = club_name or team_name or team_id
+
+        self.hass.config_entries.async_update_entry(
+            entry,
+            data={**entry.data, **data_updates},
+            title=title,
+        )
+        await self.hass.config_entries.async_reload(entry.entry_id)
+        self.hass.data.get(DOMAIN, {}).pop(current_team_id, None)
+        return self.async_abort(reason="reconfigure_successful")
+
     async def async_step_user(self, user_input=None):
         """Handle the initial step."""
         errors = {}
@@ -409,45 +442,123 @@ class HandballNetConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             return self.async_abort(reason="invalid_reconfigure_entry")
 
         current_team_id = entry.data.get(CONF_TEAM_ID, "")
+        self._club_options = {}
+        self._club_clean_names = {}
+        self._team_options = {}
+        self._team_base_names = {}
+        self._team_variants = {}
 
         if user_input is not None:
-            team_id = user_input.get(CONF_TEAM_ID, "").strip()
-            if not team_id:
-                errors[CONF_TEAM_ID] = "invalid_team_id"
-            elif self._is_team_already_configured(team_id, exclude_entry_id=entry.entry_id):
-                errors[CONF_TEAM_ID] = "already_configured"
-            else:
-                is_valid, team_name = await self._validate_team_id(team_id)
-                if not is_valid:
-                    errors[CONF_TEAM_ID] = "team_not_found"
-                else:
-                    clean_team_name, parsed_suffix = self._split_trailing_parentheses(team_name)
-                    club_name = entry.data.get("club_name")
-                    normalized_team_name = clean_team_name or team_name or team_id
-                    team_variant = self._extract_team_variant(None, parsed_suffix) or entry.data.get("team_variant")
-                    title = club_name or normalized_team_name or team_id
+            input_mode = user_input.get(CONF_TEAM_INPUT_MODE, TEAM_INPUT_MODE_MANUAL)
 
-                    data_updates = {
-                        CONF_TEAM_ID: team_id,
-                        "team_name": normalized_team_name,
-                        "team_variant": team_variant,
-                    }
-                    self.hass.config_entries.async_update_entry(
-                        entry,
-                        data={**entry.data, **data_updates},
-                        title=title,
-                    )
-                    await self.hass.config_entries.async_reload(entry.entry_id)
-                    # Reload uses updated entry data, so explicitly remove stale in-memory team cache.
-                    self.hass.data.get(DOMAIN, {}).pop(current_team_id, None)
-                    return self.async_abort(reason="reconfigure_successful")
+            if input_mode == TEAM_INPUT_MODE_MANUAL:
+                team_id = user_input.get(CONF_TEAM_ID, "").strip()
+                if not team_id:
+                    errors[CONF_TEAM_ID] = "invalid_team_id"
+                elif self._is_team_already_configured(team_id, exclude_entry_id=entry.entry_id):
+                    errors[CONF_TEAM_ID] = "already_configured"
+                else:
+                    is_valid, team_name = await self._validate_team_id(team_id)
+                    if not is_valid:
+                        errors[CONF_TEAM_ID] = "team_not_found"
+                    else:
+                        clean_team_name, parsed_suffix = self._split_trailing_parentheses(team_name)
+                        team_variant = self._extract_team_variant(None, parsed_suffix) or entry.data.get("team_variant")
+                        return await self._update_team_entry(
+                            entry,
+                            team_id,
+                            clean_team_name or team_name or team_id,
+                            team_variant=team_variant,
+                            club_name=entry.data.get("club_name"),
+                            club_id=entry.data.get(CONF_CLUB_ID),
+                        )
+
+            elif input_mode == TEAM_INPUT_MODE_CLUB_SEARCH:
+                club_query = user_input.get(CONF_CLUB_QUERY, "").strip()
+                if len(club_query) < 2:
+                    errors[CONF_CLUB_QUERY] = "invalid_club_query"
+                else:
+                    self._club_options = await self._search_clubs(club_query)
+                    if not self._club_options:
+                        errors[CONF_CLUB_QUERY] = "club_not_found"
+                    else:
+                        return await self.async_step_reconfigure_select_club(entry)
 
         data_schema = vol.Schema({
-            vol.Required(CONF_TEAM_ID, default=current_team_id): str,
+            vol.Required(CONF_TEAM_INPUT_MODE, default=TEAM_INPUT_MODE_MANUAL): vol.In({
+                TEAM_INPUT_MODE_MANUAL: "Manual Team ID",
+                TEAM_INPUT_MODE_CLUB_SEARCH: "Search by Club",
+            }),
+            vol.Optional(CONF_TEAM_ID): str,
+            vol.Optional(CONF_CLUB_QUERY): str,
         })
 
         return self.async_show_form(
             step_id="reconfigure",
+            data_schema=data_schema,
+            errors=errors,
+        )
+
+    async def async_step_reconfigure_select_club(self, entry, user_input=None):
+        """Handle club selection during reconfiguration."""
+        errors = {}
+
+        if user_input is not None:
+            club_id = user_input.get(CONF_CLUB_ID)
+            if not club_id or club_id not in self._club_options:
+                errors[CONF_CLUB_ID] = "invalid_club_selection"
+            else:
+                self._selected_club_id = club_id
+                self._selected_club_name = self._club_clean_names.get(club_id, self._club_options.get(club_id))
+                self._team_options = await self._get_teams_for_club(club_id)
+                if not self._team_options:
+                    errors[CONF_CLUB_ID] = "no_teams_found"
+                else:
+                    return await self.async_step_reconfigure_select_team(entry)
+
+        if not self._club_options:
+            return await self.async_step_reconfigure()
+
+        data_schema = vol.Schema({
+            vol.Required(CONF_CLUB_ID): vol.In(self._club_options),
+        })
+
+        return self.async_show_form(
+            step_id="reconfigure_select_club",
+            data_schema=data_schema,
+            errors=errors,
+        )
+
+    async def async_step_reconfigure_select_team(self, entry, user_input=None):
+        """Handle final team selection during reconfiguration."""
+        errors = {}
+
+        if user_input is not None:
+            team_id = user_input.get(CONF_SELECTED_TEAM_ID)
+            if not team_id or team_id not in self._team_options:
+                errors[CONF_SELECTED_TEAM_ID] = "invalid_team_selection"
+            elif self._is_team_already_configured(team_id, exclude_entry_id=entry.entry_id):
+                errors[CONF_SELECTED_TEAM_ID] = "already_configured"
+            else:
+                team_name = self._team_base_names.get(team_id, self._team_options.get(team_id))
+                return await self._update_team_entry(
+                    entry,
+                    team_id,
+                    team_name,
+                    self._selected_club_id,
+                    self._selected_club_name,
+                    self._team_variants.get(team_id),
+                )
+
+        if not self._team_options:
+            return await self.async_step_reconfigure()
+
+        data_schema = vol.Schema({
+            vol.Required(CONF_SELECTED_TEAM_ID): vol.In(self._team_options),
+        })
+
+        return self.async_show_form(
+            step_id="reconfigure_select_team",
             data_schema=data_schema,
             errors=errors,
         )
