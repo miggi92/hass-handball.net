@@ -1,6 +1,26 @@
 # Changelog
 
 
+## v0.0.18
+
+[compare changes](https://github.com/miggi92/hass-handball.net/compare/v0.0.17...v0.0.18)
+
+### 🚀 Enhancements
+
+- ✨  updated reconfig flow ([8797460](https://github.com/miggi92/hass-handball.net/commit/8797460))
+
+### 🩹 Fixes
+
+- 🐛  fixed naming ([b61d15e](https://github.com/miggi92/hass-handball.net/commit/b61d15e))
+
+### 💅 Refactors
+
+- ♻️  refactor code ([fcbd406](https://github.com/miggi92/hass-handball.net/commit/fcbd406))
+
+### ❤️ Contributors
+
+- Miguel
+
 ## v0.0.17
 
 [compare changes](https://github.com/miggi92/hass-handball.net/compare/v0.0.16...v0.0.17)
