@@ -328,7 +328,10 @@ class HandballNetConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     team_variant,
                 )
                 if preferred_label and preferred_label != (base_team_name or team_name):
-                    team_options[team_id] = preferred_label
+                    if acronym:
+                        team_options[team_id] = f"{preferred_label} ({acronym})"
+                    else:
+                        team_options[team_id] = preferred_label
                 elif acronym:
                     team_options[team_id] = f"{base_team_name or team_name} ({acronym})"
                 else:
