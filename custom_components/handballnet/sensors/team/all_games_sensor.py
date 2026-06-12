@@ -8,8 +8,7 @@ class HandballAllGamesSensor(HandballBaseSensor):
         self.utils = HandballNetUtils()
         self._team_id = team_id
 
-        club_name = entry.data.get("club_name")
-        display_name = f"{club_name} {team_name}" if club_name else team_name
+        display_name = self._resolve_display_name(team_name)
         self._attr_name = f"{display_name} Alle Spiele"
         self._attr_unique_id = self._build_unique_id("all_games")
         self._attr_icon = "mdi:calendar"

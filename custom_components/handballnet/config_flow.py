@@ -120,13 +120,17 @@ class HandballNetConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     def _build_team_mapping(self, selected_team_ids: list[str]) -> dict[str, str]:
         team_mapping: dict[str, str] = {}
         used_keys: set[str] = set()
+        selected_club_name = (self._selected_club_name or "").strip()
 
         for team_id in selected_team_ids:
             team_name = self._team_base_names.get(team_id, self._team_options.get(team_id, team_id))
             team_variant = self._team_variants.get(team_id)
-            stable_team_name = team_name
-            if team_variant and team_variant not in stable_team_name:
-                stable_team_name = f"{stable_team_name} {team_variant}"
+            if selected_club_name and team_variant:
+                stable_team_name = f"{selected_club_name} {team_variant}"
+            else:
+                stable_team_name = team_name
+                if team_variant and team_variant not in stable_team_name:
+                    stable_team_name = f"{stable_team_name} {team_variant}"
 
             stable_key = self._normalize_team_key(stable_team_name, used_keys)
             team_mapping[stable_key] = team_id

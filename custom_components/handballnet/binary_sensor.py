@@ -33,8 +33,7 @@ class HandballTeamLiveBinarySensor(HandballBaseSensor, BinarySensorEntity):
     def __init__(self, hass, entry, team_id, team_name):
         super().__init__(hass, entry, team_id, team_name)
 
-        club_name = entry.data.get("club_name")
-        display_name = f"{club_name} {team_name}" if club_name else team_name
+        display_name = self._resolve_display_name(team_name)
         self._attr_name = f"{display_name} Live"
         self._attr_unique_id = self._build_unique_id("live")
         self._attr_icon = "mdi:handball"
