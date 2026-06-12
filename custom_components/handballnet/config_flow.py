@@ -75,6 +75,29 @@ class HandballNetConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         prefix = acronym.strip().split("-", 1)[0].strip()
         return prefix or None
 
+    @staticmethod
+    def _strip_team_suffix(team_name: str | None) -> tuple[str | None, str | None]:
+        """Split a team name into base name and trailing numeric suffix."""
+        if not team_name:
+            return team_name, None
+
+        stripped_name = team_name.strip()
+        parts = stripped_name.rsplit(" ", 1)
+        if len(parts) == 2 and parts[1].isdigit():
+            return parts[0].strip(), parts[1]
+
+        return stripped_name, None
+
+    def _resolve_team_variant(self, team_name: str | None, acronym: str | None = None) -> str | None:
+        """Build the compact team variant used in device names."""
+        base_name, team_number = self._strip_team_suffix(team_name)
+        league_prefix = self._extract_league_prefix(acronym)
+
+        if league_prefix and team_number:
+            return f"{league_prefix}{team_number}"
+
+        return league_prefix or team_number
+
     async def _api_get(self, path: str):
         """Get JSON data from handball.net API path."""
         session = async_get_clientsession(self.hass)
@@ -132,6 +155,12 @@ class HandballNetConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
         return self.async_create_entry(title=title, data=data)
 
+    def _normalize_team_selection(self, team_name: str | None, acronym: str | None = None) -> tuple[str | None, str | None]:
+        """Normalize a selected team name and derive its compact variant."""
+        base_team_name, team_number = self._strip_team_suffix(team_name)
+        team_variant = self._resolve_team_variant(team_name, acronym)
+        return base_team_name or team_name, team_variant
+
     async def _search_clubs(self, query: str) -> dict[str, str]:
         """Search clubs by query and return club_id -> display_name map."""
         encoded_query = quote_plus(query)
@@ -146,8 +175,6 @@ class HandballNetConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             if club_id and club_name:
                 clean_club_name, _ = self._split_trailing_parentheses(club_name)
                 self._club_clean_names[club_id] = clean_club_name or club_name
-
-                acronym = club.get("acronym")
                 club_options[club_id] = clean_club_name or club_name
 
         return club_options
@@ -164,14 +191,9 @@ class HandballNetConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             team_id = team.get("id")
             team_name = team.get("name")
             if team_id and team_name:
-                base_team_name = team_name.rsplit(" ", 1)[0] if team_name.rstrip().split(" ")[-1].isdigit() else team_name
-                parsed_suffix = team_name if base_team_name != team_name else None
-
                 default_tournament = team.get("defaultTournament")
                 acronym = default_tournament.get("acronym") if default_tournament else None
-                league_prefix = self._extract_league_prefix(acronym)
-                team_variant_number = self._extract_team_variant(acronym, parsed_suffix)
-                team_variant = f"{league_prefix}{team_variant_number}" if league_prefix and team_variant_number else league_prefix or team_variant_number
+                base_team_name, team_variant = self._normalize_team_selection(team_name, acronym)
                 self._team_base_names[team_id] = base_team_name or team_name
                 if team_variant:
                     self._team_variants[team_id] = team_variant
@@ -295,7 +317,7 @@ class HandballNetConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                         return self._create_team_entry(
                             team_id,
                             clean_team_name or team_name,
-                            team_variant=self._extract_team_variant(None, parsed_suffix),
+                            team_variant=self._resolve_team_variant(parsed_suffix),
                         )
 
             elif input_mode == TEAM_INPUT_MODE_CLUB_SEARCH:
@@ -462,8 +484,8 @@ class HandballNetConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     if not is_valid:
                         errors[CONF_TEAM_ID] = "team_not_found"
                     else:
-                        clean_team_name, parsed_suffix = self._split_trailing_parentheses(team_name)
-                        team_variant = self._extract_team_variant(None, parsed_suffix) or entry.data.get("team_variant")
+                        clean_team_name, team_variant = self._normalize_team_selection(team_name)
+                        team_variant = team_variant or entry.data.get("team_variant")
                         return await self._update_team_entry(
                             entry,
                             team_id,
