@@ -6,6 +6,7 @@ __pycache__/
 *.pyc
 
 # Home assistant
-config/.*
+config/.storage
+config/.cache
 *.log*
 config/custom_components/*
