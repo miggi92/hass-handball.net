@@ -33,6 +33,8 @@ class HandballNetConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         self._update_interval_live = DEFAULT_UPDATE_INTERVAL_LIVE
         self._club_options: dict[str, str] = {}
         self._team_options: dict[str, str] = {}
+        self._selected_club_id: str | None = None
+        self._selected_club_name: str | None = None
 
     async def _api_get(self, path: str):
         """Get JSON data from handball.net API path."""
@@ -57,7 +59,13 @@ class HandballNetConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 return True
         return False
 
-    def _create_team_entry(self, team_id: str, team_name: str | None):
+    def _create_team_entry(
+        self,
+        team_id: str,
+        team_name: str | None,
+        club_id: str | None = None,
+        club_name: str | None = None,
+    ):
         """Create config entry for a team."""
         data = {
             CONF_ENTITY_TYPE: ENTITY_TYPE_TEAM,
@@ -66,7 +74,19 @@ class HandballNetConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             CONF_UPDATE_INTERVAL: self._update_interval,
             CONF_UPDATE_INTERVAL_LIVE: self._update_interval_live,
         }
-        title = f"Team: {team_name}" if team_name else f"Team {team_id}"
+
+        if club_id:
+            data[CONF_CLUB_ID] = club_id
+        if club_name:
+            data["club_name"] = club_name
+
+        if team_name and club_name:
+            title = f"Team: {club_name} - {team_name}"
+        elif team_name:
+            title = f"Team: {team_name}"
+        else:
+            title = f"Team {team_id}"
+
         return self.async_create_entry(title=title, data=data)
 
     async def _search_clubs(self, query: str) -> dict[str, str]:
@@ -222,6 +242,8 @@ class HandballNetConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             if not club_id or club_id not in self._club_options:
                 errors[CONF_CLUB_ID] = "invalid_club_selection"
             else:
+                self._selected_club_id = club_id
+                self._selected_club_name = self._club_options.get(club_id)
                 self._team_options = await self._get_teams_for_club(club_id)
                 if not self._team_options:
                     errors[CONF_CLUB_ID] = "no_teams_found"
@@ -253,7 +275,12 @@ class HandballNetConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 errors[CONF_SELECTED_TEAM_ID] = "already_configured"
             else:
                 team_name = self._team_options.get(team_id)
-                return self._create_team_entry(team_id, team_name)
+                return self._create_team_entry(
+                    team_id,
+                    team_name,
+                    self._selected_club_id,
+                    self._selected_club_name,
+                )
 
         if not self._team_options:
             return await self.async_step_team()
