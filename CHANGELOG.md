@@ -1,6 +1,28 @@
 # Changelog
 
 
+## v0.0.16
+
+[compare changes](https://github.com/miggi92/hass-handball.net/compare/v0.0.15...v0.0.16)
+
+### 🚀 Enhancements
+
+- ✨  group teams under a club entry ([77e9a3f](https://github.com/miggi92/hass-handball.net/commit/77e9a3f))
+- ✨  reconfig team id ([970545e](https://github.com/miggi92/hass-handball.net/commit/970545e))
+
+### 🩹 Fixes
+
+- 🐛  fixed version number on manifest ([82b44e3](https://github.com/miggi92/hass-handball.net/commit/82b44e3))
+
+### 🏡 Chore
+
+- **release:** V0.0.15 ([87fb4de](https://github.com/miggi92/hass-handball.net/commit/87fb4de))
+- 🔖  updated version ([906b605](https://github.com/miggi92/hass-handball.net/commit/906b605))
+
+### ❤️ Contributors
+
+- Miguel ([@miggi92](https://github.com/miggi92))
+
 ## v0.0.15
 
 [compare changes](https://github.com/miggi92/hass-handball.net/compare/v0.0.14...v0.0.15)
