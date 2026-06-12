@@ -6,16 +6,16 @@ import logging
 _LOGGER = logging.getLogger(__name__)
 
 class HandballStatisticsSensor(HandballBaseSensor):
-    def __init__(self, hass, entry, team_id):
-        super().__init__(hass, entry, team_id)
-        self._team_id = team_id  # Explicitly set _team_id
+    def __init__(self, hass, entry, team_id, team_name):
+        super().__init__(hass, entry, team_id, team_name)
+        self._team_id = team_id
         self._state = None
         self._attributes = {}
 
-        # Use team name from config if available, fallback to team_id
-        team_name = entry.data.get("team_name", team_id)
-        self._attr_name = f"{team_name} Statistik"
-        self._attr_unique_id = f"handball_team_{team_id}_statistics"
+        club_name = entry.data.get("club_name")
+        display_name = f"{club_name} {team_name}" if club_name else team_name
+        self._attr_name = f"{display_name} Statistik"
+        self._attr_unique_id = self._build_unique_id("statistics")
         self._attr_icon = "mdi:chart-bar"
 
     @property

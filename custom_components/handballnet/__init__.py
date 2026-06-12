@@ -1,7 +1,7 @@
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import config_validation as cv
-from .const import DOMAIN, CONF_TEAM_ID, CONF_TOURNAMENT_ID, CONF_ENTITY_TYPE, ENTITY_TYPE_TEAM, ENTITY_TYPE_TOURNAMENT
+from .const import DOMAIN, CONF_TEAM_ID, CONF_TEAM_MAPPING, CONF_TOURNAMENT_ID, CONF_ENTITY_TYPE, ENTITY_TYPE_TEAM, ENTITY_TYPE_CLUB, ENTITY_TYPE_TOURNAMENT
 
 PLATFORMS = ["sensor", "calendar", "binary_sensor"]
 
@@ -68,6 +68,13 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
             "team_logo_url": None,
             "sensors": []
         }
+    elif entity_type == ENTITY_TYPE_CLUB:
+        club_id = entry.data.get("club_id", entry.entry_id)
+        hass.data[DOMAIN][club_id] = {
+            "club_name": entry.data.get("club_name"),
+            "team_mapping": entry.data.get(CONF_TEAM_MAPPING, {}),
+            "sensors": []
+        }
     elif entity_type == ENTITY_TYPE_TOURNAMENT:
         tournament_id = entry.data[CONF_TOURNAMENT_ID]
         tournament_key = f"tournament_{tournament_id}"
@@ -88,6 +95,12 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry):
         if entity_type == ENTITY_TYPE_TEAM:
             team_id = entry.data[CONF_TEAM_ID]
             hass.data[DOMAIN].pop(team_id, None)
+        elif entity_type == ENTITY_TYPE_CLUB:
+            club_id = entry.data.get("club_id", entry.entry_id)
+            team_mapping = entry.data.get(CONF_TEAM_MAPPING, {})
+            for team_id in team_mapping.values():
+                hass.data[DOMAIN].pop(team_id, None)
+            hass.data[DOMAIN].pop(club_id, None)
         elif entity_type == ENTITY_TYPE_TOURNAMENT:
             tournament_id = entry.data[CONF_TOURNAMENT_ID]
             tournament_key = f"tournament_{tournament_id}"

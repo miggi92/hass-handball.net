@@ -9,10 +9,10 @@ from ...api import HandballNetAPI
 _LOGGER = logging.getLogger(__name__)
 
 class HandballLiveTickerEventsSensor(HandballBaseSensor):
-    def __init__(self, hass, entry, team_id, api: HandballNetAPI):
-        super().__init__(hass, entry, team_id)
+    def __init__(self, hass, entry, team_id, team_name, api: HandballNetAPI):
+        super().__init__(hass, entry, team_id, team_name)
         self._api = api
-        self._team_id = team_id  # Explicitly set _team_id
+        self._team_id = team_id
         self._state = None
         self._attributes = {}
         self._update_interval = entry.options.get(
@@ -20,10 +20,10 @@ class HandballLiveTickerEventsSensor(HandballBaseSensor):
             entry.data.get(CONF_UPDATE_INTERVAL_LIVE, DEFAULT_UPDATE_INTERVAL_LIVE)
         )
         
-        # Use team name from config if available, fallback to team_id
-        team_name = entry.data.get("team_name", team_id)
-        self._attr_name = f"{team_name} Live Events"
-        self._attr_unique_id = f"handball_team_{team_id}_live_events"
+        club_name = entry.data.get("club_name")
+        display_name = f"{club_name} {team_name}" if club_name else team_name
+        self._attr_name = f"{display_name} Live Events"
+        self._attr_unique_id = self._build_unique_id("live_events")
         self._attr_icon = "mdi:alert-circle-outline"
 
     @property

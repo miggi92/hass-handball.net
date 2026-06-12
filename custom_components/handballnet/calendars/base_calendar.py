@@ -1,5 +1,6 @@
 from homeassistant.components.calendar import CalendarEntity, CalendarEvent
 from datetime import datetime, timedelta, timezone
+import re
 from ..const import DOMAIN
 
 class HandballBaseCalendar(CalendarEntity):
@@ -10,9 +11,9 @@ class HandballBaseCalendar(CalendarEntity):
         self._entity_id = entity_id
         self._attr_config_entry_id = entry.entry_id
         
-    def _create_device_info(self, identifiers, name, model):
+    def _create_device_info(self, identifiers, name, model, via_device=None):
         """Create device info dictionary"""
-        return {
+        device_info = {
             "identifiers": identifiers,
             "name": name,
             "manufacturer": "handball.net",
@@ -20,9 +21,18 @@ class HandballBaseCalendar(CalendarEntity):
             "entry_type": "service"
         }
 
+        if via_device is not None:
+            device_info["via_device"] = via_device
+
+        return device_info
+
     def update_device_name(self, new_name: str) -> None:
         """Update device name - to be overridden if needed"""
         pass
+
+    def _build_unique_id(self, suffix: str) -> str:
+        entity_slug = re.sub(r"[^a-z0-9]+", "_", str(self._entity_id).lower()).strip("_")
+        return f"{self._attr_config_entry_id}_{entity_slug}_{suffix}"
 
     def _create_calendar_event(self, match_data: dict, is_live: bool = False) -> CalendarEvent:
         """Create a calendar event from match data"""

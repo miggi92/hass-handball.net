@@ -1,14 +1,18 @@
 import voluptuous as vol
 from homeassistant import config_entries
+from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from urllib.parse import quote_plus
 import re
 from .const import (
     DOMAIN,
+    CONF_CLUB_ID,
     CONF_TEAM_ID,
+    CONF_TEAM_MAPPING,
     CONF_TOURNAMENT_ID,
     CONF_ENTITY_TYPE,
     ENTITY_TYPE_TEAM,
+    ENTITY_TYPE_CLUB,
     ENTITY_TYPE_TOURNAMENT,
     CONF_UPDATE_INTERVAL,
     DEFAULT_UPDATE_INTERVAL,
@@ -98,6 +102,37 @@ class HandballNetConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
         return league_prefix or team_number
 
+    @staticmethod
+    def _normalize_team_key(team_name: str, used_keys: set[str]) -> str:
+        key = re.sub(r"\s+", " ", team_name.strip())
+        if not key:
+            key = "Team"
+
+        candidate = key
+        counter = 2
+        while candidate in used_keys:
+            candidate = f"{key} {counter}"
+            counter += 1
+
+        used_keys.add(candidate)
+        return candidate
+
+    def _build_team_mapping(self, selected_team_ids: list[str]) -> dict[str, str]:
+        team_mapping: dict[str, str] = {}
+        used_keys: set[str] = set()
+
+        for team_id in selected_team_ids:
+            team_name = self._team_base_names.get(team_id, self._team_options.get(team_id, team_id))
+            team_variant = self._team_variants.get(team_id)
+            stable_team_name = team_name
+            if team_variant and team_variant not in stable_team_name:
+                stable_team_name = f"{stable_team_name} {team_variant}"
+
+            stable_key = self._normalize_team_key(stable_team_name, used_keys)
+            team_mapping[stable_key] = team_id
+
+        return team_mapping
+
     async def _api_get(self, path: str):
         """Get JSON data from handball.net API path."""
         session = async_get_clientsession(self.hass)
@@ -120,12 +155,19 @@ class HandballNetConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         for entry in self._async_current_entries():
             if exclude_entry_id and entry.entry_id == exclude_entry_id:
                 continue
-            if (
-                entry.data.get(CONF_TEAM_ID) == team_id
-                and entry.data.get(CONF_ENTITY_TYPE) == ENTITY_TYPE_TEAM
-            ):
+            entity_type = entry.data.get(CONF_ENTITY_TYPE)
+            if entity_type == ENTITY_TYPE_TEAM and entry.data.get(CONF_TEAM_ID) == team_id:
+                return True
+            if entity_type == ENTITY_TYPE_CLUB and team_id in entry.data.get(CONF_TEAM_MAPPING, {}).values():
                 return True
         return False
+
+    def _are_team_ids_already_configured(
+        self,
+        team_ids: list[str],
+        exclude_entry_id: str | None = None,
+    ) -> bool:
+        return any(self._is_team_already_configured(team_id, exclude_entry_id) for team_id in team_ids)
 
     def _create_team_entry(
         self,
@@ -153,6 +195,24 @@ class HandballNetConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
         title = club_name or team_name or team_id
 
+        return self.async_create_entry(title=title, data=data)
+
+    def _create_club_entry(
+        self,
+        club_id: str,
+        club_name: str | None,
+        team_mapping: dict[str, str],
+    ):
+        data = {
+            CONF_ENTITY_TYPE: ENTITY_TYPE_CLUB,
+            CONF_CLUB_ID: club_id,
+            "club_name": club_name,
+            CONF_TEAM_MAPPING: team_mapping,
+            CONF_UPDATE_INTERVAL: self._update_interval,
+            CONF_UPDATE_INTERVAL_LIVE: self._update_interval_live,
+        }
+
+        title = club_name or club_id
         return self.async_create_entry(title=title, data=data)
 
     def _normalize_team_selection(self, team_name: str | None, acronym: str | None = None) -> tuple[str | None, str | None]:
@@ -274,6 +334,35 @@ class HandballNetConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         self.hass.data.get(DOMAIN, {}).pop(current_team_id, None)
         return self.async_abort(reason="reconfigure_successful")
 
+    async def _update_club_entry(
+        self,
+        entry,
+        club_id: str,
+        club_name: str | None,
+        team_mapping: dict[str, str],
+    ):
+        old_team_ids = list(entry.data.get(CONF_TEAM_MAPPING, {}).values())
+        data_updates = {
+            CONF_ENTITY_TYPE: ENTITY_TYPE_CLUB,
+            CONF_CLUB_ID: club_id,
+            "club_name": club_name,
+            CONF_TEAM_MAPPING: team_mapping,
+        }
+
+        title = club_name or club_id
+
+        self.hass.config_entries.async_update_entry(
+            entry,
+            data={**entry.data, **data_updates},
+            title=title,
+        )
+
+        for old_team_id in old_team_ids:
+            self.hass.data.get(DOMAIN, {}).pop(old_team_id, None)
+
+        await self.hass.config_entries.async_reload(entry.entry_id)
+        return self.async_abort(reason="reconfigure_successful")
+
     async def async_step_user(self, user_input=None):
         """Handle the initial step."""
         errors = {}
@@ -389,26 +478,29 @@ class HandballNetConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         errors = {}
 
         if user_input is not None:
-            team_id = user_input.get(CONF_SELECTED_TEAM_ID)
-            if not team_id or team_id not in self._team_options:
+            selected_team_ids = user_input.get(CONF_SELECTED_TEAM_ID, [])
+            if isinstance(selected_team_ids, str):
+                selected_team_ids = [selected_team_ids]
+
+            if not selected_team_ids:
                 errors[CONF_SELECTED_TEAM_ID] = "invalid_team_selection"
-            elif self._is_team_already_configured(team_id):
+            elif any(team_id not in self._team_options for team_id in selected_team_ids):
+                errors[CONF_SELECTED_TEAM_ID] = "invalid_team_selection"
+            elif self._are_team_ids_already_configured(selected_team_ids):
                 errors[CONF_SELECTED_TEAM_ID] = "already_configured"
             else:
-                team_name = self._team_base_names.get(team_id, self._team_options.get(team_id))
-                return self._create_team_entry(
-                    team_id,
-                    team_name,
-                    self._selected_club_id,
+                team_mapping = self._build_team_mapping(selected_team_ids)
+                return self._create_club_entry(
+                    self._selected_club_id or self._selected_club_name or "club",
                     self._selected_club_name,
-                    self._team_variants.get(team_id),
+                    team_mapping,
                 )
 
         if not self._team_options:
             return await self.async_step_team()
 
         data_schema = vol.Schema({
-            vol.Required(CONF_SELECTED_TEAM_ID): vol.In(self._team_options),
+            vol.Required(CONF_SELECTED_TEAM_ID): cv.multi_select(self._team_options),
         })
 
         return self.async_show_form(
@@ -468,7 +560,7 @@ class HandballNetConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             return self.async_abort(reason="invalid_reconfigure_entry")
 
         entity_type = entry.data.get(CONF_ENTITY_TYPE, ENTITY_TYPE_TEAM)
-        if entity_type != ENTITY_TYPE_TEAM:
+        if entity_type not in (ENTITY_TYPE_TEAM, ENTITY_TYPE_CLUB):
             return self.async_abort(reason="invalid_reconfigure_entry")
 
         current_team_id = entry.data.get(CONF_TEAM_ID, "")
@@ -481,7 +573,18 @@ class HandballNetConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         if user_input is not None:
             input_mode = user_input.get(CONF_TEAM_INPUT_MODE, TEAM_INPUT_MODE_MANUAL)
 
-            if input_mode == TEAM_INPUT_MODE_MANUAL:
+            if entity_type == ENTITY_TYPE_CLUB or input_mode == TEAM_INPUT_MODE_CLUB_SEARCH:
+                club_query = user_input.get(CONF_CLUB_QUERY, "").strip()
+                if len(club_query) < 2:
+                    errors[CONF_CLUB_QUERY] = "invalid_club_query"
+                else:
+                    self._club_options = await self._search_clubs(club_query)
+                    if not self._club_options:
+                        errors[CONF_CLUB_QUERY] = "club_not_found"
+                    else:
+                        return await self.async_step_reconfigure_select_club(entry)
+
+            elif input_mode == TEAM_INPUT_MODE_MANUAL:
                 team_id = user_input.get(CONF_TEAM_ID, "").strip()
                 if not team_id:
                     errors[CONF_TEAM_ID] = "invalid_team_id"
@@ -503,25 +606,22 @@ class HandballNetConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                             club_id=entry.data.get(CONF_CLUB_ID),
                         )
 
-            elif input_mode == TEAM_INPUT_MODE_CLUB_SEARCH:
-                club_query = user_input.get(CONF_CLUB_QUERY, "").strip()
-                if len(club_query) < 2:
-                    errors[CONF_CLUB_QUERY] = "invalid_club_query"
-                else:
-                    self._club_options = await self._search_clubs(club_query)
-                    if not self._club_options:
-                        errors[CONF_CLUB_QUERY] = "club_not_found"
-                    else:
-                        return await self.async_step_reconfigure_select_club(entry)
-
-        data_schema = vol.Schema({
-            vol.Required(CONF_TEAM_INPUT_MODE, default=TEAM_INPUT_MODE_MANUAL): vol.In({
-                TEAM_INPUT_MODE_MANUAL: "Manual Team ID",
-                TEAM_INPUT_MODE_CLUB_SEARCH: "Search by Club",
-            }),
-            vol.Optional(CONF_TEAM_ID): str,
-            vol.Optional(CONF_CLUB_QUERY): str,
-        })
+        if entity_type == ENTITY_TYPE_CLUB:
+            data_schema = vol.Schema({
+                vol.Required(CONF_TEAM_INPUT_MODE, default=TEAM_INPUT_MODE_CLUB_SEARCH): vol.In({
+                    TEAM_INPUT_MODE_CLUB_SEARCH: "Search by Club",
+                }),
+                vol.Optional(CONF_CLUB_QUERY): str,
+            })
+        else:
+            data_schema = vol.Schema({
+                vol.Required(CONF_TEAM_INPUT_MODE, default=TEAM_INPUT_MODE_MANUAL): vol.In({
+                    TEAM_INPUT_MODE_MANUAL: "Manual Team ID",
+                    TEAM_INPUT_MODE_CLUB_SEARCH: "Search by Club",
+                }),
+                vol.Optional(CONF_TEAM_ID): str,
+                vol.Optional(CONF_CLUB_QUERY): str,
+            })
 
         return self.async_show_form(
             step_id="reconfigure",
@@ -564,27 +664,30 @@ class HandballNetConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         errors = {}
 
         if user_input is not None:
-            team_id = user_input.get(CONF_SELECTED_TEAM_ID)
-            if not team_id or team_id not in self._team_options:
+            selected_team_ids = user_input.get(CONF_SELECTED_TEAM_ID, [])
+            if isinstance(selected_team_ids, str):
+                selected_team_ids = [selected_team_ids]
+
+            if not selected_team_ids:
                 errors[CONF_SELECTED_TEAM_ID] = "invalid_team_selection"
-            elif self._is_team_already_configured(team_id, exclude_entry_id=entry.entry_id):
+            elif any(team_id not in self._team_options for team_id in selected_team_ids):
+                errors[CONF_SELECTED_TEAM_ID] = "invalid_team_selection"
+            elif self._are_team_ids_already_configured(selected_team_ids, exclude_entry_id=entry.entry_id):
                 errors[CONF_SELECTED_TEAM_ID] = "already_configured"
             else:
-                team_name = self._team_base_names.get(team_id, self._team_options.get(team_id))
-                return await self._update_team_entry(
+                team_mapping = self._build_team_mapping(selected_team_ids)
+                return await self._update_club_entry(
                     entry,
-                    team_id,
-                    team_name,
-                    self._selected_club_id,
-                    self._selected_club_name,
-                    self._team_variants.get(team_id),
+                    self._selected_club_id or entry.data.get(CONF_CLUB_ID) or entry.entry_id,
+                    self._selected_club_name or entry.data.get("club_name"),
+                    team_mapping,
                 )
 
         if not self._team_options:
             return await self.async_step_reconfigure()
 
         data_schema = vol.Schema({
-            vol.Required(CONF_SELECTED_TEAM_ID): vol.In(self._team_options),
+            vol.Required(CONF_SELECTED_TEAM_ID): cv.multi_select(self._team_options),
         })
 
         return self.async_show_form(

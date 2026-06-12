@@ -4,13 +4,13 @@ from .base_calendar import HandballBaseCalendar
 from ...const import DOMAIN
 
 class HandballTeamCalendar(HandballBaseCalendar):
-    def __init__(self, hass, entry, team_id):
-        super().__init__(hass, entry, team_id)
-        
-        # Use team name from config if available, fallback to team_id
-        team_name = entry.data.get("team_name", team_id)
-        self._attr_name = f"{team_name} Spielplan"
-        self._attr_unique_id = f"handball_{team_id}_calendar"
+    def __init__(self, hass, entry, team_id, team_name):
+        super().__init__(hass, entry, team_id, team_name)
+
+        club_name = entry.data.get("club_name")
+        display_name = f"{club_name} {team_name}" if club_name else team_name
+        self._attr_name = f"{display_name} Spielplan"
+        self._attr_unique_id = self._build_unique_id("calendar")
         self._event = None
 
     @property

@@ -14,15 +14,20 @@ class HandballBaseSensor(Entity):
         if category:
             self._attr_entity_category = category
 
-    def _create_device_info(self, identifiers, name, model):
+    def _create_device_info(self, identifiers, name, model, via_device=None):
         """Create device info dictionary"""
-        return {
+        device_info = {
             "identifiers": identifiers,
             "name": name,
             "manufacturer": "handball.net",
             "model": model,
             "entry_type": "service"
         }
+
+        if via_device is not None:
+            device_info["via_device"] = via_device
+
+        return device_info
 
     def update_device_name(self, new_name: str) -> None:
         """Update device name - to be overridden if needed"""

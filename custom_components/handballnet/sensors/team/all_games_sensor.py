@@ -8,18 +8,18 @@ import logging
 _LOGGER = logging.getLogger(__name__)
 
 class HandballAllGamesSensor(HandballBaseSensor):
-    def __init__(self, hass, entry, team_id, api: HandballNetAPI):
-        super().__init__(hass, entry, team_id)
+    def __init__(self, hass, entry, team_id, team_name, api: HandballNetAPI):
+        super().__init__(hass, entry, team_id, team_name)
         self.utils = HandballNetUtils()
         self._api = api
-        self._team_id = team_id  # Explicitly set _team_id
+        self._team_id = team_id
         self._state = None
         self._attributes = {}
 
-        # Use team name from config if available, fallback to team_id
-        team_name = entry.data.get("team_name", team_id)
-        self._attr_name = f"{team_name} Alle Spiele"
-        self._attr_unique_id = f"handball_team_{team_id}_all_games"
+        club_name = entry.data.get("club_name")
+        display_name = f"{club_name} {team_name}" if club_name else team_name
+        self._attr_name = f"{display_name} Alle Spiele"
+        self._attr_unique_id = self._build_unique_id("all_games")
         self._attr_icon = "mdi:calendar"
 
     @property

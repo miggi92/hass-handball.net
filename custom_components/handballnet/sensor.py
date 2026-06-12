@@ -5,10 +5,13 @@ import logging
 
 from .const import (
     DOMAIN,
+    CONF_CLUB_ID,
     CONF_TEAM_ID,
+    CONF_TEAM_MAPPING,
     CONF_TOURNAMENT_ID,
     CONF_ENTITY_TYPE,
     ENTITY_TYPE_TEAM,
+    ENTITY_TYPE_CLUB,
     ENTITY_TYPE_TOURNAMENT,
     CONF_UPDATE_INTERVAL,
     CONF_UPDATE_INTERVAL_LIVE,
@@ -37,6 +40,8 @@ async def async_setup_entry(hass: HomeAssistant, entry, async_add_entities):
     
     if entity_type == ENTITY_TYPE_TEAM:
         await _setup_team_sensors(hass, entry, async_add_entities)
+    elif entity_type == ENTITY_TYPE_CLUB:
+        await _setup_club_sensors(hass, entry, async_add_entities)
     elif entity_type == ENTITY_TYPE_TOURNAMENT:
         await _setup_tournament_sensors(hass, entry, async_add_entities)
 
@@ -47,22 +52,21 @@ async def _setup_team_sensors(hass: HomeAssistant, entry, async_add_entities):
     live_interval = entry.options.get(CONF_UPDATE_INTERVAL_LIVE, entry.data.get(CONF_UPDATE_INTERVAL_LIVE, DEFAULT_UPDATE_INTERVAL_LIVE))
 
     api = HandballNetAPI(hass)
-    
-    # Create team sensor instances
-    all_sensor = HandballAllGamesSensor(hass, entry, team_id, api)
-    heim_sensor = HandballHeimspielSensor(hass, entry, team_id)
-    aus_sensor = HandballAuswaertsspielSensor(hass, entry, team_id)
-    next_match_sensor = HandballNextMatchSensor(hass, entry, team_id, api)
-    statistics_sensor = HandballStatisticsSensor(hass, entry, team_id)
-    live_sensor = HandballLiveTickerSensor(hass, entry, team_id)
-    live_events_sensor = HandballLiveTickerEventsSensor(hass, entry, team_id, api)
-    table_sensor = HandballTablePositionSensor(hass, entry, team_id, api)
-    health_sensor = HandballHealthSensor(hass, entry, team_id, api)
 
-    # Store sensor references
-    hass.data[DOMAIN][team_id]["sensors"] = [all_sensor, heim_sensor, aus_sensor, next_match_sensor, statistics_sensor, live_sensor, live_events_sensor, table_sensor, health_sensor]
+    all_sensor = HandballAllGamesSensor(hass, entry, team_id, entry.data.get("team_name", team_id), api)
+    heim_sensor = HandballHeimspielSensor(hass, entry, team_id, entry.data.get("team_name", team_id))
+    aus_sensor = HandballAuswaertsspielSensor(hass, entry, team_id, entry.data.get("team_name", team_id))
+    next_match_sensor = HandballNextMatchSensor(hass, entry, team_id, entry.data.get("team_name", team_id), api)
+    statistics_sensor = HandballStatisticsSensor(hass, entry, team_id, entry.data.get("team_name", team_id))
+    live_sensor = HandballLiveTickerSensor(hass, entry, team_id, entry.data.get("team_name", team_id))
+    live_events_sensor = HandballLiveTickerEventsSensor(hass, entry, team_id, entry.data.get("team_name", team_id), api)
+    table_sensor = HandballTablePositionSensor(hass, entry, team_id, entry.data.get("team_name", team_id), api)
+    health_sensor = HandballHealthSensor(hass, entry, team_id, entry.data.get("team_name", team_id), api)
 
-    async_add_entities([all_sensor, heim_sensor, aus_sensor, next_match_sensor, statistics_sensor, live_sensor, live_events_sensor, table_sensor, health_sensor])
+    team_sensors = [all_sensor, heim_sensor, aus_sensor, next_match_sensor, statistics_sensor, live_sensor, live_events_sensor, table_sensor, health_sensor]
+    hass.data[DOMAIN][team_id]["sensors"] = team_sensors
+
+    async_add_entities(team_sensors)
 
     async def update_all(now=None):
         try:
@@ -131,6 +135,120 @@ async def _setup_team_sensors(hass: HomeAssistant, entry, async_add_entities):
             match.get("startsAt", 0) / 1000 <= now_ts <= match.get("startsAt", 0) / 1000 + 7200
             for match in matches
         )
+        interval = live_interval if is_live else update_interval
+        async_call_later(hass, interval, update_all)
+
+    await update_all()
+
+async def _setup_club_sensors(hass: HomeAssistant, entry, async_add_entities):
+    club_id = entry.data.get(CONF_CLUB_ID, entry.entry_id)
+    team_mapping = entry.data.get(CONF_TEAM_MAPPING, {})
+    update_interval = entry.options.get(CONF_UPDATE_INTERVAL, entry.data.get(CONF_UPDATE_INTERVAL, DEFAULT_UPDATE_INTERVAL))
+    live_interval = entry.options.get(CONF_UPDATE_INTERVAL_LIVE, entry.data.get(CONF_UPDATE_INTERVAL_LIVE, DEFAULT_UPDATE_INTERVAL_LIVE))
+
+    api = HandballNetAPI(hass)
+    team_state_map: dict[str, dict[str, object]] = {}
+    entities_to_add = []
+
+    for team_name, team_id in team_mapping.items():
+        hass.data[DOMAIN].setdefault(team_id, {
+            "matches": [],
+            "table_position": None,
+            "team_name": None,
+            "team_logo_url": None,
+            "sensors": []
+        })
+
+        all_sensor = HandballAllGamesSensor(hass, entry, team_id, team_name, api)
+        heim_sensor = HandballHeimspielSensor(hass, entry, team_id, team_name)
+        aus_sensor = HandballAuswaertsspielSensor(hass, entry, team_id, team_name)
+        next_match_sensor = HandballNextMatchSensor(hass, entry, team_id, team_name, api)
+        statistics_sensor = HandballStatisticsSensor(hass, entry, team_id, team_name)
+        live_sensor = HandballLiveTickerSensor(hass, entry, team_id, team_name)
+        live_events_sensor = HandballLiveTickerEventsSensor(hass, entry, team_id, team_name, api)
+        table_sensor = HandballTablePositionSensor(hass, entry, team_id, team_name, api)
+        health_sensor = HandballHealthSensor(hass, entry, team_id, team_name, api)
+
+        team_sensors = [all_sensor, heim_sensor, aus_sensor, next_match_sensor, statistics_sensor, live_sensor, live_events_sensor, table_sensor, health_sensor]
+        hass.data[DOMAIN][team_id]["sensors"] = team_sensors
+        team_state_map[team_id] = {
+            "team_name": team_name,
+            "sensors": team_sensors,
+            "all_sensor": all_sensor,
+            "heim_sensor": heim_sensor,
+            "aus_sensor": aus_sensor,
+            "next_match_sensor": next_match_sensor,
+            "statistics_sensor": statistics_sensor,
+            "live_sensor": live_sensor,
+            "live_events_sensor": live_events_sensor,
+            "table_sensor": table_sensor,
+            "health_sensor": health_sensor,
+        }
+        entities_to_add.extend(team_sensors)
+
+    async_add_entities(entities_to_add)
+
+    async def update_all(now=None):
+        for team_id, state in team_state_map.items():
+            try:
+                all_sensor = state["all_sensor"]
+                heim_sensor = state["heim_sensor"]
+                aus_sensor = state["aus_sensor"]
+                next_match_sensor = state["next_match_sensor"]
+                statistics_sensor = state["statistics_sensor"]
+                live_sensor = state["live_sensor"]
+                live_events_sensor = state["live_events_sensor"]
+                table_sensor = state["table_sensor"]
+                health_sensor = state["health_sensor"]
+
+                await all_sensor.async_update()
+
+                team_bucket = hass.data.get(DOMAIN, {}).get(team_id, {})
+                team_name = team_bucket.get("team_name") or state["team_name"]
+                team_logo_url = team_bucket.get("team_logo_url")
+
+                if team_name:
+                    for sensor in state["sensors"]:
+                        if hasattr(sensor, "update_device_name"):
+                            sensor.update_device_name(team_name)
+
+                    if team_logo_url and hasattr(all_sensor, "update_entity_picture"):
+                        all_sensor.update_entity_picture(team_logo_url)
+
+                await next_match_sensor.async_update()
+                await statistics_sensor.async_update()
+                await table_sensor.async_update()
+                await health_sensor.async_update()
+                await heim_sensor.async_update()
+                await aus_sensor.async_update()
+                await live_events_sensor.async_update()
+
+                all_sensor.async_write_ha_state()
+                heim_sensor.async_write_ha_state()
+                aus_sensor.async_write_ha_state()
+                next_match_sensor.async_write_ha_state()
+                statistics_sensor.async_write_ha_state()
+                live_sensor.update_state()
+                live_sensor.async_write_ha_state()
+                live_events_sensor.async_write_ha_state()
+                table_sensor.async_write_ha_state()
+                health_sensor.async_write_ha_state()
+            except Exception as e:
+                _LOGGER.error("Error updating club sensors for %s: %s", team_id, e)
+        await schedule_next_poll()
+
+    async def schedule_next_poll():
+        now_ts = datetime.now(timezone.utc).timestamp()
+        is_live = False
+        for team_id in team_state_map:
+            matches = hass.data.get(DOMAIN, {}).get(team_id, {}).get("matches", [])
+            if any(
+                match.get("startsAt", 0) / 1000 <= now_ts <= match.get("startsAt", 0) / 1000 + 7200
+                for match in matches
+            ):
+                is_live = True
+                break
+
         interval = live_interval if is_live else update_interval
         async_call_later(hass, interval, update_all)
 
