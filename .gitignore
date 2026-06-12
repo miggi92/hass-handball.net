@@ -4,3 +4,8 @@ node_modules/
 # python
 __pycache__/
 *.pyc
+
+# Home assistant
+config/.*
+*.log*
+config/custom_components/*
