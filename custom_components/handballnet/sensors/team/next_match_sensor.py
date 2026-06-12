@@ -5,6 +5,7 @@ import logging
 
 _LOGGER = logging.getLogger(__name__)
 
+
 class HandballNextMatchSensor(HandballBaseSensor):
     def __init__(self, coordinator, entry, team_id, team_name, api=None):
         super().__init__(coordinator, entry, team_id, team_name)

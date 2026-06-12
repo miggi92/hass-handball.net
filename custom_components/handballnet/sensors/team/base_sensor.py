@@ -4,6 +4,7 @@ from ..base_sensor import HandballBaseSensor as BaseHandballSensor
 from ...const import DOMAIN, CONF_CLUB_ID
 from ...utils import HandballNetUtils
 
+
 class HandballBaseSensor(BaseHandballSensor):
     """Base class for handball team sensors"""
 
@@ -21,7 +22,7 @@ class HandballBaseSensor(BaseHandballSensor):
             identifiers={(DOMAIN, f"{entry.entry_id}_{team_name}")},
             via_device=(DOMAIN, self._club_id),
             name=device_name,
-            model="Handball Team"
+            model="Handball Team",
         )
 
     def _compose_device_name(self, team_name: str) -> str:

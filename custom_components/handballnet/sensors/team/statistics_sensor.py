@@ -4,6 +4,7 @@ import logging
 
 _LOGGER = logging.getLogger(__name__)
 
+
 class HandballStatisticsSensor(HandballBaseSensor):
     def __init__(self, coordinator, entry, team_id, team_name):
         super().__init__(coordinator, entry, team_id, team_name)
@@ -22,41 +23,46 @@ class HandballStatisticsSensor(HandballBaseSensor):
     def extra_state_attributes(self) -> dict[str, Any]:
         return self._calculate_statistics(self._get_team_bucket().get("matches", []))[1]
 
-    def _calculate_statistics(self, matches: List[Dict[str, Any]]) -> tuple[str | None, dict[str, Any]]:
+    def _calculate_statistics(
+        self, matches: List[Dict[str, Any]]
+    ) -> tuple[str | None, dict[str, Any]]:
         # Filter only finished matches (those with results)
         finished_matches = []
         upcoming_matches = []
-        
+
         for match in matches:
-            if match.get("state") == "Post" or (match.get("homeGoals") is not None and match.get("awayGoals") is not None):
+            if match.get("state") == "Post" or (
+                match.get("homeGoals") is not None
+                and match.get("awayGoals") is not None
+            ):
                 finished_matches.append(match)
             else:
                 upcoming_matches.append(match)
-        
+
         total_matches = len(finished_matches)
         wins = 0
         draws = 0
         losses = 0
         goals_scored = 0
         goals_conceded = 0
-        
+
         for match in finished_matches:
             home_goals = match.get("homeGoals", 0) or 0
             away_goals = match.get("awayGoals", 0) or 0
-            
+
             # Determine if this team is home or away
             is_home = match.get("isHomeMatch", False)
-            
+
             if is_home:
                 team_goals = home_goals
                 opponent_goals = away_goals
             else:
                 team_goals = away_goals
                 opponent_goals = home_goals
-            
+
             goals_scored += team_goals
             goals_conceded += opponent_goals
-            
+
             # Determine result
             if team_goals > opponent_goals:
                 wins += 1

@@ -2,6 +2,7 @@ from typing import Any, Optional
 from .base_sensor import HandballBaseSensor
 from ...utils import HandballNetUtils
 
+
 class HandballAuswaertsspielSensor(HandballBaseSensor):
     def __init__(self, coordinator, entry, team_id, team_name):
         super().__init__(coordinator, entry, team_id, team_name)

@@ -1,6 +1,7 @@
 from typing import Any
 from .base_sensor import HandballBaseSensor
 
+
 class HandballLiveTickerEventsSensor(HandballBaseSensor):
     def __init__(self, coordinator, entry, team_id, team_name, api=None):
         super().__init__(coordinator, entry, team_id, team_name)

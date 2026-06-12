@@ -1,8 +1,15 @@
 from homeassistant.components.binary_sensor import BinarySensorEntity
 from homeassistant.core import HomeAssistant
 from datetime import datetime, timezone
-from .const import DOMAIN, CONF_ENTITY_TYPE, CONF_TEAM_MAPPING, ENTITY_TYPE_TEAM, ENTITY_TYPE_CLUB
+from .const import (
+    DOMAIN,
+    CONF_ENTITY_TYPE,
+    CONF_TEAM_MAPPING,
+    ENTITY_TYPE_TEAM,
+    ENTITY_TYPE_CLUB,
+)
 from .sensors.team.base_sensor import HandballBaseSensor
+
 
 async def async_setup_entry(hass: HomeAssistant, entry, async_add_entities):
     entity_type = entry.data.get(CONF_ENTITY_TYPE, ENTITY_TYPE_TEAM)
@@ -22,12 +29,19 @@ async def async_setup_entry(hass: HomeAssistant, entry, async_add_entities):
     else:
         for team_name, team_id in entry.data.get(CONF_TEAM_MAPPING, {}).items():
             if team_id not in hass.data[DOMAIN]:
-                hass.data[DOMAIN][team_id] = {"matches": [], "table_position": None, "team_name": None, "team_logo_url": None, "sensors": []}
+                hass.data[DOMAIN][team_id] = {
+                    "matches": [],
+                    "table_position": None,
+                    "team_name": None,
+                    "team_logo_url": None,
+                    "sensors": [],
+                }
             entity = HandballTeamLiveBinarySensor(hass, entry, team_id, team_name)
             hass.data[DOMAIN][team_id].setdefault("sensors", []).append(entity)
             entities.append(entity)
 
     async_add_entities(entities, update_before_add=True)
+
 
 class HandballTeamLiveBinarySensor(HandballBaseSensor, BinarySensorEntity):
     def __init__(self, hass, entry, team_id, team_name):
@@ -41,9 +55,13 @@ class HandballTeamLiveBinarySensor(HandballBaseSensor, BinarySensorEntity):
     @property
     def is_on(self) -> bool:
         now_ts = datetime.now(timezone.utc).timestamp()
-        matches = self.hass.data.get(DOMAIN, {}).get(self._team_id, {}).get("matches", [])
+        matches = (
+            self.hass.data.get(DOMAIN, {}).get(self._team_id, {}).get("matches", [])
+        )
         return any(
-            match.get("startsAt", 0) / 1000 <= now_ts <= match.get("startsAt", 0) / 1000 + 7200
+            match.get("startsAt", 0) / 1000
+            <= now_ts
+            <= match.get("startsAt", 0) / 1000 + 7200
             for match in matches
         )
 
@@ -51,5 +69,7 @@ class HandballTeamLiveBinarySensor(HandballBaseSensor, BinarySensorEntity):
     def extra_state_attributes(self):
         return {
             "team_id": self._team_id,
-            "matches_count": len(self.hass.data.get(DOMAIN, {}).get(self._team_id, {}).get("matches", []))
+            "matches_count": len(
+                self.hass.data.get(DOMAIN, {}).get(self._team_id, {}).get("matches", [])
+            ),
         }
