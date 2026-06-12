@@ -1,6 +1,6 @@
 {
     "name": "Handball.net Integration",
-    "homeassistant": "2025.5.2",
+    "homeassistant": "2026.6.2",
     "render_readme": true,
     "zip_release": true,
     "filename": "handballnet.zip"
