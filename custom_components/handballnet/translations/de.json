@@ -39,6 +39,13 @@
         "data": {
           "tournament_id": "Turnier-ID"
         }
+      },
+      "reconfigure": {
+        "title": "Handball.net Team neu konfigurieren",
+        "description": "Aktualisiere die Team-ID für dieses konfigurierte Team",
+        "data": {
+          "team_id": "Team-ID"
+        }
       }
     },
     "error": {
@@ -55,7 +62,9 @@
       "already_configured": "Diese Entität ist bereits konfiguriert."
     },
     "abort": {
-      "already_configured": "Diese Entität ist bereits konfiguriert."
+      "already_configured": "Diese Entität ist bereits konfiguriert.",
+      "invalid_reconfigure_entry": "Dieser Eintrag kann nicht neu konfiguriert werden.",
+      "reconfigure_successful": "Team wurde erfolgreich neu konfiguriert."
     }
   },
   "options": {

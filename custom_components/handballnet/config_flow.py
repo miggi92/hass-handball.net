@@ -49,9 +49,15 @@ class HandballNetConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         except Exception:
             return None
 
-    def _is_team_already_configured(self, team_id: str) -> bool:
+    def _is_team_already_configured(
+        self,
+        team_id: str,
+        exclude_entry_id: str | None = None,
+    ) -> bool:
         """Check if the team is already configured."""
         for entry in self._async_current_entries():
+            if exclude_entry_id and entry.entry_id == exclude_entry_id:
+                continue
             if (
                 entry.data.get(CONF_TEAM_ID) == team_id
                 and entry.data.get(CONF_ENTITY_TYPE) == ENTITY_TYPE_TEAM
@@ -335,4 +341,61 @@ class HandballNetConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             step_id="tournament",
             data_schema=data_schema,
             errors=errors
+        )
+
+    async def async_step_reconfigure(self, user_input=None):
+        """Handle reconfiguration of existing entries."""
+        errors = {}
+        entry = self.hass.config_entries.async_get_entry(self.context["entry_id"])
+
+        if entry is None:
+            return self.async_abort(reason="invalid_reconfigure_entry")
+
+        entity_type = entry.data.get(CONF_ENTITY_TYPE, ENTITY_TYPE_TEAM)
+        if entity_type != ENTITY_TYPE_TEAM:
+            return self.async_abort(reason="invalid_reconfigure_entry")
+
+        current_team_id = entry.data.get(CONF_TEAM_ID, "")
+
+        if user_input is not None:
+            team_id = user_input.get(CONF_TEAM_ID, "").strip()
+            if not team_id:
+                errors[CONF_TEAM_ID] = "invalid_team_id"
+            elif self._is_team_already_configured(team_id, exclude_entry_id=entry.entry_id):
+                errors[CONF_TEAM_ID] = "already_configured"
+            else:
+                is_valid, team_name = await self._validate_team_id(team_id)
+                if not is_valid:
+                    errors[CONF_TEAM_ID] = "team_not_found"
+                else:
+                    club_name = entry.data.get("club_name")
+                    if team_name and club_name:
+                        title = f"Team: {club_name} - {team_name}"
+                    elif team_name:
+                        title = f"Team: {team_name}"
+                    else:
+                        title = f"Team {team_id}"
+
+                    data_updates = {
+                        CONF_TEAM_ID: team_id,
+                        "team_name": team_name,
+                    }
+                    self.hass.config_entries.async_update_entry(
+                        entry,
+                        data={**entry.data, **data_updates},
+                        title=title,
+                    )
+                    await self.hass.config_entries.async_reload(entry.entry_id)
+                    # Reload uses updated entry data, so explicitly remove stale in-memory team cache.
+                    self.hass.data.get(DOMAIN, {}).pop(current_team_id, None)
+                    return self.async_abort(reason="reconfigure_successful")
+
+        data_schema = vol.Schema({
+            vol.Required(CONF_TEAM_ID, default=current_team_id): str,
+        })
+
+        return self.async_show_form(
+            step_id="reconfigure",
+            data_schema=data_schema,
+            errors=errors,
         )
