@@ -12,3 +12,4 @@ config/.cache/
 config/custom_components/*
 .ha_run.lock
 home-assistant.log*
+core.*

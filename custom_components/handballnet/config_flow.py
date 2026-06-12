@@ -122,6 +122,38 @@ class HandballNetConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         used_keys.add(candidate)
         return candidate
 
+    def _compose_team_display_name(
+        self,
+        team_name: str | None,
+        club_name: str | None = None,
+        team_variant: str | None = None,
+    ) -> str:
+        """Build a stable display name for a team."""
+        normalized_team_name = (team_name or "").strip()
+        normalized_club_name = (club_name or "").strip()
+        normalized_variant = (team_variant or "").strip()
+
+        if normalized_club_name and normalized_variant:
+            return f"{normalized_club_name} {normalized_variant}".strip()
+
+        if normalized_club_name:
+            if normalized_team_name.startswith(f"{normalized_club_name} "):
+                return normalized_team_name
+            if normalized_team_name == normalized_club_name and normalized_variant:
+                return f"{normalized_team_name} {normalized_variant}".strip()
+            if normalized_team_name:
+                return f"{normalized_club_name} {normalized_team_name}".strip()
+            return normalized_club_name
+
+        if (
+            normalized_variant
+            and normalized_team_name
+            and not normalized_team_name.endswith(f" {normalized_variant}")
+        ):
+            return f"{normalized_team_name} {normalized_variant}".strip()
+
+        return normalized_team_name or "Team"
+
     def _build_team_mapping(self, selected_team_ids: list[str]) -> dict[str, str]:
         team_mapping: dict[str, str] = {}
         used_keys: set[str] = set()
@@ -132,12 +164,11 @@ class HandballNetConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 team_id, self._team_options.get(team_id, team_id)
             )
             team_variant = self._team_variants.get(team_id)
-            if selected_club_name and team_variant:
-                stable_team_name = f"{selected_club_name} {team_variant}"
-            else:
-                stable_team_name = team_name
-                if team_variant and team_variant not in stable_team_name:
-                    stable_team_name = f"{stable_team_name} {team_variant}"
+            stable_team_name = self._compose_team_display_name(
+                team_name,
+                selected_club_name,
+                team_variant,
+            )
 
             stable_key = self._normalize_team_key(stable_team_name, used_keys)
             team_mapping[stable_key] = team_id
@@ -213,7 +244,7 @@ class HandballNetConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         if team_variant:
             data["team_variant"] = team_variant
 
-        title = club_name or team_name or team_id
+        title = self._compose_team_display_name(team_name, club_name, team_variant)
 
         return self.async_create_entry(title=title, data=data)
 
@@ -291,7 +322,14 @@ class HandballNetConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 if team_variant:
                     self._team_variants[team_id] = team_variant
 
-                if acronym:
+                preferred_label = self._compose_team_display_name(
+                    base_team_name or team_name,
+                    self._selected_club_name,
+                    team_variant,
+                )
+                if preferred_label and preferred_label != (base_team_name or team_name):
+                    team_options[team_id] = preferred_label
+                elif acronym:
                     team_options[team_id] = f"{base_team_name or team_name} ({acronym})"
                 else:
                     team_options[team_id] = base_team_name or team_name
@@ -354,7 +392,7 @@ class HandballNetConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         if club_name:
             data_updates["club_name"] = club_name
 
-        title = club_name or team_name or team_id
+        title = self._compose_team_display_name(team_name, club_name, team_variant)
 
         self.hass.config_entries.async_update_entry(
             entry,
@@ -632,6 +670,15 @@ class HandballNetConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         self._team_base_names = {}
         self._team_variants = {}
 
+        if entity_type == ENTITY_TYPE_CLUB and user_input is None:
+            existing_club_id = entry.data.get(CONF_CLUB_ID)
+            if existing_club_id:
+                self._selected_club_id = existing_club_id
+                self._selected_club_name = entry.data.get("club_name")
+                self._team_options = await self._get_teams_for_club(existing_club_id)
+                if self._team_options:
+                    return await self.async_step_reconfigure_select_team(entry)
+
         if user_input is not None:
             input_mode = user_input.get(CONF_TEAM_INPUT_MODE, TEAM_INPUT_MODE_MANUAL)
 
@@ -777,11 +824,13 @@ class HandballNetConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         if not self._team_options:
             return await self.async_step_reconfigure()
 
+        existing_team_ids = list(entry.data.get(CONF_TEAM_MAPPING, {}).values())
         data_schema = vol.Schema(
             {
-                vol.Required(CONF_SELECTED_TEAM_ID): cv.multi_select(
-                    self._team_options
-                ),
+                vol.Required(
+                    CONF_SELECTED_TEAM_ID,
+                    default=existing_team_ids,
+                ): cv.multi_select(self._team_options),
             }
         )
 

@@ -26,10 +26,11 @@ class HandballBaseSensor(BaseHandballSensor):
         )
 
     def _compose_device_name(self, team_name: str) -> str:
-        base_name = self._club_name or team_name
-        if self._team_variant and team_name != self._team_variant:
-            return f"{base_name} {self._team_variant}"
-        return base_name
+        display_name = self._resolve_display_name(team_name)
+        normalized_variant = (self._team_variant or "").strip()
+        if normalized_variant and not display_name.endswith(f" {normalized_variant}"):
+            return f"{display_name} {normalized_variant}".strip()
+        return display_name
 
     def _resolve_display_name(self, team_name: str) -> str:
         """Build a stable display name for team entities."""
