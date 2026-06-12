@@ -1,3 +1,4 @@
+from typing import Any
 import re
 from ..base_sensor import HandballBaseSensor as BaseHandballSensor
 from ...const import DOMAIN, CONF_CLUB_ID
@@ -6,8 +7,8 @@ from ...utils import HandballNetUtils
 class HandballBaseSensor(BaseHandballSensor):
     """Base class for handball team sensors"""
 
-    def __init__(self, hass, entry, team_id, team_name, category=None):
-        super().__init__(hass, entry, team_id, category)
+    def __init__(self, coordinator, entry, team_id, team_name, category=None):
+        super().__init__(coordinator, entry, team_id, category)
         self.utils = HandballNetUtils()
         self._team_id = team_id
         self._team_name = team_name
@@ -32,6 +33,9 @@ class HandballBaseSensor(BaseHandballSensor):
     def _build_unique_id(self, sensor_type: str) -> str:
         team_slug = re.sub(r"[^a-z0-9]+", "_", self._team_name.lower()).strip("_")
         return f"{self._attr_config_entry_id}_{team_slug}_{sensor_type}"
+
+    def _get_team_bucket(self) -> dict[str, Any]:
+        return (self.coordinator.data or {}).get("teams", {}).get(self._team_id, {})
 
     def update_device_name(self, team_name: str) -> None:
         if team_name and team_name != "":

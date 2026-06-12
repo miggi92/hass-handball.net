@@ -1,11 +1,11 @@
-from homeassistant.helpers.entity import Entity
+from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from ..const import DOMAIN
 
-class HandballBaseSensor(Entity):
+class HandballBaseSensor(CoordinatorEntity):
     """Base class for all handball sensors"""
     
-    def __init__(self, hass, entry, entity_id, category=None):
-        self.hass = hass
+    def __init__(self, coordinator, entry, entity_id, category=None):
+        super().__init__(coordinator)
         self._entity_id = entity_id
         self._category = category
         self._attr_config_entry_id = entry.entry_id

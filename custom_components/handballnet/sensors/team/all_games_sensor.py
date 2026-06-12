@@ -1,20 +1,12 @@
 from typing import Any
 from .base_sensor import HandballBaseSensor
-from ...const import DOMAIN
-from ...api import HandballNetAPI
 from ...utils import HandballNetUtils
-import logging
-
-_LOGGER = logging.getLogger(__name__)
 
 class HandballAllGamesSensor(HandballBaseSensor):
-    def __init__(self, hass, entry, team_id, team_name, api: HandballNetAPI):
-        super().__init__(hass, entry, team_id, team_name)
+    def __init__(self, coordinator, entry, team_id, team_name, api=None):
+        super().__init__(coordinator, entry, team_id, team_name)
         self.utils = HandballNetUtils()
-        self._api = api
         self._team_id = team_id
-        self._state = None
-        self._attributes = {}
 
         club_name = entry.data.get("club_name")
         display_name = f"{club_name} {team_name}" if club_name else team_name
@@ -24,95 +16,28 @@ class HandballAllGamesSensor(HandballBaseSensor):
 
     @property
     def state(self) -> str | None:
-        return self._state
+        team_bucket = self._get_team_bucket()
+        matches = team_bucket.get("matches", [])
+        if not matches:
+            return "Keine Spiele verfügbar"
+
+        next_match = team_bucket.get("next_match") or self.utils.get_next_match_info(matches)
+        return f"Nächstes Spiel: {next_match['opponent']['name']}" if next_match else "Kein nächstes Spiel"
 
     @property
     def extra_state_attributes(self) -> dict[str, Any]:
-        return self._attributes
+        team_bucket = self._get_team_bucket()
+        matches = team_bucket.get("matches", [])
+        next_match = team_bucket.get("next_match") or self.utils.get_next_match_info(matches)
+        last_match = team_bucket.get("last_match") or self.utils.get_last_match_info(matches)
 
-    def _extract_essential_match_data(self, matches: list) -> list:
-        """Extract only essential match data to reduce memory usage"""
-        essential_matches = []
+        if not matches:
+            return {"next_match": None, "last_match": None, "total_matches": 0, "upcoming_matches": [], "recent_matches": []}
 
-        for match in matches:
-            # Get logo URLs and normalize them
-            home_logo = match.get("homeTeam", {}).get("logo")
-            away_logo = match.get("awayTeam", {}).get("logo")
-
-            essential_match = {
-                "id": match.get("id"),
-                "startsAt": match.get("startsAt"),
-                "state": match.get("state"),
-                "homeTeam": {
-                    "id": match.get("homeTeam", {}).get("id"),
-                    "name": match.get("homeTeam", {}).get("name"),
-                    "logo": self.utils.normalize_logo_url(home_logo) if home_logo else None
-                },
-                "awayTeam": {
-                    "id": match.get("awayTeam", {}).get("id"),
-                    "name": match.get("awayTeam", {}).get("name"),
-                    "logo": self.utils.normalize_logo_url(away_logo) if away_logo else None
-                },
-                "field": {
-                    "name": match.get("field", {}).get("name")
-                },
-                "homeGoals": match.get("homeGoals"),
-                "awayGoals": match.get("awayGoals"),
-                "tournament": {
-                    "id": match.get("tournament", {}).get("id"),
-                    "name": match.get("tournament", {}).get("name")
-                },
-                # Add computed fields for easier processing
-                "isHomeMatch": match.get("homeTeam", {}).get("id") == self._team_id,
-                "isAway": match.get("awayTeam", {}).get("id") == self._team_id
-            }
-            essential_matches.append(essential_match)
-
-        return essential_matches
-
-    async def async_update(self) -> None:
-        try:
-            matches = await self._api.get_team_schedule(self._team_id)
-            if not matches:
-                self._state = "Keine Spiele verfügbar"
-                self._attributes = {}
-                return
-
-            # Extract only essential data
-            essential_matches = self._extract_essential_match_data(matches)
-
-            next_match = self.utils.get_next_match_info(essential_matches)
-            last_match = self.utils.get_last_match_info(essential_matches)
-
-            self._state = f"Nächstes Spiel: {next_match['opponent']['name']}" if next_match else "Kein nächstes Spiel"
-            self._attributes = {
-                "next_match": next_match,
-                "last_match": last_match,
-                "total_matches": len(essential_matches),
-                # Only store first 5 upcoming and last 5 played matches in attributes
-                "upcoming_matches": [m for m in essential_matches if m.get("startsAt", 0) > 0][:5],
-                "recent_matches": [m for m in essential_matches if m.get("state") == "Post"][-5:]
-            }
-
-            # Store essential matches in hass.data for other sensors
-            if DOMAIN not in self.hass.data:
-                self.hass.data[DOMAIN] = {}
-            if self._team_id not in self.hass.data[DOMAIN]:
-                self.hass.data[DOMAIN][self._team_id] = {}
-            self.hass.data[DOMAIN][self._team_id]["matches"] = essential_matches
-
-            # Try to get and store team info for other sensors
-            try:
-                team_info = await self._api.get_team_info(self._team_id)
-                if team_info:
-                    self.hass.data[DOMAIN][self._team_id]["team_name"] = team_info.get("name")
-                    logo_url = self._api.extract_team_logo_url(matches, self._team_id)
-                    if logo_url:
-                        self.hass.data[DOMAIN][self._team_id]["team_logo_url"] = logo_url
-            except Exception as e:
-                _LOGGER.debug("Could not update team info: %s", e)
-
-        except Exception as e:
-            _LOGGER.error("Error updating all games sensor for %s: %s", self._team_id, e)
-            self._state = "Fehler beim Laden"
-            self._attributes = {"error": str(e)}
+        return {
+            "next_match": next_match,
+            "last_match": last_match,
+            "total_matches": len(matches),
+            "upcoming_matches": [match for match in matches if match.get("startsAt", 0) > 0][:5],
+            "recent_matches": [match for match in matches if match.get("state") == "Post"][-5:],
+        }

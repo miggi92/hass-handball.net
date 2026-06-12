@@ -1,2 +1,6 @@
 # node modules
 node_modules/
+
+# python
+__pycache__/
+*.pyc

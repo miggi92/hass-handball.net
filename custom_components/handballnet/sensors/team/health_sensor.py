@@ -1,23 +1,11 @@
-from datetime import datetime, timezone, timedelta
 from typing import Any, List
 from .base_sensor import HandballBaseSensor
-from ...const import (
-    DOMAIN, HEALTH_CHECK_STALE_HOURS,
-    HEALTH_STATUS_HEALTHY, HEALTH_STATUS_DEGRADED, HEALTH_STATUS_UNHEALTHY,
-    HEALTH_STATUS_STALE, HEALTH_STATUS_ERROR, HEALTH_STATUS_UNKNOWN
-)
-from ...api import HandballNetAPI
-import logging
-
-_LOGGER = logging.getLogger(__name__)
+from ...const import HEALTH_STATUS_UNKNOWN
 
 class HandballHealthSensor(HandballBaseSensor):
-    def __init__(self, hass, entry, team_id, team_name, api: HandballNetAPI):
-        super().__init__(hass, entry, team_id, team_name)
-        self._api = api
+    def __init__(self, coordinator, entry, team_id, team_name, api=None):
+        super().__init__(coordinator, entry, team_id, team_name)
         self._team_id = team_id
-        self._state = None
-        self._attributes = {}
 
         club_name = entry.data.get("club_name")
         display_name = f"{club_name} {team_name}" if club_name else team_name
@@ -27,59 +15,9 @@ class HandballHealthSensor(HandballBaseSensor):
 
     @property
     def state(self) -> str | None:
-        return self._state
+        return self._get_team_bucket().get("health", {}).get("state", HEALTH_STATUS_UNKNOWN)
 
     @property
     def extra_state_attributes(self) -> dict[str, Any]:
-        return self._attributes
-
-    async def async_update(self) -> None:
-        try:
-            matches = self.hass.data.get(DOMAIN, {}).get(self._team_id, {}).get("matches", [])
-            if not matches:
-                self._state = HEALTH_STATUS_UNKNOWN
-                self._attributes = {}
-                return
-
-            now = datetime.now(timezone.utc)
-            stale_threshold = now - timedelta(hours=HEALTH_CHECK_STALE_HOURS)
-
-            # Check for stale data
-            if all(datetime.fromtimestamp(match.get("lastUpdated", 0) / 1000, tz=timezone.utc) < stale_threshold for match in matches):
-                self._state = HEALTH_STATUS_STALE
-                self._attributes = {}
-                return
-
-            # Check for errors in matches
-            if any(match.get("error") for match in matches):
-                self._state = HEALTH_STATUS_ERROR
-                self._attributes = {}
-                return
-
-            # Check for unhealthy conditions
-            if any(match.get("status") == "unhealthy" for match in matches):
-                self._state = HEALTH_STATUS_UNHEALTHY
-                self._attributes = {}
-                return
-
-            # Check for degraded conditions
-            if any(match.get("status") == "degraded" for match in matches):
-                self._state = HEALTH_STATUS_DEGRADED
-                self._attributes = {}
-                return
-
-            # If none of the above, the system is healthy
-            self._state = HEALTH_STATUS_HEALTHY
-            self._attributes = {
-                "last_updated": max(match.get("lastUpdated", 0) for match in matches),
-                "total_matches": len(matches),
-                "healthy_matches": sum(1 for match in matches if match.get("status") == "healthy"),
-                "degraded_matches": sum(1 for match in matches if match.get("status") == "degraded"),
-                "unhealthy_matches": sum(1 for match in matches if match.get("status") == "unhealthy"),
-                "stale_matches": sum(1 for match in matches if datetime.fromtimestamp(match.get("lastUpdated", 0) / 1000, tz=timezone.utc) < stale_threshold),
-            }
-
-        except Exception as e:
-            _LOGGER.error("Error updating health sensor for %s: %s", self._team_id, e)
-            self._state = HEALTH_STATUS_ERROR
-            self._attributes = {"error": str(e)}
+        health = self._get_team_bucket().get("health", {})
+        return health.get("attributes", {})

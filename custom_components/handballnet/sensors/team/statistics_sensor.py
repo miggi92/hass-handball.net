@@ -1,16 +1,13 @@
 from typing import Any, Dict, List
 from .base_sensor import HandballBaseSensor
-from ...const import DOMAIN
 import logging
 
 _LOGGER = logging.getLogger(__name__)
 
 class HandballStatisticsSensor(HandballBaseSensor):
-    def __init__(self, hass, entry, team_id, team_name):
-        super().__init__(hass, entry, team_id, team_name)
+    def __init__(self, coordinator, entry, team_id, team_name):
+        super().__init__(coordinator, entry, team_id, team_name)
         self._team_id = team_id
-        self._state = None
-        self._attributes = {}
 
         club_name = entry.data.get("club_name")
         display_name = f"{club_name} {team_name}" if club_name else team_name
@@ -20,28 +17,13 @@ class HandballStatisticsSensor(HandballBaseSensor):
 
     @property
     def state(self) -> str | None:
-        return self._state
+        return self._calculate_statistics(self._get_team_bucket().get("matches", []))[0]
 
     @property
     def extra_state_attributes(self) -> dict[str, Any]:
-        return self._attributes
+        return self._calculate_statistics(self._get_team_bucket().get("matches", []))[1]
 
-    async def async_update(self) -> None:
-        try:
-            matches = self.hass.data.get(DOMAIN, {}).get(self._team_id, {}).get("matches", [])
-            if not matches:
-                self._state = "Keine Spieldaten verfügbar"
-                self._attributes = {}
-                return
-
-            self._calculate_statistics(matches)
-        except Exception as e:
-            _LOGGER.error("Error updating statistics for %s: %s", self._team_id, e)
-            self._state = "Fehler beim Laden"
-            self._attributes = {"error": str(e)}
-
-    def _calculate_statistics(self, matches: List[Dict[str, Any]]) -> None:
-        """Calculate statistics from match data"""
+    def _calculate_statistics(self, matches: List[Dict[str, Any]]) -> tuple[str | None, dict[str, Any]]:
         # Filter only finished matches (those with results)
         finished_matches = []
         upcoming_matches = []
@@ -85,21 +67,24 @@ class HandballStatisticsSensor(HandballBaseSensor):
                 losses += 1
 
         if total_matches == 0:
-            self._state = "Noch keine beendeten Spiele"
-            self._attributes = {
-                "total_matches": 0,
-                "finished_matches": 0,
-                "upcoming_matches": len(upcoming_matches),
-                "wins": 0,
-                "draws": 0,
-                "losses": 0,
-                "goals_scored": 0,
-                "goals_conceded": 0,
-                "goal_difference": 0
-            }
-        else:
-            self._state = f"{wins} Siege, {draws} Unentschieden, {losses} Niederlagen"
-            self._attributes = {
+            return (
+                "Noch keine beendeten Spiele",
+                {
+                    "total_matches": 0,
+                    "finished_matches": 0,
+                    "upcoming_matches": len(upcoming_matches),
+                    "wins": 0,
+                    "draws": 0,
+                    "losses": 0,
+                    "goals_scored": 0,
+                    "goals_conceded": 0,
+                    "goal_difference": 0,
+                },
+            )
+
+        return (
+            f"{wins} Siege, {draws} Unentschieden, {losses} Niederlagen",
+            {
                 "total_matches": len(matches),
                 "finished_matches": total_matches,
                 "upcoming_matches": len(upcoming_matches),
@@ -109,9 +94,10 @@ class HandballStatisticsSensor(HandballBaseSensor):
                 "goals_scored": goals_scored,
                 "goals_conceded": goals_conceded,
                 "goal_difference": goals_scored - goals_conceded,
-                "win_percentage": round((wins / total_matches) * 100, 1) if total_matches > 0 else 0.0,
-                "draw_percentage": round((draws / total_matches) * 100, 1) if total_matches > 0 else 0.0,
-                "loss_percentage": round((losses / total_matches) * 100, 1) if total_matches > 0 else 0.0,
-                "avg_goals_scored": round(goals_scored / total_matches, 2) if total_matches > 0 else 0.0,
-                "avg_goals_conceded": round(goals_conceded / total_matches, 2) if total_matches > 0 else 0.0
-            }
+                "win_percentage": round((wins / total_matches) * 100, 1),
+                "draw_percentage": round((draws / total_matches) * 100, 1),
+                "loss_percentage": round((losses / total_matches) * 100, 1),
+                "avg_goals_scored": round(goals_scored / total_matches, 2),
+                "avg_goals_conceded": round(goals_conceded / total_matches, 2),
+            },
+        )

@@ -1,11 +1,13 @@
+from typing import Any
+
 from ..base_sensor import HandballBaseSensor as BaseHandballSensor
 from ...const import DOMAIN
 
 class HandballBaseSensor(BaseHandballSensor):
     """Base class for handball tournament sensors"""
     
-    def __init__(self, hass, entry, tournament_id, category=None):
-        super().__init__(hass, entry, tournament_id, category)
+    def __init__(self, coordinator, entry, tournament_id, category=None):
+        super().__init__(coordinator, entry, tournament_id, category)
         self._tournament_id = tournament_id
         
         # Create tournament-specific device info
@@ -17,6 +19,8 @@ class HandballBaseSensor(BaseHandballSensor):
         )
 
     def update_device_name(self, tournament_name: str) -> None:
-        """Update device name with actual tournament name"""
         if tournament_name and tournament_name != "":
             self._attr_device_info["name"] = f"{tournament_name}"
+
+    def _get_tournament_bucket(self) -> dict[str, Any]:
+        return (self.coordinator.data or {}).get("tournament", {})
