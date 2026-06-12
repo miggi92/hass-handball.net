@@ -32,9 +32,34 @@ class HandballNetConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         self._update_interval = DEFAULT_UPDATE_INTERVAL
         self._update_interval_live = DEFAULT_UPDATE_INTERVAL_LIVE
         self._club_options: dict[str, str] = {}
+        self._club_clean_names: dict[str, str] = {}
         self._team_options: dict[str, str] = {}
+        self._team_base_names: dict[str, str] = {}
+        self._team_variants: dict[str, str] = {}
         self._selected_club_id: str | None = None
         self._selected_club_name: str | None = None
+
+    @staticmethod
+    def _split_trailing_parentheses(value: str | None) -> tuple[str | None, str | None]:
+        """Split 'Name (SUFFIX)' into ('Name', 'SUFFIX')."""
+        if not value:
+            return value, None
+
+        stripped_value = value.strip()
+        if stripped_value.endswith(")") and " (" in stripped_value:
+            base, suffix = stripped_value.rsplit(" (", 1)
+            return base.strip(), suffix[:-1].strip()
+
+        return stripped_value, None
+
+    @staticmethod
+    def _extract_team_variant(acronym: str | None, fallback_suffix: str | None = None) -> str | None:
+        """Extract short team variant, e.g. M from M-BOL-2-NF."""
+        source = (acronym or fallback_suffix or "").strip()
+        if not source:
+            return None
+
+        return source.split("-", 1)[0].strip() or None
 
     async def _api_get(self, path: str):
         """Get JSON data from handball.net API path."""
@@ -71,6 +96,7 @@ class HandballNetConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         team_name: str | None,
         club_id: str | None = None,
         club_name: str | None = None,
+        team_variant: str | None = None,
     ):
         """Create config entry for a team."""
         data = {
@@ -85,13 +111,10 @@ class HandballNetConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             data[CONF_CLUB_ID] = club_id
         if club_name:
             data["club_name"] = club_name
+        if team_variant:
+            data["team_variant"] = team_variant
 
-        if team_name and club_name:
-            title = f"Team: {club_name} - {team_name}"
-        elif team_name:
-            title = f"Team: {team_name}"
-        else:
-            title = f"Team {team_id}"
+        title = club_name or team_name or team_id
 
         return self.async_create_entry(title=title, data=data)
 
@@ -102,12 +125,16 @@ class HandballNetConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         clubs = data.get("data", []) if data else []
 
         club_options: dict[str, str] = {}
+        self._club_clean_names = {}
         for club in clubs:
             club_id = club.get("id")
             club_name = club.get("name")
             if club_id and club_name:
+                clean_club_name, _ = self._split_trailing_parentheses(club_name)
+                self._club_clean_names[club_id] = clean_club_name or club_name
+
                 acronym = club.get("acronym")
-                if acronym:
+                if acronym and acronym != club_name:
                     club_options[club_id] = f"{club_name} ({acronym})"
                 else:
                     club_options[club_id] = club_name
@@ -120,16 +147,25 @@ class HandballNetConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         teams = data.get("data", []) if data else []
 
         team_options: dict[str, str] = {}
+        self._team_base_names = {}
+        self._team_variants = {}
         for team in teams:
             team_id = team.get("id")
             team_name = team.get("name")
             if team_id and team_name:
+                base_team_name, parsed_suffix = self._split_trailing_parentheses(team_name)
+
                 default_tournament = team.get("defaultTournament")
                 acronym = default_tournament.get("acronym") if default_tournament else None
-                if acronym:
-                    team_options[team_id] = f"{team_name} ({acronym})"
+                team_variant = self._extract_team_variant(acronym, parsed_suffix)
+                self._team_base_names[team_id] = base_team_name or team_name
+                if team_variant:
+                    self._team_variants[team_id] = team_variant
+
+                if acronym and acronym != team_name:
+                    team_options[team_id] = f"{base_team_name or team_name} ({acronym})"
                 else:
-                    team_options[team_id] = team_name
+                    team_options[team_id] = base_team_name or team_name
 
         return team_options
 
@@ -211,7 +247,12 @@ class HandballNetConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     if not is_valid:
                         errors[CONF_TEAM_ID] = "team_not_found"
                     else:
-                        return self._create_team_entry(team_id, team_name)
+                        clean_team_name, parsed_suffix = self._split_trailing_parentheses(team_name)
+                        return self._create_team_entry(
+                            team_id,
+                            clean_team_name or team_name,
+                            team_variant=self._extract_team_variant(None, parsed_suffix),
+                        )
 
             elif input_mode == TEAM_INPUT_MODE_CLUB_SEARCH:
                 club_query = user_input.get(CONF_CLUB_QUERY, "").strip()
@@ -249,7 +290,7 @@ class HandballNetConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 errors[CONF_CLUB_ID] = "invalid_club_selection"
             else:
                 self._selected_club_id = club_id
-                self._selected_club_name = self._club_options.get(club_id)
+                self._selected_club_name = self._club_clean_names.get(club_id, self._club_options.get(club_id))
                 self._team_options = await self._get_teams_for_club(club_id)
                 if not self._team_options:
                     errors[CONF_CLUB_ID] = "no_teams_found"
@@ -280,12 +321,13 @@ class HandballNetConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             elif self._is_team_already_configured(team_id):
                 errors[CONF_SELECTED_TEAM_ID] = "already_configured"
             else:
-                team_name = self._team_options.get(team_id)
+                team_name = self._team_base_names.get(team_id, self._team_options.get(team_id))
                 return self._create_team_entry(
                     team_id,
                     team_name,
                     self._selected_club_id,
                     self._selected_club_name,
+                    self._team_variants.get(team_id),
                 )
 
         if not self._team_options:
@@ -368,17 +410,16 @@ class HandballNetConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 if not is_valid:
                     errors[CONF_TEAM_ID] = "team_not_found"
                 else:
+                    clean_team_name, parsed_suffix = self._split_trailing_parentheses(team_name)
                     club_name = entry.data.get("club_name")
-                    if team_name and club_name:
-                        title = f"Team: {club_name} - {team_name}"
-                    elif team_name:
-                        title = f"Team: {team_name}"
-                    else:
-                        title = f"Team {team_id}"
+                    normalized_team_name = clean_team_name or team_name or team_id
+                    team_variant = self._extract_team_variant(None, parsed_suffix) or entry.data.get("team_variant")
+                    title = club_name or normalized_team_name or team_id
 
                     data_updates = {
                         CONF_TEAM_ID: team_id,
-                        "team_name": team_name,
+                        "team_name": normalized_team_name,
+                        "team_variant": team_variant,
                     }
                     self.hass.config_entries.async_update_entry(
                         entry,
