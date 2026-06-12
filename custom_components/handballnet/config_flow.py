@@ -2,6 +2,7 @@ import voluptuous as vol
 from homeassistant import config_entries
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from urllib.parse import quote_plus
+import re
 from .const import (
     DOMAIN,
     CONF_TEAM_ID,
@@ -54,12 +55,25 @@ class HandballNetConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
     @staticmethod
     def _extract_team_variant(acronym: str | None, fallback_suffix: str | None = None) -> str | None:
-        """Extract short team variant, e.g. M from M-BOL-2-NF."""
-        source = (acronym or fallback_suffix or "").strip()
+        """Extract the trailing team variant, e.g. 2 from TSV Willsbach 2."""
+        source = (fallback_suffix or "").strip()
         if not source:
             return None
 
-        return source.split("-", 1)[0].strip() or None
+        match = re.search(r"(\d+)$", source)
+        if match:
+            return match.group(1)
+
+        return None
+
+    @staticmethod
+    def _extract_league_prefix(acronym: str | None) -> str | None:
+        """Extract the league prefix, e.g. M from M-BK."""
+        if not acronym:
+            return None
+
+        prefix = acronym.strip().split("-", 1)[0].strip()
+        return prefix or None
 
     async def _api_get(self, path: str):
         """Get JSON data from handball.net API path."""
@@ -134,10 +148,7 @@ class HandballNetConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 self._club_clean_names[club_id] = clean_club_name or club_name
 
                 acronym = club.get("acronym")
-                if acronym and acronym != club_name:
-                    club_options[club_id] = f"{club_name} ({acronym})"
-                else:
-                    club_options[club_id] = club_name
+                club_options[club_id] = clean_club_name or club_name
 
         return club_options
 
@@ -153,19 +164,19 @@ class HandballNetConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             team_id = team.get("id")
             team_name = team.get("name")
             if team_id and team_name:
-                base_team_name, parsed_suffix = self._split_trailing_parentheses(team_name)
+                base_team_name = team_name.rsplit(" ", 1)[0] if team_name.rstrip().split(" ")[-1].isdigit() else team_name
+                parsed_suffix = team_name if base_team_name != team_name else None
 
                 default_tournament = team.get("defaultTournament")
                 acronym = default_tournament.get("acronym") if default_tournament else None
-                team_variant = self._extract_team_variant(acronym, parsed_suffix)
+                league_prefix = self._extract_league_prefix(acronym)
+                team_variant_number = self._extract_team_variant(acronym, parsed_suffix)
+                team_variant = f"{league_prefix}{team_variant_number}" if league_prefix and team_variant_number else league_prefix or team_variant_number
                 self._team_base_names[team_id] = base_team_name or team_name
                 if team_variant:
                     self._team_variants[team_id] = team_variant
 
-                if acronym and acronym != team_name:
-                    team_options[team_id] = f"{base_team_name or team_name} ({acronym})"
-                else:
-                    team_options[team_id] = base_team_name or team_name
+                team_options[team_id] = base_team_name or team_name
 
         return team_options
 

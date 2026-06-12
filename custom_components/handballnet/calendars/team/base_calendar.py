@@ -23,7 +23,7 @@ class HandballBaseCalendar(BaseHandballCalendar):
         """Build stable device name, preferring club name and optional team variant."""
         base_name = self._club_name or team_name
         if self._team_variant:
-            return f"{base_name} - {self._team_variant}"
+            return f"{base_name} {self._team_variant}"
         return base_name
 
     def update_device_name(self, team_name: str) -> None:
