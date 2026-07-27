@@ -3,6 +3,7 @@ from datetime import datetime, timedelta, timezone
 from .const import DOMAIN, CONF_ENTITY_TYPE, CONF_TEAM_MAPPING, ENTITY_TYPE_TEAM, ENTITY_TYPE_CLUB, ENTITY_TYPE_TOURNAMENT
 from .calendars import HandballTeamCalendar, HandballTournamentCalendar
 from .api import HandballNetAPI
+from .device_helpers import async_ensure_club_device
 
 async def async_setup_entry(hass, entry, async_add_entities):
     entity_type = entry.data.get(CONF_ENTITY_TYPE, ENTITY_TYPE_TEAM)
@@ -16,6 +17,8 @@ async def async_setup_entry(hass, entry, async_add_entities):
 
 async def _setup_team_calendar(hass, entry, async_add_entities):
     """Setup calendar for team entities"""
+    await async_ensure_club_device(hass, entry)
+
     team_id = entry.data["team_id"]
     team_name = entry.data.get("team_name", team_id)
     entity = HandballTeamCalendar(hass, entry, team_id, team_name)
@@ -27,6 +30,8 @@ async def _setup_team_calendar(hass, entry, async_add_entities):
     async_add_entities([entity], update_before_add=True)
 
 async def _setup_club_calendar(hass, entry, async_add_entities):
+    await async_ensure_club_device(hass, entry)
+
     club_team_mapping = entry.data.get(CONF_TEAM_MAPPING, {})
     entities = []
 

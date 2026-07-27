@@ -10,6 +10,7 @@ from .const import (
     ENTITY_TYPE_TOURNAMENT,
 )
 from .coordinator import HandballDataUpdateCoordinator
+from .device_helpers import async_ensure_club_device
 from .sensors import (
     HandballAllGamesSensor,
     HandballAuswaertsspielSensor,
@@ -38,6 +39,8 @@ async def async_setup_entry(hass: HomeAssistant, entry, async_add_entities):
 
 
 async def _setup_team_sensors(hass: HomeAssistant, entry, async_add_entities):
+    await async_ensure_club_device(hass, entry)
+
     coordinator = HandballDataUpdateCoordinator(hass, entry)
     await coordinator.async_config_entry_first_refresh()
 
@@ -57,6 +60,8 @@ async def _setup_team_sensors(hass: HomeAssistant, entry, async_add_entities):
 
 
 async def _setup_club_sensors(hass: HomeAssistant, entry, async_add_entities):
+    await async_ensure_club_device(hass, entry)
+
     coordinator = HandballDataUpdateCoordinator(hass, entry)
     await coordinator.async_config_entry_first_refresh()
 
