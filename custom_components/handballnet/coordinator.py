@@ -50,6 +50,7 @@ class HandballDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         )
         self._team_items = self._build_team_items(entry)
         self._tournament_id = entry.data.get(CONF_TOURNAMENT_ID)
+        self._perf_snapshot: dict[str, Any] = {}
 
         super().__init__(
             hass,
@@ -74,6 +75,7 @@ class HandballDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         return []
 
     async def _async_update_data(self) -> dict[str, Any]:
+        self._reset_perf_snapshot()
         update_started = time.perf_counter()
         if self._entity_type == ENTITY_TYPE_TOURNAMENT:
             result = await self._async_update_tournament_data()
@@ -84,6 +86,7 @@ class HandballDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 teams=0,
                 is_live=False,
             )
+            result["perf"] = self._perf_snapshot
             return result
 
         teams_fetch_started = time.perf_counter()
@@ -129,6 +132,7 @@ class HandballDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             "teams": teams,
             "tournament": None,
             "is_live": is_live,
+            "perf": self._perf_snapshot,
         }
         self._log_perf(
             "update_total",
@@ -161,11 +165,19 @@ class HandballDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 "matches": [],
             }
             self._store_tournament_bucket(tournament_bucket)
+            self._log_perf(
+                "tournament_update_total",
+                tournament_started,
+                tournament_id=self._tournament_id,
+                rows=0,
+                matches=0,
+            )
             return {
                 "entity_type": self._entity_type,
                 "teams": {},
                 "tournament": tournament_bucket,
                 "is_live": False,
+                "perf": self._perf_snapshot,
             }
 
         tournament_info = self._extract_tournament_info_from_table_data(table_data)
@@ -195,6 +207,7 @@ class HandballDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             "teams": {},
             "tournament": tournament_bucket,
             "is_live": False,
+            "perf": self._perf_snapshot,
         }
         self._log_perf(
             "tournament_update_total",
@@ -274,15 +287,35 @@ class HandballDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             "table_position": table_position,
             "health": health,
             "is_live": bool(live_matches),
+            "perf": {
+                "team_bucket_update_ms": self._perf_snapshot.get(
+                    "team_bucket_ms", {}
+                ).get(team_id)
+            },
         }
 
-    def _log_perf(self, phase: str, started: float, **meta: Any) -> None:
-        elapsed_ms = (time.perf_counter() - started) * 1000
+    def _reset_perf_snapshot(self) -> None:
+        self._perf_snapshot = {
+            "updated_at": datetime.now(timezone.utc).isoformat(),
+            "phases_ms": {},
+            "team_bucket_ms": {},
+        }
+
+    def _log_perf(self, phase: str, started: float, **meta: Any) -> float:
+        elapsed_ms = round((time.perf_counter() - started) * 1000, 1)
+        if phase == "team_bucket_update":
+            team_id = meta.get("team_id")
+            if team_id:
+                self._perf_snapshot.setdefault("team_bucket_ms", {})[team_id] = elapsed_ms
+        else:
+            self._perf_snapshot.setdefault("phases_ms", {})[phase] = elapsed_ms
+
         if meta:
             meta_string = ", ".join(f"{key}={value}" for key, value in meta.items())
             _LOGGER.debug("perf %s: %.1fms (%s)", phase, elapsed_ms, meta_string)
-            return
+            return elapsed_ms
         _LOGGER.debug("perf %s: %.1fms", phase, elapsed_ms)
+        return elapsed_ms
 
     def _create_error_team_bucket(
         self, team_id: str, team_name: str, error: str
@@ -303,6 +336,7 @@ class HandballDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             "health": {"state": "error", "attributes": {}, "error": error},
             "is_live": False,
             "error": error,
+            "perf": {},
         }
 
     async def _load_live_events(
@@ -775,6 +809,7 @@ class HandballDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 "last_match": team_bucket.get("last_match"),
                 "tournament_id": team_bucket.get("tournament_id"),
                 "health": team_bucket.get("health", {}),
+                "perf": team_bucket.get("perf", {}),
                 "sensors": sensors,
             }
         )
@@ -789,6 +824,7 @@ class HandballDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 "table_rows": tournament_bucket.get("table_rows", []),
                 "team_positions": tournament_bucket.get("team_positions", {}),
                 "matches": tournament_bucket.get("matches", []),
+                "perf": self._perf_snapshot,
                 "sensors": bucket.get("sensors", []),
             }
         )
