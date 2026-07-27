@@ -1,18 +1,12 @@
 import pytest
-from unittest.mock import MagicMock, patch, AsyncMock
-import time
+from unittest.mock import patch, AsyncMock
 
-from custom_components.handballnet.api import HandballNetAPI
+from .api_test_helpers import mocked_handball_api
 
 @pytest.fixture
 def api():
-    hass = MagicMock()
-    # We need to mock session since it's used in __init__
-
-    with patch("custom_components.handballnet.api.HandballNetUtils", MagicMock()), \
-         patch("custom_components.handballnet.api.async_get_clientsession", MagicMock()):
-        api = HandballNetAPI(hass)
-        return api
+    with mocked_handball_api() as api_client:
+        yield api_client
 
 @pytest.mark.asyncio
 async def test_league_table_caching(api):
