@@ -1,6 +1,18 @@
 # Changelog
 
 
+## v0.0.28
+
+[compare changes](https://github.com/miggi92/hass-handball.net/compare/v0.0.27...v0.0.28)
+
+### 🩹 Fixes
+
+- 🐛  fixed not every game showing in cal ([41ce432](https://github.com/miggi92/hass-handball.net/commit/41ce432))
+
+### ❤️ Contributors
+
+- Miguel
+
 ## v0.0.27
 
 [compare changes](https://github.com/miggi92/hass-handball.net/compare/v0.0.26...v0.0.27)
