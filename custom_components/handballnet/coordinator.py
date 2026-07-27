@@ -559,9 +559,15 @@ class HandballDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         self, table_rows: list[dict[str, Any]]
     ) -> list[dict[str, Any]]:
         team_ids = [row.get("team_id") for row in table_rows if row.get("team_id")]
+
+        if not team_ids:
+            # Cup competitions may not expose table rows (e.g. hasTable=false).
+            team_ids = await self._api.get_tournament_team_ids(self._tournament_id)
+
         if not team_ids:
             return []
 
+        team_ids_set = set(team_ids)
         unique_matches: dict[str, dict[str, Any]] = {}
         schedule_results = await asyncio.gather(
             *(self._api.get_team_schedule(team_id) for team_id in team_ids),
@@ -584,7 +590,11 @@ class HandballDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
 
                 home_team_id = match.get("homeTeam", {}).get("id")
                 away_team_id = match.get("awayTeam", {}).get("id")
-                if home_team_id in team_ids and away_team_id in team_ids:
+                match_tournament_id = match.get("tournament", {}).get("id")
+
+                if match_tournament_id == self._tournament_id:
+                    unique_matches[match_id] = match
+                elif home_team_id in team_ids_set and away_team_id in team_ids_set:
                     unique_matches[match_id] = match
 
         return self._extract_essential_match_data(

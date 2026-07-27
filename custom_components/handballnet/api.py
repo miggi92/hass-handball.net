@@ -1,6 +1,7 @@
 import logging
 import time
 from typing import Dict, List, Any, Optional
+from urllib.parse import quote_plus
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.core import HomeAssistant
 from .const import HANDBALL_NET_BASE_URL
@@ -91,6 +92,34 @@ class HandballNetAPI:
         """Get live ticker events for a game"""
         data = await self._make_request(f"games/{game_id}/combined")
         return data.get("data", {}) if data else None
+
+    async def get_tournament_team_ids(self, tournament_id: str) -> list[str]:
+        """Resolve tournament participants using team search fallback."""
+        query = quote_plus(tournament_id)
+        data = await self._make_request(f"teams/search?query={query}")
+        teams = data.get("data", []) if data else []
+
+        team_ids: list[str] = []
+        seen: set[str] = set()
+        for team in teams:
+            if not isinstance(team, dict):
+                continue
+
+            default_tournament = team.get("defaultTournament")
+            if not isinstance(default_tournament, dict):
+                continue
+
+            if default_tournament.get("id") != tournament_id:
+                continue
+
+            team_id = team.get("id")
+            if not team_id or team_id in seen:
+                continue
+
+            seen.add(team_id)
+            team_ids.append(team_id)
+
+        return team_ids
 
     def extract_team_logo_url(self, matches: List[Dict[str, Any]], team_id: str) -> Optional[str]:
         """Extract team logo URL from matches data"""

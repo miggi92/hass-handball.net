@@ -49,3 +49,38 @@ async def test_league_table_no_cache_on_error(api):
     result = await api.get_league_table("123")
     assert result == [{"rank": 2}]
     assert api._make_request.call_count == 1
+
+
+@pytest.mark.asyncio
+async def test_get_tournament_team_ids_filters_by_default_tournament(api):
+    api._make_request = AsyncMock(
+        return_value={
+            "data": [
+                {
+                    "id": "team-a",
+                    "defaultTournament": {"id": "sr.competition.57"},
+                },
+                {
+                    "id": "team-b",
+                    "defaultTournament": {"id": "sr.competition.57"},
+                },
+                {
+                    "id": "team-c",
+                    "defaultTournament": {"id": "sr.competition.123"},
+                },
+                {
+                    "id": "team-a",
+                    "defaultTournament": {"id": "sr.competition.57"},
+                },
+                {
+                    "id": "team-d",
+                    "defaultTournament": None,
+                },
+            ]
+        }
+    )
+
+    result = await api.get_tournament_team_ids("sr.competition.57")
+
+    assert result == ["team-a", "team-b"]
+    api._make_request.assert_called_once()
