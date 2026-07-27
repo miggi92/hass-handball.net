@@ -29,6 +29,14 @@ class HandballClubOverviewSensor(HandballBaseSensor):
         return len(self._team_mapping)
 
     @property
+    def entity_picture(self) -> str | None:
+        for team in self._build_team_summaries():
+            team_logo = team.get("team_logo")
+            if team_logo:
+                return team_logo
+        return None
+
+    @property
     def extra_state_attributes(self) -> dict[str, Any]:
         teams = self._build_team_summaries()
         next_matches = sorted(
@@ -44,6 +52,7 @@ class HandballClubOverviewSensor(HandballBaseSensor):
             ],
             key=lambda item: item["match"].get("starts_at") or 0,
         )
+        team_cards = [self._build_team_card(team) for team in teams]
 
         return {
             "club_id": self._club_id,
@@ -51,6 +60,7 @@ class HandballClubOverviewSensor(HandballBaseSensor):
             "team_count": len(teams),
             "teams": teams,
             "next_matches": next_matches,
+            "team_cards": team_cards,
         }
 
     def _build_team_summaries(self) -> list[dict[str, Any]]:
@@ -73,6 +83,25 @@ class HandballClubOverviewSensor(HandballBaseSensor):
             )
 
         return sorted(teams, key=self._team_sort_key)
+
+    def _build_team_card(self, team: dict[str, Any]) -> dict[str, Any]:
+        next_match = team.get("next_match") or {}
+        last_match = team.get("last_match") or {}
+
+        return {
+            "team_id": team.get("team_id"),
+            "friendly_name": team.get("team_name"),
+            "entity_picture": team.get("team_logo"),
+            "next_match": next_match or None,
+            "last_match": last_match or None,
+            "home_team": next_match.get("home_team"),
+            "away_team": next_match.get("away_team"),
+            "field": next_match.get("field"),
+            "starts_at": next_match.get("starts_at"),
+            "starts_at_local": next_match.get("starts_at_local"),
+            "table_position": team.get("table_position"),
+            "is_live": team.get("is_live", False),
+        }
 
     def _team_sort_key(self, team: dict[str, Any]) -> tuple[datetime, str]:
         next_match = team.get("next_match") or {}

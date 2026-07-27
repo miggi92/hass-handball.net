@@ -103,24 +103,24 @@ button_card_templates:
       home: |
         [[[
           const m = states[entity.entity_id].attributes.next_match;
-          return `<img src="${m.homeTeam.logo}" height="50">`;
+          return `<img src="${m.home_team.logo}" height="50">`;
         ]]]
       away: |
         [[[
           const m = states[entity.entity_id].attributes.next_match;
-          return `<img src="${m.awayTeam.logo}" height="50">`;
+          return `<img src="${m.away_team.logo}" height="50">`;
         ]]]
       vs: |
         🆚
       homeName: |
         [[[
           const m = states[entity.entity_id].attributes.next_match;
-          return `<b>${m.homeTeam.name}</b>`;
+          return `<b>${m.home_team.name}</b>`;
         ]]]
       awayName: |
         [[[
           const m = states[entity.entity_id].attributes.next_match;
-          return `<b>${m.awayTeam.name}</b>`;
+          return `<b>${m.away_team.name}</b>`;
         ]]]
       date: |
         [[[
@@ -154,10 +154,191 @@ For club-based setups, the integration also exposes one overview entity per club
 ```yaml
 type: entities
 entities:
-  - entity: sensor.sg_heuchelberg_verein
+  - entity: sensor.sg_musterstadt_verein
 ```
 
-Its `teams` attribute contains all configured teams including `team_logo`, `next_match`, `last_match` and `table_position`, so one dashboard card can render the whole club without querying every team entity separately.
+Its `teams` attribute contains all configured teams including `team_logo`, `next_match`, `last_match` and `table_position`.
+
+For easier dashboard rendering there is also a flatter `team_cards` attribute. Each item includes:
+
+- `friendly_name`
+- `entity_picture`
+- `next_match`
+- `last_match`
+- `home_team`
+- `away_team`
+- `field`
+- `starts_at_local`
+- `table_position`
+
+Example using one club entity to render all configured teams in a single Markdown card:
+
+```yaml
+type: markdown
+content: |
+  {% set club = state_attr('sensor.sg_musterstadt_verein', 'team_cards') or [] %}
+  {% for team in club %}
+  ### {{ team.friendly_name }}
+  {% if team.entity_picture %}
+  <img src="{{ team.entity_picture }}" height="42">
+  {% endif %}
+
+  {% if team.next_match %}
+  Nächstes Spiel: **{{ team.home_team.name }} vs. {{ team.away_team.name }}**  
+  Termin: {{ as_datetime(team.starts_at_local).strftime('%d.%m.%Y %H:%M') if team.starts_at_local else '-' }}  
+  Halle: {{ team.field or '-' }}  
+  {% elif team.last_match %}
+  Letztes Spiel: **{{ team.last_match.home_team.name }} vs. {{ team.last_match.away_team.name }}**
+  {% else %}
+  Keine Spiele vorhanden.
+  {% endif %}
+
+  {% if team.table_position %}
+  Tabellenplatz: {{ team.table_position.position }}
+  {% endif %}
+
+  ---
+  {% endfor %}
+```
+
+#### Club Button-Card
+
+Using [Button-Card](https://github.com/custom-cards/button-card) with one club entity as the only data source:
+
+```yaml
+button_card_templates:
+  handballnet_club_team_card:
+    variables:
+      club_entity: sensor.sg_musterstadt_verein
+      team_index: 0
+    show_name: false
+    show_state: false
+    show_icon: false
+    styles:
+      card:
+        - padding: 12px
+        - border-radius: 12px
+        - box-shadow: 0 2px 6px rgba(0,0,0,0.3)
+      grid:
+        - grid-template-areas: |
+            "home vs away"
+            "homeName date awayName"
+            "bottom bottom bottom"
+        - grid-template-columns: 1fr auto 1fr
+        - grid-template-rows: auto auto auto
+    custom_fields:
+      home: |
+        [[[
+          const club = states[variables.club_entity];
+          const team = club?.attributes?.team_cards?.[variables.team_index];
+          const match = team?.next_match;
+          if (!match?.home_team?.logo) return '';
+          return `<img src="${match.home_team.logo}" height="50">`;
+        ]]]
+      away: |
+        [[[
+          const club = states[variables.club_entity];
+          const team = club?.attributes?.team_cards?.[variables.team_index];
+          const match = team?.next_match;
+          if (!match?.away_team?.logo) return '';
+          return `<img src="${match.away_team.logo}" height="50">`;
+        ]]]
+      vs: |
+        [[[
+          const club = states[variables.club_entity];
+          const team = club?.attributes?.team_cards?.[variables.team_index];
+          if (!team) return '';
+          if (!team.next_match) {
+            return team.entity_picture ? `<img src="${team.entity_picture}" height="60">` : '';
+          }
+          return `🆚`;
+        ]]]
+      homeName: |
+        [[[
+          const club = states[variables.club_entity];
+          const team = club?.attributes?.team_cards?.[variables.team_index];
+          const match = team?.next_match;
+          if (!team) return '';
+          if (!match) return `<b>${team.friendly_name}</b>`;
+          return `<b>${match.home_team.name}</b>`;
+        ]]]
+      awayName: |
+        [[[
+          const club = states[variables.club_entity];
+          const team = club?.attributes?.team_cards?.[variables.team_index];
+          const match = team?.next_match;
+          if (!match) return '';
+          return `<b>${match.away_team.name}</b>`;
+        ]]]
+      date: |
+        [[[
+          const club = states[variables.club_entity];
+          const team = club?.attributes?.team_cards?.[variables.team_index];
+          const match = team?.next_match;
+          if (!team) return '';
+          if (!match) {
+            const rank = team.table_position?.position ?? '?';
+            return `Tabellenplatz<br><b>${rank}</b>`;
+          }
+          const timestamp = new Date(match.starts_at_local);
+          return timestamp.toLocaleDateString('de-DE', { weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric' })
+            + '<br>' + timestamp.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+        ]]]
+      bottom: |
+        [[[
+          const club = states[variables.club_entity];
+          const team = club?.attributes?.team_cards?.[variables.team_index];
+          const match = team?.next_match;
+          if (!team) return '';
+          if (!match) return team.friendly_name;
+          return `${team.friendly_name}<br>📍 ${match.field || '-'}`;
+        ]]]
+```
+
+```yaml
+type: custom:button-card
+template: handballnet_club_team_card
+variables:
+  club_entity: sensor.sg_musterstadt_verein
+  team_index: 0
+```
+
+#### Auto-Entities / Config-Template-Card
+
+If you want one card per team without manually copying the card block, you can combine [auto-entities](https://github.com/thomasloven/lovelace-auto-entities) with [config-template-card](https://github.com/iantrich/config-template-card):
+
+```yaml
+type: custom:auto-entities
+card:
+  type: grid
+  columns: 2
+  square: false
+card_param: cards
+filter:
+  template: |
+    {% set count = state_attr('sensor.sg_musterstadt_verein', 'team_count') | int(0) %}
+    [
+    {% for idx in range(count) %}
+      {
+        "type": "custom:config-template-card",
+        "entities": ["sensor.sg_musterstadt_verein"],
+        "variables": {
+          "INDEX": {{ idx }}
+        },
+        "card": {
+          "type": "custom:button-card",
+          "template": "handballnet_club_team_card",
+          "variables": {
+            "club_entity": "sensor.sg_musterstadt_verein",
+            "team_index": "${INDEX}"
+          }
+        }
+      }{% if not loop.last %},{% endif %}
+    {% endfor %}
+    ]
+```
+
+This setup only needs the single club overview entity and automatically creates one card per configured team.
 
 ## Sponsors
 
