@@ -17,8 +17,11 @@ async def async_setup_entry(hass: HomeAssistant, entry, async_add_entities):
     if entity_type not in (ENTITY_TYPE_TEAM, ENTITY_TYPE_CLUB):
         return
 
-    coordinator = HandballDataUpdateCoordinator(hass, entry)
-    await coordinator.async_config_entry_first_refresh()
+    coordinator = getattr(entry, "runtime_data", None)
+    if coordinator is None:
+        coordinator = HandballDataUpdateCoordinator(hass, entry)
+        await coordinator.async_config_entry_first_refresh()
+        entry.runtime_data = coordinator
 
     entities = []
 

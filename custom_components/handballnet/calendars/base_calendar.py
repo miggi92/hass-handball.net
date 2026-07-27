@@ -6,10 +6,28 @@ from ..const import DOMAIN
 class HandballBaseCalendar(CalendarEntity):
     """Base class for all handball calendars"""
     
-    def __init__(self, hass, entry, entity_id):
+    def __init__(self, hass, entry, entity_id, coordinator=None):
         self.hass = hass
         self._entity_id = entity_id
+        self.coordinator = coordinator
+        self._remove_coordinator_listener = None
         self._attr_config_entry_id = entry.entry_id
+
+    async def async_added_to_hass(self) -> None:
+        await super().async_added_to_hass()
+        if self.coordinator is not None:
+            self._remove_coordinator_listener = self.coordinator.async_add_listener(
+                self._handle_coordinator_update
+            )
+
+    async def async_will_remove_from_hass(self) -> None:
+        if self._remove_coordinator_listener is not None:
+            self._remove_coordinator_listener()
+            self._remove_coordinator_listener = None
+        await super().async_will_remove_from_hass()
+
+    def _handle_coordinator_update(self) -> None:
+        self.async_write_ha_state()
         
     def _create_device_info(self, identifiers, name, model, via_device=None):
         """Create device info dictionary"""

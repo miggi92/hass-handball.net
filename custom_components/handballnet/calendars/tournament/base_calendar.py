@@ -4,8 +4,8 @@ from ...const import DOMAIN
 class HandballBaseCalendar(BaseHandballCalendar):
     """Base class for handball tournament calendars"""
     
-    def __init__(self, hass, entry, tournament_id):
-        super().__init__(hass, entry, tournament_id)
+    def __init__(self, hass, entry, tournament_id, coordinator=None):
+        super().__init__(hass, entry, tournament_id, coordinator)
         self._tournament_id = tournament_id
         
         # Create tournament-specific device info

@@ -28,21 +28,24 @@ from .sensors import (
 
 
 async def async_setup_entry(hass: HomeAssistant, entry, async_add_entities):
+    coordinator = getattr(entry, "runtime_data", None)
+    if coordinator is None:
+        coordinator = HandballDataUpdateCoordinator(hass, entry)
+        await coordinator.async_config_entry_first_refresh()
+        entry.runtime_data = coordinator
+
     entity_type = entry.data.get(CONF_ENTITY_TYPE, ENTITY_TYPE_TEAM)
 
     if entity_type == ENTITY_TYPE_TEAM:
-        await _setup_team_sensors(hass, entry, async_add_entities)
+        await _setup_team_sensors(hass, entry, async_add_entities, coordinator)
     elif entity_type == ENTITY_TYPE_CLUB:
-        await _setup_club_sensors(hass, entry, async_add_entities)
+        await _setup_club_sensors(hass, entry, async_add_entities, coordinator)
     elif entity_type == ENTITY_TYPE_TOURNAMENT:
-        await _setup_tournament_sensors(hass, entry, async_add_entities)
+        await _setup_tournament_sensors(hass, entry, async_add_entities, coordinator)
 
 
-async def _setup_team_sensors(hass: HomeAssistant, entry, async_add_entities):
+async def _setup_team_sensors(hass: HomeAssistant, entry, async_add_entities, coordinator):
     await async_ensure_club_device(hass, entry)
-
-    coordinator = HandballDataUpdateCoordinator(hass, entry)
-    await coordinator.async_config_entry_first_refresh()
 
     team_id = entry.data[CONF_TEAM_ID]
     team_name = entry.data.get("team_name", team_id)
@@ -59,11 +62,8 @@ async def _setup_team_sensors(hass: HomeAssistant, entry, async_add_entities):
     ])
 
 
-async def _setup_club_sensors(hass: HomeAssistant, entry, async_add_entities):
+async def _setup_club_sensors(hass: HomeAssistant, entry, async_add_entities, coordinator):
     await async_ensure_club_device(hass, entry)
-
-    coordinator = HandballDataUpdateCoordinator(hass, entry)
-    await coordinator.async_config_entry_first_refresh()
 
     sensors = [HandballClubOverviewSensor(coordinator, entry)]
     for team_name, team_id in entry.data.get(CONF_TEAM_MAPPING, {}).items():
@@ -82,9 +82,7 @@ async def _setup_club_sensors(hass: HomeAssistant, entry, async_add_entities):
     async_add_entities(sensors)
 
 
-async def _setup_tournament_sensors(hass: HomeAssistant, entry, async_add_entities):
-    coordinator = HandballDataUpdateCoordinator(hass, entry)
-    await coordinator.async_config_entry_first_refresh()
+async def _setup_tournament_sensors(hass: HomeAssistant, entry, async_add_entities, coordinator):
 
     tournament_id = entry.data[CONF_TOURNAMENT_ID]
     tournament_bucket = coordinator.data.get("tournament", {}) if coordinator.data else {}

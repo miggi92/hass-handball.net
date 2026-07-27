@@ -6,8 +6,8 @@ from ...const import DOMAIN, CONF_CLUB_ID
 class HandballBaseCalendar(BaseHandballCalendar):
     """Base class for handball team calendars"""
 
-    def __init__(self, hass, entry, team_id, team_name):
-        super().__init__(hass, entry, team_id)
+    def __init__(self, hass, entry, team_id, team_name, coordinator=None):
+        super().__init__(hass, entry, team_id, coordinator)
         self._team_id = team_id
         self._team_name = team_name
         self._club_name = entry.data.get("club_name")

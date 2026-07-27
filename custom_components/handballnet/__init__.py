@@ -14,13 +14,15 @@ async def async_reload_config(hass: HomeAssistant):
 async def async_refresh_team_data(hass: HomeAssistant, call):
     """Service to refresh team data"""
     team_id = call.data.get("team_id")
-    if team_id in hass.data[DOMAIN]:
-        # Trigger update for all sensors of this team
-        sensors = hass.data[DOMAIN][team_id].get("sensors", [])
-        for sensor in sensors:
-            if hasattr(sensor, 'async_update'):
-                await sensor.async_update()
-                sensor.async_write_ha_state()
+    for entry in hass.config_entries.async_entries(DOMAIN):
+        coordinator = getattr(entry, "runtime_data", None)
+        if coordinator is None:
+            continue
+
+        team_buckets = (coordinator.data or {}).get("teams", {})
+        if team_id in team_buckets:
+            await coordinator.async_request_refresh()
+            return
 
 async def async_diagnose_team(hass: HomeAssistant, call):
     """Service to diagnose team configuration"""
@@ -55,6 +57,8 @@ async def async_setup(hass: HomeAssistant, config: dict):
     return True
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
+    from .coordinator import HandballDataUpdateCoordinator
+
     hass.data.setdefault(DOMAIN, {})
     
     entity_type = entry.data.get(CONF_ENTITY_TYPE, ENTITY_TYPE_TEAM)
@@ -85,6 +89,10 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
             "sensors": []
         }
 
+    coordinator = HandballDataUpdateCoordinator(hass, entry)
+    await coordinator.async_config_entry_first_refresh()
+    entry.runtime_data = coordinator
+
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
     return True
 
@@ -105,6 +113,8 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry):
             tournament_id = entry.data[CONF_TOURNAMENT_ID]
             tournament_key = f"tournament_{tournament_id}"
             hass.data[DOMAIN].pop(tournament_key, None)
+
+        entry.runtime_data = None
     
     if not hass.config_entries.async_entries(DOMAIN):
         hass.services.async_remove(DOMAIN, "reload_config")
