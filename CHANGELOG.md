@@ -1,6 +1,26 @@
 # Changelog
 
 
+## v0.0.25
+
+[compare changes](https://github.com/miggi92/hass-handball.net/compare/v0.0.24...v0.0.25)
+
+### 🚀 Enhancements
+
+- ✨  updated lovelace cards ([0235120](https://github.com/miggi92/hass-handball.net/commit/0235120))
+
+### 🩹 Fixes
+
+- 🐛  fixed error in flow ([9ebe899](https://github.com/miggi92/hass-handball.net/commit/9ebe899))
+
+### 🏡 Chore
+
+- 🔖  update version ([3ab879d](https://github.com/miggi92/hass-handball.net/commit/3ab879d))
+
+### ❤️ Contributors
+
+- Miguel
+
 ## v0.0.24
 
 [compare changes](https://github.com/miggi92/hass-handball.net/compare/v0.0.23...v0.0.24)
