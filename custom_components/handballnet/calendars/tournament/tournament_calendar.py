@@ -1,5 +1,5 @@
 from homeassistant.components.calendar import CalendarEvent
-from datetime import datetime, timezone
+from datetime import datetime
 from .base_calendar import HandballBaseCalendar
 from ...const import DOMAIN
 
@@ -25,25 +25,7 @@ class HandballTournamentCalendar(HandballBaseCalendar):
 
     async def async_get_events(self, hass, start_date: datetime, end_date: datetime) -> list[CalendarEvent]:
         matches = self._get_matches()
-        events: list[CalendarEvent] = []
-        now = datetime.now(timezone.utc)
-        
-        for match in matches:
-            match_window = self._get_match_window(match)
-            if not match_window:
-                continue
-            start, end = match_window
-            
-            if start_date <= start <= end_date:
-                # Mark live games
-                is_live = start <= now <= end
-                event = self._create_calendar_event(match, is_live=is_live)
-                if event:
-                    events.append(event)
-        
-        # Sort events by start time
-        events.sort(key=lambda x: x.start)
-        return events
+        return self._collect_events_in_range(matches, start_date, end_date)
 
     def _get_matches(self) -> list[dict]:
         if self.coordinator is not None:
