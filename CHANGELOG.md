@@ -1,6 +1,27 @@
 # Changelog
 
 
+## v0.0.23
+
+[compare changes](https://github.com/miggi92/hass-handball.net/compare/v0.0.22...v0.0.23)
+
+### 🚀 Enhancements
+
+- ✨  changed logo entities ([e4c94a7](https://github.com/miggi92/hass-handball.net/commit/e4c94a7))
+- ✨  added lovelace cards ([6117f18](https://github.com/miggi92/hass-handball.net/commit/6117f18))
+
+### 🩹 Fixes
+
+- 🐛  fixed error ([78804fe](https://github.com/miggi92/hass-handball.net/commit/78804fe))
+
+### 🏡 Chore
+
+- 🔖  updated version ([2f15119](https://github.com/miggi92/hass-handball.net/commit/2f15119))
+
+### ❤️ Contributors
+
+- Miguel
+
 ## v0.0.22
 
 [compare changes](https://github.com/miggi92/hass-handball.net/compare/v0.0.21...v0.0.22)
