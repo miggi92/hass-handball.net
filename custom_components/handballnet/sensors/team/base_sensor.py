@@ -13,6 +13,7 @@ class HandballBaseSensor(BaseHandballSensor):
         self.utils = HandballNetUtils()
         self._team_id = team_id
         self._team_name = team_name
+        self._show_team_logo = False
         self._club_name = entry.data.get("club_name")
         self._club_id = entry.data.get(CONF_CLUB_ID, entry.entry_id)
         self._team_variant = entry.data.get("team_variant")
@@ -60,9 +61,10 @@ class HandballBaseSensor(BaseHandballSensor):
 
     @property
     def entity_picture(self) -> str | None:
-        logo_url = self._get_team_bucket().get("team_logo_url")
-        if logo_url:
-            return self.utils.normalize_logo_url(logo_url)
+        if self._show_team_logo:
+            logo_url = self._get_team_bucket().get("team_logo_url")
+            if logo_url:
+                return self.utils.normalize_logo_url(logo_url)
         return getattr(self, "_attr_entity_picture", None)
 
     def update_device_name(self, team_name: str) -> None:

@@ -8,6 +8,7 @@ class HandballAllGamesSensor(HandballBaseSensor):
         super().__init__(coordinator, entry, team_id, team_name)
         self.utils = HandballNetUtils()
         self._team_id = team_id
+        self._show_team_logo = True
 
         display_name = self._resolve_display_name(team_name)
         self._attr_name = f"{display_name} Alle Spiele"

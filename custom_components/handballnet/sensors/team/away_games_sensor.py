@@ -44,9 +44,16 @@ class HandballAuswaertsspielSensor(HandballBaseSensor):
             "match_date": time_formats["formatted"],
         }
 
-    def update_entity_picture(self, logo_url: str) -> None:
+    @property
+    def entity_picture(self) -> str | None:
+        match = self._get_next_away_match()
+        if not match:
+            return None
+
+        logo_url = match.get("homeTeam", {}).get("logo")
         if logo_url:
-            self._attr_entity_picture = self.utils.normalize_logo_url(logo_url)
+            return self.utils.normalize_logo_url(logo_url)
+        return None
 
     def _get_next_away_match(self) -> dict[str, Any] | None:
         matches = self._get_team_bucket().get("matches", [])
