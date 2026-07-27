@@ -1,3 +1,4 @@
+import os
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import config_validation as cv
@@ -50,7 +51,24 @@ async def async_diagnose_team(hass: HomeAssistant, call):
     
     _LOGGER.info("=== END DIAGNOSE ===")
 
+_LOVELACE_CARDS = [
+    "handball-tournament-table-card.js",
+    "handball-team-card.js",
+]
+
+
 async def async_setup(hass: HomeAssistant, config: dict):
+    # Register Lovelace card JS files as static resources
+    from homeassistant.components.frontend import add_extra_js_url
+
+    www_dir = os.path.join(os.path.dirname(__file__), "www")
+    for filename in _LOVELACE_CARDS:
+        url_path = f"/{DOMAIN}/{filename}"
+        file_path = os.path.join(www_dir, filename)
+        if os.path.isfile(file_path):
+            hass.http.register_static_path(url_path, file_path, cache_headers=False)
+            add_extra_js_url(hass, url_path)
+
     hass.services.async_register(DOMAIN, "reload_config", async_reload_config)
     hass.services.async_register(DOMAIN, "refresh_team_data", async_refresh_team_data)
     hass.services.async_register(DOMAIN, "diagnose_team", async_diagnose_team)
