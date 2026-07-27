@@ -18,6 +18,8 @@ class HandballClubOverviewSensor(HandballBaseSensor):
         self._attr_name = f"{self._club_name} Verein"
         self._attr_unique_id = f"{entry.entry_id}_club_overview"
         self._attr_icon = "mdi:shield-account"
+        self._teams_cache_key: int | None = None
+        self._teams_cache_value: list[dict[str, Any]] = []
         self._attr_device_info = self._create_device_info(
             identifiers={(DOMAIN, self._club_id)},
             name=self._club_name,
@@ -64,6 +66,10 @@ class HandballClubOverviewSensor(HandballBaseSensor):
         }
 
     def _build_team_summaries(self) -> list[dict[str, Any]]:
+        cache_key = id(self.coordinator.data)
+        if cache_key == self._teams_cache_key:
+            return self._teams_cache_value
+
         teams: list[dict[str, Any]] = []
         team_buckets = (self.coordinator.data or {}).get("teams", {})
 
@@ -82,7 +88,9 @@ class HandballClubOverviewSensor(HandballBaseSensor):
                 }
             )
 
-        return sorted(teams, key=self._team_sort_key)
+        self._teams_cache_value = sorted(teams, key=self._team_sort_key)
+        self._teams_cache_key = cache_key
+        return self._teams_cache_value
 
     def _build_team_card(self, team: dict[str, Any]) -> dict[str, Any]:
         next_match = team.get("next_match") or {}

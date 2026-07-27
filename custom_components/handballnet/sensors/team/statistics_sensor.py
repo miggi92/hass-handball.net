@@ -9,6 +9,8 @@ class HandballStatisticsSensor(HandballBaseSensor):
     def __init__(self, coordinator, entry, team_id, team_name):
         super().__init__(coordinator, entry, team_id, team_name)
         self._team_id = team_id
+        self._stats_cache_key: tuple[int, int, int] | None = None
+        self._stats_cache_value: tuple[str | None, dict[str, Any]] = (None, {})
 
         display_name = self._resolve_display_name(team_name)
         self._attr_name = f"{display_name} Statistik"
@@ -17,11 +19,19 @@ class HandballStatisticsSensor(HandballBaseSensor):
 
     @property
     def state(self) -> str | None:
-        return self._calculate_statistics(self._get_team_bucket().get("matches", []))[0]
+        return self._get_cached_statistics()[0]
 
     @property
     def extra_state_attributes(self) -> dict[str, Any]:
-        return self._calculate_statistics(self._get_team_bucket().get("matches", []))[1]
+        return self._get_cached_statistics()[1]
+
+    def _get_cached_statistics(self) -> tuple[str | None, dict[str, Any]]:
+        matches = self._get_team_bucket().get("matches", [])
+        cache_key = (id(self.coordinator.data), id(matches), len(matches))
+        if cache_key != self._stats_cache_key:
+            self._stats_cache_value = self._calculate_statistics(matches)
+            self._stats_cache_key = cache_key
+        return self._stats_cache_value
 
     def _calculate_statistics(
         self, matches: List[Dict[str, Any]]

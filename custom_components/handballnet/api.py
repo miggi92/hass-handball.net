@@ -14,6 +14,7 @@ class HandballNetAPI:
 
     LEAGUE_TABLE_CACHE_TTL = 3600  # 1 hour
     TEAM_SCHEDULE_CACHE_TTL = 3600  # 1 hour
+    TEAM_INFO_CACHE_TTL = 21600  # 6 hours
 
     def __init__(self, hass: HomeAssistant):
         self.hass = hass
@@ -22,6 +23,7 @@ class HandballNetAPI:
         self.session = async_get_clientsession(hass)
         self._league_table_cache = {}
         self._team_schedule_cache = {}
+        self._team_info_cache = {}
 
     async def _make_request(self, endpoint: str) -> Optional[Dict[str, Any]]:
         """Make HTTP request to handball.net API"""
@@ -58,6 +60,13 @@ class HandballNetAPI:
 
     async def get_team_info(self, team_id: str) -> Optional[Dict[str, Any]]:
         """Get team information including logo"""
+        now = time.time()
+
+        if team_id in self._team_info_cache:
+            timestamp, cached_data = self._team_info_cache[team_id]
+            if now - timestamp < self.TEAM_INFO_CACHE_TTL:
+                return cached_data
+
         data = await self._make_request(f"teams/{team_id}")
         if not data:
             return None
@@ -65,6 +74,12 @@ class HandballNetAPI:
         team_data = data.get("data")
         if team_data and team_data.get("logo"):
             team_data["logo"] = self.utils.normalize_logo_url(team_data["logo"])
+
+        if team_data is not None:
+            # Prevent unbounded growth
+            if len(self._team_info_cache) >= 50:
+                self._team_info_cache.clear()
+            self._team_info_cache[team_id] = (now, team_data)
 
         return team_data
 

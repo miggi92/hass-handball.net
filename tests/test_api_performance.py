@@ -73,3 +73,43 @@ async def test_team_schedule_no_cache_on_error(api):
     assert result == [{"id": "match2"}]
     assert api._make_request.call_count == 1
     assert len(api._team_schedule_cache) == 1
+
+
+@pytest.mark.asyncio
+async def test_team_info_caching(api):
+    api._make_request = AsyncMock(return_value={"data": {"id": "team123"}})
+
+    with patch("time.time", return_value=2000):
+        result1 = await api.get_team_info("team123")
+
+    assert result1 == {"id": "team123"}
+    assert api._make_request.call_count == 1
+
+    with patch("time.time", return_value=2000 + 3000):  # +50 mins
+        result2 = await api.get_team_info("team123")
+
+    assert result2 == {"id": "team123"}
+    assert api._make_request.call_count == 1
+
+    with patch("time.time", return_value=2000 + 21601):  # +6 hours 1 sec
+        result3 = await api.get_team_info("team123")
+
+    assert result3 == {"id": "team123"}
+    assert api._make_request.call_count == 2
+
+
+@pytest.mark.asyncio
+async def test_team_info_no_cache_on_error(api):
+    api._make_request = AsyncMock(return_value=None)
+
+    result = await api.get_team_info("team123")
+    assert result is None
+    assert len(api._team_info_cache) == 0
+
+    api._make_request.reset_mock()
+    api._make_request.return_value = {"data": {"id": "team123"}}
+
+    result = await api.get_team_info("team123")
+    assert result == {"id": "team123"}
+    assert api._make_request.call_count == 1
+    assert len(api._team_info_cache) == 1
