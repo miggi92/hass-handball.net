@@ -1,6 +1,34 @@
 # Changelog
 
 
+## v0.0.27
+
+[compare changes](https://github.com/miggi92/hass-handball.net/compare/v0.0.26...v0.0.27)
+
+### 🚀 Enhancements
+
+- ✨  added remaining teams sensor for k.o. tournaments ([b2c2e42](https://github.com/miggi92/hass-handball.net/commit/b2c2e42))
+- ✨  only show remaining teams sensor for tournaments without table ([ae01f0f](https://github.com/miggi92/hass-handball.net/commit/ae01f0f))
+- ✨  added performance to health sensor ([2d63945](https://github.com/miggi92/hass-handball.net/commit/2d63945))
+
+### 🔥 Performance
+
+- ⚡️  improved performance ([73724ea](https://github.com/miggi92/hass-handball.net/commit/73724ea))
+- ⚡️  improved cal performance ([4337908](https://github.com/miggi92/hass-handball.net/commit/4337908))
+
+### 🩹 Fixes
+
+- Declare http dependency for hassfest validation ([d162d46](https://github.com/miggi92/hass-handball.net/commit/d162d46))
+- 🐛  table only showing 10 entries ([59f5cc7](https://github.com/miggi92/hass-handball.net/commit/59f5cc7))
+
+### 🏡 Chore
+
+- 🔖  update version ([5691b20](https://github.com/miggi92/hass-handball.net/commit/5691b20))
+
+### ❤️ Contributors
+
+- Miguel
+
 ## v0.0.26
 
 [compare changes](https://github.com/miggi92/hass-handball.net/compare/v0.0.25...v0.0.26)
