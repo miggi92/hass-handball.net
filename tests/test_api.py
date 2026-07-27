@@ -2,15 +2,6 @@ import pytest
 from unittest.mock import MagicMock, patch, AsyncMock
 import time
 
-# Mock sys.modules for homeassistant dependencies if they are not available
-import sys
-if "homeassistant" not in sys.modules:
-    sys.modules["homeassistant"] = MagicMock()
-    sys.modules["homeassistant.helpers"] = MagicMock()
-    sys.modules["homeassistant.helpers.aiohttp_client"] = MagicMock()
-    sys.modules["homeassistant.core"] = MagicMock()
-    sys.modules["homeassistant.config_entries"] = MagicMock()
-
 from custom_components.handballnet.api import HandballNetAPI
 
 @pytest.fixture

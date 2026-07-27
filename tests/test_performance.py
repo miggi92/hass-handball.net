@@ -1,19 +1,11 @@
 import unittest
 from unittest.mock import MagicMock, patch, AsyncMock
 import time
-import sys
 import os
+import sys
 
 # Add the root directory to sys.path to allow importing from custom_components
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-
-# Mock sys.modules for homeassistant dependencies
-if "homeassistant" not in sys.modules:
-    sys.modules["homeassistant"] = MagicMock()
-    sys.modules["homeassistant.helpers"] = MagicMock()
-    sys.modules["homeassistant.helpers.aiohttp_client"] = MagicMock()
-    sys.modules["homeassistant.core"] = MagicMock()
-    sys.modules["homeassistant.config_entries"] = MagicMock()
 
 from custom_components.handballnet.api import HandballNetAPI
 

@@ -6,3 +6,4 @@ ruff==0.15.17
 requests
 voluptuous
 pytest
+pytest-asyncio
