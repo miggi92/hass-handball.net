@@ -1,5 +1,6 @@
 from typing import Any, Dict
 from .base_sensor import HandballBaseSensor
+from ...const import DOMAIN
 from ...utils import HandballNetUtils
 
 class HandballTournamentTeamPositionSensor(HandballBaseSensor):
