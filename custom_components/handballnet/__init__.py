@@ -60,14 +60,31 @@ _LOVELACE_CARDS = [
 async def async_setup(hass: HomeAssistant, config: dict):
     # Register Lovelace card JS files as static resources
     from homeassistant.components.frontend import add_extra_js_url
+    try:
+        from homeassistant.components.http import StaticPathConfig
+    except ImportError:
+        StaticPathConfig = None
 
     www_dir = os.path.join(os.path.dirname(__file__), "www")
+    static_files = []
     for filename in _LOVELACE_CARDS:
         url_path = f"/{DOMAIN}/{filename}"
         file_path = os.path.join(www_dir, filename)
         if os.path.isfile(file_path):
-            hass.http.register_static_path(url_path, file_path, cache_headers=False)
+            static_files.append((url_path, file_path))
             add_extra_js_url(hass, url_path)
+
+    if static_files:
+        if hasattr(hass.http, "async_register_static_paths") and StaticPathConfig is not None:
+            await hass.http.async_register_static_paths(
+                [
+                    StaticPathConfig(url_path, file_path, cache_headers=False)
+                    for url_path, file_path in static_files
+                ]
+            )
+        else:
+            for url_path, file_path in static_files:
+                hass.http.register_static_path(url_path, file_path, cache_headers=False)
 
     hass.services.async_register(DOMAIN, "reload_config", async_reload_config)
     hass.services.async_register(DOMAIN, "refresh_team_data", async_refresh_team_data)
