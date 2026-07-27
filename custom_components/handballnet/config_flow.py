@@ -175,6 +175,11 @@ class HandballNetConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
         return team_mapping
 
+    def _get_existing_selected_team_ids(self, entry) -> list[str]:
+        """Return existing team ids that are still valid for the current club."""
+        existing_team_ids = list(entry.data.get(CONF_TEAM_MAPPING, {}).values())
+        return [team_id for team_id in existing_team_ids if team_id in self._team_options]
+
     async def _api_get(self, path: str):
         """Get JSON data from handball.net API path."""
         session = async_get_clientsession(self.hass)
@@ -827,7 +832,7 @@ class HandballNetConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         if not self._team_options:
             return await self.async_step_reconfigure()
 
-        existing_team_ids = list(entry.data.get(CONF_TEAM_MAPPING, {}).values())
+        existing_team_ids = self._get_existing_selected_team_ids(entry)
         data_schema = vol.Schema(
             {
                 vol.Required(
