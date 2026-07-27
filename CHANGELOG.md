@@ -1,6 +1,28 @@
 # Changelog
 
 
+## v0.0.21
+
+[compare changes](https://github.com/miggi92/hass-handball.net/compare/v0.0.20...v0.0.21)
+
+### 🚀 Enhancements
+
+- ✨  added logo on club level ([031586c](https://github.com/miggi92/hass-handball.net/commit/031586c))
+- ✨  added frontend card ([929204b](https://github.com/miggi92/hass-handball.net/commit/929204b))
+
+### 🩹 Fixes
+
+- 🐛  old teams couldn't be removed ([54a95a8](https://github.com/miggi92/hass-handball.net/commit/54a95a8))
+
+### 🏡 Chore
+
+- Update version ([c4d49e5](https://github.com/miggi92/hass-handball.net/commit/c4d49e5))
+- ⬆️  update pnpm ([4568d3a](https://github.com/miggi92/hass-handball.net/commit/4568d3a))
+
+### ❤️ Contributors
+
+- Miguel
+
 ## v0.0.20
 
 [compare changes](https://github.com/miggi92/hass-handball.net/compare/v0.0.19...v0.0.20)
