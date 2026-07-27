@@ -23,6 +23,7 @@ from .sensors import (
     HandballStatisticsSensor,
     HandballTablePositionSensor,
     HandballTournamentTableSensor,
+    HandballTournamentRemainingTeamsSensor,
     HandballTournamentTeamPositionSensor,
 )
 
@@ -88,7 +89,10 @@ async def _setup_tournament_sensors(hass: HomeAssistant, entry, async_add_entiti
     tournament_bucket = coordinator.data.get("tournament", {}) if coordinator.data else {}
     table_rows = tournament_bucket.get("table_rows", [])
 
-    sensors = [HandballTournamentTableSensor(coordinator, entry, tournament_id)]
+    sensors = [
+        HandballTournamentTableSensor(coordinator, entry, tournament_id),
+        HandballTournamentRemainingTeamsSensor(coordinator, entry, tournament_id),
+    ]
     sensors.extend(
         HandballTournamentTeamPositionSensor(coordinator, entry, tournament_id, team_row)
         for team_row in table_rows

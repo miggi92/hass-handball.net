@@ -143,7 +143,7 @@ class HandballDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
 
         tournament_info = await self._get_tournament_info()
         table_rows = await self._extract_table_rows_with_logos(table_data)
-        matches = await self._fetch_tournament_matches(table_rows)
+        matches = await self._fetch_tournament_matches(table_rows, tournament_info)
         team_positions = {
             row.get("team_id"): row for row in table_rows if row.get("team_id")
         }
@@ -556,7 +556,9 @@ class HandballDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         return formatted_rows
 
     async def _fetch_tournament_matches(
-        self, table_rows: list[dict[str, Any]]
+        self,
+        table_rows: list[dict[str, Any]],
+        tournament_info: dict[str, Any] | None = None,
     ) -> list[dict[str, Any]]:
         team_ids = [row.get("team_id") for row in table_rows if row.get("team_id")]
 
@@ -567,35 +569,76 @@ class HandballDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         if not team_ids:
             return []
 
-        team_ids_set = set(team_ids)
-        unique_matches: dict[str, dict[str, Any]] = {}
-        schedule_results = await asyncio.gather(
-            *(self._api.get_team_schedule(team_id) for team_id in team_ids),
-            return_exceptions=True,
+        target_tournament_name = (
+            (tournament_info or {}).get("name", "") if tournament_info else ""
         )
 
-        for team_id, matches_result in zip(team_ids, schedule_results, strict=False):
-            if isinstance(matches_result, Exception):
-                _LOGGER.debug(
-                    "Could not get tournament matches for team %s: %s",
-                    team_id,
-                    matches_result,
-                )
-                continue
+        known_team_ids: set[str] = set(team_ids)
+        pending_team_ids: set[str] = set(team_ids)
+        processed_team_ids: set[str] = set()
+        unique_matches: dict[str, dict[str, Any]] = {}
+        max_teams = 256
 
-            for match in matches_result or []:
-                match_id = match.get("id")
-                if not match_id or match_id in unique_matches:
+        while pending_team_ids and len(processed_team_ids) < max_teams:
+            batch_team_ids = [
+                team_id for team_id in pending_team_ids if team_id not in processed_team_ids
+            ]
+            pending_team_ids.clear()
+            if not batch_team_ids:
+                break
+
+            schedule_results = await asyncio.gather(
+                *(self._api.get_team_schedule(team_id) for team_id in batch_team_ids),
+                return_exceptions=True,
+            )
+
+            for team_id, matches_result in zip(
+                batch_team_ids, schedule_results, strict=False
+            ):
+                processed_team_ids.add(team_id)
+                if isinstance(matches_result, Exception):
+                    _LOGGER.debug(
+                        "Could not get tournament matches for team %s: %s",
+                        team_id,
+                        matches_result,
+                    )
                     continue
 
-                home_team_id = match.get("homeTeam", {}).get("id")
-                away_team_id = match.get("awayTeam", {}).get("id")
-                match_tournament_id = match.get("tournament", {}).get("id")
+                for match in matches_result or []:
+                    match_id = match.get("id")
+                    if not match_id:
+                        continue
 
-                if match_tournament_id == self._tournament_id:
+                    tournament_data = match.get("tournament", {})
+                    match_tournament_id = tournament_data.get("id")
+                    match_tournament_name = tournament_data.get("name", "")
+                    is_target_tournament = match_tournament_id == self._tournament_id
+
+                    if (
+                        not is_target_tournament
+                        and not match_tournament_id
+                        and target_tournament_name
+                        and match_tournament_name == target_tournament_name
+                    ):
+                        is_target_tournament = True
+
+                    if not is_target_tournament:
+                        continue
+
                     unique_matches[match_id] = match
-                elif home_team_id in team_ids_set and away_team_id in team_ids_set:
-                    unique_matches[match_id] = match
+
+                    for participant in (
+                        match.get("homeTeam", {}),
+                        match.get("awayTeam", {}),
+                    ):
+                        participant_id = participant.get("id")
+                        if (
+                            participant_id
+                            and participant_id not in known_team_ids
+                            and len(known_team_ids) < max_teams
+                        ):
+                            known_team_ids.add(participant_id)
+                            pending_team_ids.add(participant_id)
 
         return self._extract_essential_match_data(
             "",

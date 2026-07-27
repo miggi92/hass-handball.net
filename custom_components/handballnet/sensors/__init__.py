@@ -17,7 +17,8 @@ from .club import HandballClubOverviewSensor
 # Import tournament sensors
 from .tournament import (
     HandballTournamentTableSensor,
-    HandballTournamentTeamPositionSensor
+    HandballTournamentTeamPositionSensor,
+    HandballTournamentRemainingTeamsSensor,
 )
 
 __all__ = [
@@ -35,5 +36,6 @@ __all__ = [
     "HandballClubOverviewSensor",
     # Tournament sensors
     "HandballTournamentTableSensor",
-    "HandballTournamentTeamPositionSensor"
+    "HandballTournamentTeamPositionSensor",
+    "HandballTournamentRemainingTeamsSensor",
 ]
