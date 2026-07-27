@@ -36,7 +36,7 @@ class HandballTournamentTableSensor(HandballBaseSensor):
             "tournament_acronym": tournament_info.get("acronym", ""),
             "organization": tournament_info.get("organization", ""),
             "total_teams": len(table_rows),
-            "table": table_rows[:10],
+            "table": table_rows,
             "leader": table_rows[0],
             "last_place": table_rows[-1],
         }
