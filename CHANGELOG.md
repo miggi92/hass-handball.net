@@ -1,6 +1,35 @@
 # Changelog
 
 
+## v0.0.22
+
+[compare changes](https://github.com/miggi92/hass-handball.net/compare/v0.0.21...v0.0.22)
+
+### 🚀 Enhancements
+
+- ✨  central koordinator ([f450e28](https://github.com/miggi92/hass-handball.net/commit/f450e28))
+
+### 🩹 Fixes
+
+- 🐛  fixed warning in log when changing teams ([8a83c3e](https://github.com/miggi92/hass-handball.net/commit/8a83c3e))
+- 🐛  fixed tests ([b424fb2](https://github.com/miggi92/hass-handball.net/commit/b424fb2))
+
+### 💅 Refactors
+
+- ♻️  optimize code ([de3f8b7](https://github.com/miggi92/hass-handball.net/commit/de3f8b7))
+
+### 🏡 Chore
+
+- 🔖  updated version ([d68b418](https://github.com/miggi92/hass-handball.net/commit/d68b418))
+
+### ✅ Tests
+
+- 🧪  fixed tests ([a53c086](https://github.com/miggi92/hass-handball.net/commit/a53c086))
+
+### ❤️ Contributors
+
+- Miguel
+
 ## v0.0.21
 
 [compare changes](https://github.com/miggi92/hass-handball.net/compare/v0.0.20...v0.0.21)
