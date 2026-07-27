@@ -1,6 +1,18 @@
 # Changelog
 
 
+## v0.0.24
+
+[compare changes](https://github.com/miggi92/hass-handball.net/compare/v0.0.23...v0.0.24)
+
+### 🩹 Fixes
+
+- 🐛  fixed loading issues ([a40cf74](https://github.com/miggi92/hass-handball.net/commit/a40cf74))
+
+### ❤️ Contributors
+
+- Miguel
+
 ## v0.0.23
 
 [compare changes](https://github.com/miggi92/hass-handball.net/compare/v0.0.22...v0.0.23)
