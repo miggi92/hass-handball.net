@@ -110,7 +110,7 @@ class HandballNetAPI:
         """Get team position in league table"""
         table_data = await self.get_league_table(tournament_id)
         if not table_data:
-            _LOGGER.warning("No table data received for tournament %s", tournament_id)
+            _LOGGER.debug("No table data received for tournament %s", tournament_id)
             return None
 
         return self._find_team_in_table(table_data, team_id, tournament_id)
@@ -132,7 +132,7 @@ class HandballNetAPI:
             if team_info.get("id") == team_id:
                 return self._create_table_position_dict(team_entry, team_info)
 
-        _LOGGER.warning("Team %s not found in table for tournament %s", team_id, tournament_id)
+        _LOGGER.debug("Team %s not found in table for tournament %s", team_id, tournament_id)
         return None
 
     def _extract_table_rows(self, table_data: Any) -> Optional[List[Dict[str, Any]]]:

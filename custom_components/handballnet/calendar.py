@@ -22,10 +22,10 @@ async def _setup_team_calendar(hass, entry, async_add_entities):
     team_id = entry.data["team_id"]
     team_name = entry.data.get("team_name", team_id)
     entity = HandballTeamCalendar(hass, entry, team_id, team_name)
-    
-    if "sensors" not in hass.data[DOMAIN][team_id]:
-        hass.data[DOMAIN][team_id]["sensors"] = []
-    hass.data[DOMAIN][team_id]["sensors"].append(entity)
+
+    team_bucket = hass.data.setdefault(DOMAIN, {}).setdefault(team_id, {})
+    team_bucket.setdefault("matches", [])
+    team_bucket.setdefault("sensors", []).append(entity)
     
     async_add_entities([entity], update_before_add=True)
 
@@ -36,11 +36,15 @@ async def _setup_club_calendar(hass, entry, async_add_entities):
     entities = []
 
     for team_name, team_id in club_team_mapping.items():
-        if team_id not in hass.data[DOMAIN]:
-            hass.data[DOMAIN][team_id] = {"matches": [], "table_position": None, "team_name": None, "team_logo_url": None, "sensors": []}
+        team_bucket = hass.data.setdefault(DOMAIN, {}).setdefault(team_id, {})
+        team_bucket.setdefault("matches", [])
+        team_bucket.setdefault("table_position", None)
+        team_bucket.setdefault("team_name", None)
+        team_bucket.setdefault("team_logo_url", None)
+        team_bucket.setdefault("sensors", [])
 
         entity = HandballTeamCalendar(hass, entry, team_id, team_name)
-        hass.data[DOMAIN][team_id].setdefault("sensors", []).append(entity)
+        team_bucket.setdefault("sensors", []).append(entity)
         entities.append(entity)
 
     async_add_entities(entities, update_before_add=True)
@@ -53,10 +57,7 @@ async def _setup_tournament_calendar(hass, entry, async_add_entities):
     
     # Add calendar to sensors list
     tournament_key = f"tournament_{tournament_id}"
-    if tournament_key not in hass.data[DOMAIN]:
-        hass.data[DOMAIN][tournament_key] = {"sensors": []}
-    if "sensors" not in hass.data[DOMAIN][tournament_key]:
-        hass.data[DOMAIN][tournament_key]["sensors"] = []
-    hass.data[DOMAIN][tournament_key]["sensors"].append(entity)
+    tournament_bucket = hass.data.setdefault(DOMAIN, {}).setdefault(tournament_key, {})
+    tournament_bucket.setdefault("sensors", []).append(entity)
     
     async_add_entities([entity], update_before_add=True)

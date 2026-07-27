@@ -165,7 +165,9 @@ class HandballDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         }
 
     async def _load_team_bucket(self, team_id: str, team_name: str) -> dict[str, Any]:
-        matches = await self._api.get_team_schedule(team_id) or []
+        schedule_data = await self._api.get_team_schedule(team_id)
+        schedule_unavailable = schedule_data is None
+        matches = schedule_data or []
         essential_matches = self._extract_essential_match_data(team_id, matches)
 
         team_info = None
@@ -186,7 +188,10 @@ class HandballDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         live_events = await self._load_live_events(live_matches)
         tournament_id = self._find_tournament_id(essential_matches, team_info)
         table_position = await self._load_table_position(team_id, tournament_id)
-        health = self._build_health_data(essential_matches)
+        health = self._build_health_data(
+            essential_matches,
+            schedule_unavailable=schedule_unavailable,
+        )
         next_match = self._get_next_match(essential_matches)
         last_match = self._get_last_match(essential_matches)
 
@@ -406,9 +411,28 @@ class HandballDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             "logo": self._utils.normalize_logo_url(logo_url) if logo_url else None,
         }
 
-    def _build_health_data(self, matches: list[dict[str, Any]]) -> dict[str, Any]:
+    def _build_health_data(
+        self,
+        matches: list[dict[str, Any]],
+        schedule_unavailable: bool = False,
+    ) -> dict[str, Any]:
+        if schedule_unavailable:
+            return {
+                "state": "unknown",
+                "attributes": {
+                    "reason": "schedule_unavailable",
+                    "total_matches": 0,
+                },
+            }
+
         if not matches:
-            return {"state": "unknown", "attributes": {}}
+            return {
+                "state": "unknown",
+                "attributes": {
+                    "reason": "no_matches_available",
+                    "total_matches": 0,
+                },
+            }
 
         now = datetime.now(timezone.utc)
         stale_threshold = now - timedelta(hours=HEALTH_CHECK_STALE_HOURS)

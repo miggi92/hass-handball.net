@@ -15,13 +15,17 @@ class HandballTeamCalendar(HandballBaseCalendar):
 
     @property
     def event(self) -> CalendarEvent | None:
-        matches = self.hass.data[DOMAIN][self._team_id].get("matches", [])
+        matches = (
+            self.hass.data.get(DOMAIN, {}).get(self._team_id, {}).get("matches", [])
+        )
         return self._get_current_or_next_event(matches)
 
     async def async_get_events(
         self, hass, start_date: datetime, end_date: datetime
     ) -> list[CalendarEvent]:
-        matches = self.hass.data[DOMAIN][self._team_id].get("matches", [])
+        matches = (
+            self.hass.data.get(DOMAIN, {}).get(self._team_id, {}).get("matches", [])
+        )
         events: list[CalendarEvent] = []
         now = datetime.now(timezone.utc)
 
