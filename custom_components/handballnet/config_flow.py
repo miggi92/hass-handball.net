@@ -180,6 +180,18 @@ class HandballNetConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         existing_team_ids = list(entry.data.get(CONF_TEAM_MAPPING, {}).values())
         return [team_id for team_id in existing_team_ids if team_id in self._team_options]
 
+    def _get_reconfigure_entry(self):
+        """Return the config entry currently being reconfigured."""
+        context = getattr(self, "context", {}) or {}
+        entry_id = context.get("entry_id")
+        if not entry_id:
+            return None
+
+        if not getattr(self, "hass", None):
+            return None
+
+        return self.hass.config_entries.async_get_entry(entry_id)
+
     async def _api_get(self, path: str):
         """Get JSON data from handball.net API path."""
         session = async_get_clientsession(self.hass)
@@ -662,7 +674,7 @@ class HandballNetConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     async def async_step_reconfigure(self, user_input=None):
         """Handle reconfiguration of existing entries."""
         errors = {}
-        entry = self.hass.config_entries.async_get_entry(self.context["entry_id"])
+        entry = self._get_reconfigure_entry()
 
         if entry is None:
             return self.async_abort(reason="invalid_reconfigure_entry")
@@ -685,7 +697,7 @@ class HandballNetConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 self._selected_club_name = entry.data.get("club_name")
                 self._team_options = await self._get_teams_for_club(existing_club_id)
                 if self._team_options:
-                    return await self.async_step_reconfigure_select_team(entry)
+                    return await self.async_step_reconfigure_select_team()
 
         if user_input is not None:
             input_mode = user_input.get(CONF_TEAM_INPUT_MODE, TEAM_INPUT_MODE_MANUAL)
@@ -702,7 +714,7 @@ class HandballNetConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     if not self._club_options:
                         errors[CONF_CLUB_QUERY] = "club_not_found"
                     else:
-                        return await self.async_step_reconfigure_select_club(entry)
+                        return await self.async_step_reconfigure_select_club()
 
             elif input_mode == TEAM_INPUT_MODE_MANUAL:
                 team_id = user_input.get(CONF_TEAM_ID, "").strip()
@@ -765,9 +777,18 @@ class HandballNetConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             errors=errors,
         )
 
-    async def async_step_reconfigure_select_club(self, entry, user_input=None):
+    async def async_step_reconfigure_select_club(self, user_input=None):
         """Handle club selection during reconfiguration."""
         errors = {}
+        entry = None
+        if user_input is not None and hasattr(user_input, "data"):
+            entry = user_input
+            user_input = None
+        else:
+            entry = self._get_reconfigure_entry()
+
+        if entry is None:
+            return self.async_abort(reason="invalid_reconfigure_entry")
 
         if user_input is not None:
             club_id = user_input.get(CONF_CLUB_ID)
@@ -782,7 +803,7 @@ class HandballNetConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 if not self._team_options:
                     errors[CONF_CLUB_ID] = "no_teams_found"
                 else:
-                    return await self.async_step_reconfigure_select_team(entry)
+                    return await self.async_step_reconfigure_select_team()
 
         if not self._club_options:
             return await self.async_step_reconfigure()
@@ -799,9 +820,18 @@ class HandballNetConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             errors=errors,
         )
 
-    async def async_step_reconfigure_select_team(self, entry, user_input=None):
+    async def async_step_reconfigure_select_team(self, user_input=None):
         """Handle final team selection during reconfiguration."""
         errors = {}
+        entry = None
+        if user_input is not None and hasattr(user_input, "data"):
+            entry = user_input
+            user_input = None
+        else:
+            entry = self._get_reconfigure_entry()
+
+        if entry is None:
+            return self.async_abort(reason="invalid_reconfigure_entry")
 
         if user_input is not None:
             selected_team_ids = user_input.get(CONF_SELECTED_TEAM_ID, [])
