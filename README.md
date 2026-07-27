@@ -45,6 +45,7 @@ Copy the `custom_components/handballnet` folder to your Home Assistant `custom_c
 - Creates sensors for home and away games
 - Creates calendar events for games
 - Supports multiple teams
+- Club entries now also create a club overview sensor with all configured teams, logos and next matches for dashboard cards
 
 ## Lovelace / Dashboard
 
@@ -145,6 +146,18 @@ type: custom:button-card
 template: handballnet_next_game_card
 entity: sensor.thw_kiel_alle_spiele
 ```
+
+### Club Overview
+
+For club-based setups, the integration also exposes one overview entity per club:
+
+```yaml
+type: entities
+entities:
+  - entity: sensor.sg_heuchelberg_verein
+```
+
+Its `teams` attribute contains all configured teams including `team_logo`, `next_match`, `last_match` and `table_position`, so one dashboard card can render the whole club without querying every team entity separately.
 
 ## Sponsors
 

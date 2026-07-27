@@ -13,6 +13,7 @@ from .coordinator import HandballDataUpdateCoordinator
 from .sensors import (
     HandballAllGamesSensor,
     HandballAuswaertsspielSensor,
+    HandballClubOverviewSensor,
     HandballHealthSensor,
     HandballHeimspielSensor,
     HandballLiveTickerEventsSensor,
@@ -59,7 +60,7 @@ async def _setup_club_sensors(hass: HomeAssistant, entry, async_add_entities):
     coordinator = HandballDataUpdateCoordinator(hass, entry)
     await coordinator.async_config_entry_first_refresh()
 
-    sensors = []
+    sensors = [HandballClubOverviewSensor(coordinator, entry)]
     for team_name, team_id in entry.data.get(CONF_TEAM_MAPPING, {}).items():
         sensors.extend([
             HandballAllGamesSensor(coordinator, entry, team_id, team_name),

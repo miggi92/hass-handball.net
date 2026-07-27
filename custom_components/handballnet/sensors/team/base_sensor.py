@@ -58,6 +58,13 @@ class HandballBaseSensor(BaseHandballSensor):
     def _get_team_bucket(self) -> dict[str, Any]:
         return (self.coordinator.data or {}).get("teams", {}).get(self._team_id, {})
 
+    @property
+    def entity_picture(self) -> str | None:
+        logo_url = self._get_team_bucket().get("team_logo_url")
+        if logo_url:
+            return self.utils.normalize_logo_url(logo_url)
+        return getattr(self, "_attr_entity_picture", None)
+
     def update_device_name(self, team_name: str) -> None:
         if team_name and team_name != "":
             self._attr_device_info["name"] = self._compose_device_name(team_name)
