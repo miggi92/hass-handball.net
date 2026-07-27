@@ -111,28 +111,37 @@ class HandballNetAPI:
     async def get_tournament_team_ids(self, tournament_id: str) -> list[str]:
         """Resolve tournament participants using team search fallback."""
         query = quote_plus(tournament_id)
-        data = await self._make_request(f"teams/search?query={query}")
-        teams = data.get("data", []) if data else []
 
         team_ids: list[str] = []
         seen: set[str] = set()
-        for team in teams:
-            if not isinstance(team, dict):
-                continue
 
-            default_tournament = team.get("defaultTournament")
-            if not isinstance(default_tournament, dict):
-                continue
+        page = 1
+        page_count = 1
+        while page <= page_count:
+            data = await self._make_request(f"teams/search?query={query}&page={page}")
+            teams = data.get("data", []) if data else []
+            meta = data.get("meta", {}) if data else {}
+            page_count = meta.get("pageCount", page_count) or page_count
 
-            if default_tournament.get("id") != tournament_id:
-                continue
+            for team in teams:
+                if not isinstance(team, dict):
+                    continue
 
-            team_id = team.get("id")
-            if not team_id or team_id in seen:
-                continue
+                default_tournament = team.get("defaultTournament")
+                if not isinstance(default_tournament, dict):
+                    continue
 
-            seen.add(team_id)
-            team_ids.append(team_id)
+                if default_tournament.get("id") != tournament_id:
+                    continue
+
+                team_id = team.get("id")
+                if not team_id or team_id in seen:
+                    continue
+
+                seen.add(team_id)
+                team_ids.append(team_id)
+
+            page += 1
 
         return team_ids
 

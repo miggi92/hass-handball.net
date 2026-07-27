@@ -148,18 +148,16 @@ class HandballDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         if not self._tournament_id:
             raise UpdateFailed("Tournament ID is missing")
 
+        tournament_info = await self._get_tournament_info()
+
         table_started = time.perf_counter()
         table_data = await self._api.get_league_table(self._tournament_id)
         self._log_perf("tournament_table_fetch", table_started, tournament_id=self._tournament_id)
         if not table_data:
             tournament_bucket = {
                 "tournament_id": self._tournament_id,
-                "tournament_info": {
-                    "name": self._tournament_id,
-                    "acronym": "",
-                    "organization": "",
-                    "logo": "",
-                },
+                "tournament_info": tournament_info,
+                "has_table": tournament_info.get("has_table", False),
                 "table_rows": [],
                 "team_positions": {},
                 "matches": [],
@@ -180,7 +178,10 @@ class HandballDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 "perf": self._perf_snapshot,
             }
 
-        tournament_info = self._extract_tournament_info_from_table_data(table_data)
+        tournament_info = self._merge_tournament_info(
+            tournament_info,
+            self._extract_tournament_info_from_table_data(table_data),
+        )
 
         rows_started = time.perf_counter()
         table_rows = await self._extract_table_rows_with_logos(table_data)
@@ -196,6 +197,7 @@ class HandballDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         tournament_bucket = {
             "tournament_id": self._tournament_id,
             "tournament_info": tournament_info,
+            "has_table": tournament_info.get("has_table", bool(table_rows)),
             "table_rows": table_rows,
             "team_positions": team_positions,
             "matches": matches,
@@ -592,20 +594,23 @@ class HandballDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         }
 
     async def _get_tournament_info(self) -> dict[str, Any]:
-        data = await self._api._make_request(f"tournaments/{self._tournament_id}/table")
+        data = await self._api._make_request(f"tournaments/{self._tournament_id}")
         if data and "data" in data:
-            tournament_data = data["data"].get("tournament", {})
+            tournament_data = data.get("data", {})
+            meta = data.get("meta", {})
             return {
                 "name": tournament_data.get("name", self._tournament_id),
                 "acronym": tournament_data.get("acronym", ""),
                 "organization": tournament_data.get("organization", {}).get("name", ""),
                 "logo": tournament_data.get("logo", ""),
+                "has_table": bool(meta.get("hasTable", False)),
             }
         return {
             "name": self._tournament_id,
             "acronym": "",
             "organization": "",
             "logo": "",
+            "has_table": False,
         }
 
     def _extract_tournament_info_from_table_data(
@@ -627,6 +632,17 @@ class HandballDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             "organization": "",
             "logo": "",
         }
+
+    def _merge_tournament_info(
+        self,
+        base_info: dict[str, Any],
+        extra_info: dict[str, Any],
+    ) -> dict[str, Any]:
+        merged = dict(base_info)
+        for key, value in extra_info.items():
+            if key not in merged or merged[key] in (None, ""):
+                merged[key] = value
+        return merged
 
     async def _extract_table_rows_with_logos(
         self, table_data: Any
@@ -821,6 +837,7 @@ class HandballDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         bucket.update(
             {
                 "tournament_info": tournament_bucket.get("tournament_info", {}),
+                "has_table": tournament_bucket.get("has_table", False),
                 "table_rows": tournament_bucket.get("table_rows", []),
                 "team_positions": tournament_bucket.get("team_positions", {}),
                 "matches": tournament_bucket.get("matches", []),

@@ -84,3 +84,39 @@ async def test_get_tournament_team_ids_filters_by_default_tournament(api):
 
     assert result == ["team-a", "team-b"]
     api._make_request.assert_called_once()
+
+
+@pytest.mark.asyncio
+async def test_get_tournament_team_ids_reads_all_pages(api):
+    api._make_request = AsyncMock(
+        side_effect=[
+            {
+                "data": [
+                    {
+                        "id": "team-a",
+                        "defaultTournament": {"id": "sr.competition.57"},
+                    }
+                ],
+                "meta": {"pageCount": 2},
+            },
+            {
+                "data": [
+                    {
+                        "id": "team-b",
+                        "defaultTournament": {"id": "sr.competition.57"},
+                    },
+                    {
+                        "id": "team-c",
+                        "defaultTournament": {"id": "sr.competition.999"},
+                    },
+                ],
+                "meta": {"pageCount": 2},
+            },
+        ]
+    )
+
+    result = await api.get_tournament_team_ids("sr.competition.57")
+
+    assert result == ["team-a", "team-b"]
+    assert api._make_request.await_args_list[0].args[0].endswith("page=1")
+    assert api._make_request.await_args_list[1].args[0].endswith("page=2")
