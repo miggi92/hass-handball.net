@@ -11,6 +11,10 @@
  *   live_ticker_entity:    sensor.xyz_live_ticker     # optional – shows live score
  */
 class HandballTeamCard extends HTMLElement {
+  static async getConfigElement() {
+    return document.createElement("handball-team-card-editor");
+  }
+
   static getStubConfig() {
     return {
       table_position_entity: "sensor.handball_team_table_position",
@@ -174,9 +178,35 @@ class HandballTeamCard extends HTMLElement {
   _render() {
     if (!this._hass || !this._config) return;
 
-    const tableState = this._state(this._config.table_position_entity);
-    const nextState = this._state(this._config.next_match_entity);
-    const liveState = this._state(this._config.live_ticker_entity);
+    let tableState = this._state(this._config.table_position_entity);
+    let nextState = this._state(this._config.next_match_entity);
+    let liveState = this._state(this._config.live_ticker_entity);
+
+    if (!tableState && !nextState && !liveState) {
+      tableState = {
+        attributes: {
+          team_name: "SG Musterstadt",
+          position: 3,
+          wins: 14,
+          draws: 2,
+          losses: 5,
+          games_played: 21,
+          goals_scored: 612,
+          goals_conceded: 588,
+          goal_difference: 24,
+          points: "30:12",
+        },
+      };
+
+      nextState = {
+        attributes: {
+          match_date: "Sa, 19:30 Uhr",
+          field: "Sporthalle Musterstadt",
+          home_team: { name: "SG Musterstadt" },
+          away_team: { name: "TV Nordstadt" },
+        },
+      };
+    }
 
     // Derive team name: config > table_position attributes > next_match state name
     const teamName =
@@ -430,11 +460,152 @@ class HandballTeamCard extends HTMLElement {
 
 customElements.define("handball-team-card", HandballTeamCard);
 
+class HandballTeamCardEditor extends HTMLElement {
+  setConfig(config) {
+    this._config = { ...config };
+    this._render();
+  }
+
+  set hass(hass) {
+    this._hass = hass;
+    this._render();
+  }
+
+  _onValueChanged(ev) {
+    const target = ev.target;
+    const key = target?.dataset?.key;
+    if (!key) return;
+
+    const config = { ...this._config };
+    const value = target.value?.trim();
+
+    if (value) {
+      config[key] = value;
+    } else {
+      delete config[key];
+    }
+
+    this._config = config;
+    this.dispatchEvent(
+      new CustomEvent("config-changed", {
+        detail: { config },
+        bubbles: true,
+        composed: true,
+      })
+    );
+  }
+
+  _render() {
+    if (!this.shadowRoot) {
+      this.attachShadow({ mode: "open" });
+    }
+
+    const sensorEntities = Object.keys(this._hass?.states || {})
+      .filter((entityId) => entityId.startsWith("sensor."))
+      .sort((a, b) => a.localeCompare(b));
+
+    this.shadowRoot.innerHTML = `
+      <style>
+        :host {
+          display: block;
+        }
+        .grid {
+          display: grid;
+          gap: 12px;
+        }
+        .field {
+          display: grid;
+          gap: 4px;
+        }
+        label {
+          font-size: 0.78rem;
+          color: var(--secondary-text-color);
+        }
+        input {
+          font: inherit;
+          color: var(--primary-text-color);
+          background: var(--card-background-color);
+          border: 1px solid var(--divider-color, rgba(0, 0, 0, 0.2));
+          border-radius: 8px;
+          padding: 8px 10px;
+          box-sizing: border-box;
+          width: 100%;
+        }
+        .hint {
+          font-size: 0.75rem;
+          color: var(--secondary-text-color);
+        }
+      </style>
+      <div class="grid">
+        <div class="field">
+          <label for="title">Titel (optional)</label>
+          <input
+            id="title"
+            type="text"
+            data-key="title"
+            value="${this._config?.title ?? ""}"
+            placeholder="z. B. SG Musterstadt"
+          />
+        </div>
+
+        <div class="field">
+          <label for="table_position_entity">Entity: Tabellenplatz</label>
+          <input
+            id="table_position_entity"
+            type="text"
+            data-key="table_position_entity"
+            value="${this._config?.table_position_entity ?? ""}"
+            list="team-sensor-entities"
+            placeholder="sensor.mein_team_table_position"
+          />
+        </div>
+
+        <div class="field">
+          <label for="next_match_entity">Entity: Nächstes Spiel</label>
+          <input
+            id="next_match_entity"
+            type="text"
+            data-key="next_match_entity"
+            value="${this._config?.next_match_entity ?? ""}"
+            list="team-sensor-entities"
+            placeholder="sensor.mein_team_naechstes_spiel"
+          />
+        </div>
+
+        <div class="field">
+          <label for="live_ticker_entity">Entity: Live Ticker</label>
+          <input
+            id="live_ticker_entity"
+            type="text"
+            data-key="live_ticker_entity"
+            value="${this._config?.live_ticker_entity ?? ""}"
+            list="team-sensor-entities"
+            placeholder="sensor.mein_team_live_ticker"
+          />
+        </div>
+
+        <div class="hint">
+          Mindestens eine der drei Entity-Felder muss gesetzt sein.
+        </div>
+      </div>
+      <datalist id="team-sensor-entities">
+        ${sensorEntities.map((entityId) => `<option value="${entityId}"></option>`).join("")}
+      </datalist>
+    `;
+
+    this.shadowRoot.querySelectorAll("input").forEach((input) => {
+      input.addEventListener("change", this._onValueChanged.bind(this));
+    });
+  }
+}
+
+customElements.define("handball-team-card-editor", HandballTeamCardEditor);
+
 window.customCards = window.customCards || [];
 window.customCards.push({
   type: "handball-team-card",
   name: "Handball: Team Karte",
   description:
     "Zeigt Tabellenplatz, nächstes Spiel und optionalen Live-Score eines Handball-Teams.",
-  preview: false,
+  preview: true,
 });
