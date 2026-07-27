@@ -1,6 +1,22 @@
 # Changelog
 
 
+## v0.0.26
+
+[compare changes](https://github.com/miggi92/hass-handball.net/compare/v0.0.25...v0.0.26)
+
+### 🩹 Fixes
+
+- 🐛  fix for tournament without table ([e175366](https://github.com/miggi92/hass-handball.net/commit/e175366))
+
+### 🏡 Chore
+
+- Upgrade version ([c22b163](https://github.com/miggi92/hass-handball.net/commit/c22b163))
+
+### ❤️ Contributors
+
+- Miguel
+
 ## v0.0.25
 
 [compare changes](https://github.com/miggi92/hass-handball.net/compare/v0.0.24...v0.0.25)
