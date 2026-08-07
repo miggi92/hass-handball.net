@@ -2,7 +2,7 @@ colorlog==6.10.1
 homeassistant==2026.6.2
 home-assistant-frontend
 pip>=21.3.1
-ruff==0.15.17
+ruff==0.16.2
 requests
 voluptuous
 pytest
