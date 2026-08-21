@@ -1,3 +1,4 @@
+import asyncio
 import voluptuous as vol
 from homeassistant import config_entries
 from homeassistant.helpers import config_validation as cv
@@ -397,6 +398,21 @@ class HandballNetConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
         return club_options
 
+    async def _get_team_league_name(self, team_id: str) -> str | None:
+        """Best-effort lookup of a team's current league/competition name."""
+        payload = await self._api_get_new(
+            "matches",
+            {"team_id": team_id, "page": 1},
+            referer=f"{HANDBALL_NET_WEB_URL}team/{team_id}",
+        )
+        matches = payload.get("data", []) if payload else []
+        if not matches:
+            return None
+
+        phase = matches[0].get("phase") or {}
+        competition = phase.get("competition") or {}
+        return competition.get("name") or None
+
     async def _get_teams_for_club(self, club_id: str) -> dict[str, str]:
         """Get teams for a club and return team_id -> display_name map."""
         params = {"club_id": club_id}
@@ -443,6 +459,17 @@ class HandballNetConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 self._selected_club_name,
                 team_variant,
             )
+
+        if team_options:
+            team_ids = list(team_options.keys())
+            league_names = await asyncio.gather(
+                *(self._get_team_league_name(team_id) for team_id in team_ids),
+                return_exceptions=True,
+            )
+            for team_id, league_name in zip(team_ids, league_names):
+                if isinstance(league_name, Exception) or not league_name:
+                    continue
+                team_options[team_id] = f"{team_options[team_id]} ({league_name})"
 
         return team_options
 

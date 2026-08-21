@@ -1,6 +1,36 @@
-from homeassistant.helpers import device_registry as dr
+from homeassistant.helpers import device_registry as dr, entity_registry as er
 
 from .const import CONF_CLUB_ID, CONF_ENTITY_TYPE, DOMAIN, ENTITY_TYPE_CLUB, ENTITY_TYPE_TEAM
+
+
+async def async_prune_stale_team_devices(hass, entry, keep_team_names: set[str]) -> None:
+    """Remove devices/entities for teams no longer present in a club's team mapping.
+
+    Team devices are identified as f"{entry.entry_id}_{team_name}"; reloading a
+    config entry only (re-)creates entities for the teams currently listed in
+    CONF_TEAM_MAPPING, so unchecked teams would otherwise linger as orphaned
+    devices/entities in the registries.
+    """
+    device_registry = dr.async_get(hass)
+    entity_registry = er.async_get(hass)
+    prefix = f"{entry.entry_id}_"
+
+    for device in list(dr.async_entries_for_config_entry(device_registry, entry.entry_id)):
+        for domain, identifier in device.identifiers:
+            if domain != DOMAIN or not identifier.startswith(prefix):
+                continue
+
+            team_name = identifier[len(prefix):]
+            if team_name in keep_team_names:
+                break
+
+            for entity_entry in er.async_entries_for_device(
+                entity_registry, device.id, include_disabled_entities=True
+            ):
+                entity_registry.async_remove(entity_entry.entity_id)
+
+            device_registry.async_remove_device(device.id)
+            break
 
 
 async def async_ensure_club_device(hass, entry) -> None:
