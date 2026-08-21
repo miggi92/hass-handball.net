@@ -454,11 +454,10 @@ class HandballNetConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
     async def _validate_team_id(self, team_id: str) -> tuple[bool, str | None]:
         """Validate team ID against handball.net API and return team name"""
-        data = await self._api_get(f"teams/{team_id}")
-        if not data:
-            return False, None
-
-        team_data = data.get("data")
+        payload = await self._api_get_new(
+            f"teams/{team_id}", {}, referer=f"{HANDBALL_NET_WEB_URL}team/{team_id}"
+        )
+        team_data = payload.get("data") if payload else None
         if team_data:
             team_name = team_data.get("name", team_id)
             return True, team_name

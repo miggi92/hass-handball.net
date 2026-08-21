@@ -168,21 +168,72 @@ class HandballNetAPI:
             if now - timestamp < self.TEAM_INFO_CACHE_TTL:
                 return cached_data
 
-        data = await self._make_request(f"teams/{team_id}")
-        if not data:
+        payload = await self._make_new_api_request(
+            f"teams/{team_id}", {}, referer=f"{HANDBALL_NET_WEB_URL}team/{team_id}"
+        )
+        team_data = payload.get("data") if payload else None
+        if not team_data:
             return None
 
-        team_data = data.get("data")
-        if team_data and team_data.get("logo"):
-            team_data["logo"] = self.utils.normalize_logo_url(team_data["logo"])
+        club_logo = (team_data.get("club") or {}).get("logo")
+        team_data["logo"] = self.utils.normalize_logo_url(club_logo) if club_logo else None
 
-        if team_data is not None:
-            # Prevent unbounded growth
-            if len(self._team_info_cache) >= 50:
-                self._team_info_cache.clear()
-            self._team_info_cache[team_id] = (now, team_data)
+        # Not returned by the new API; schedule matches carry a fallback tournament id.
+        team_data.setdefault("defaultTournament", None)
+
+        # Prevent unbounded growth
+        if len(self._team_info_cache) >= 50:
+            self._team_info_cache.clear()
+        self._team_info_cache[team_id] = (now, team_data)
 
         return team_data
+
+    def _normalize_standings(
+        self, standings: List[Dict[str, Any]]
+    ) -> List[Dict[str, Any]]:
+        """Normalize new-API standings rows into the legacy table-row shape.
+
+        The new `standings` endpoint returns one row per team *per round*
+        (i.e. the full table history for the season), not just the current
+        table. We take the rows for the highest round number present, which
+        should be the most recently played/current matchday.
+        """
+        if not standings:
+            return []
+
+        max_round = max((row.get("round") or 0) for row in standings)
+        current_rows = [row for row in standings if row.get("round") == max_round]
+
+        rows: List[Dict[str, Any]] = []
+        for row in current_rows:
+            team = row.get("team") or {}
+            club = team.get("club") or {}
+            team_id = team.get("id")
+
+            rows.append(
+                {
+                    "rank": row.get("position"),
+                    "team": {
+                        "id": str(team_id) if team_id is not None else None,
+                        "name": team.get("name"),
+                        "acronym": "",
+                        "logo": club.get("logo"),
+                    },
+                    "points": row.get("points"),
+                    "games": row.get("played", 0),
+                    "wins": row.get("won", 0),
+                    "draws": row.get("drawn", 0),
+                    "losses": row.get("lost", 0),
+                    "goals": row.get("goals_for", 0),
+                    "goalsAgainst": row.get("goals_against", 0),
+                    "goalDifference": row.get("goals_diff", 0),
+                    "promoted": None,
+                    "relegated": None,
+                }
+            )
+
+        rows.sort(key=lambda r: r.get("rank") or 0)
+        return rows
 
     async def get_league_table(self, league_id: str) -> Optional[List[Dict[str, Any]]]:
         """Get league table"""
@@ -193,8 +244,13 @@ class HandballNetAPI:
             if now - timestamp < self.LEAGUE_TABLE_CACHE_TTL:
                 return cached_data
 
-        data = await self._make_request(f"tournaments/{league_id}/table")
-        result = data.get("data", []) if data else None
+        payload = await self._make_new_api_request(
+            "standings",
+            {"phase_id": league_id},
+            referer=f"{HANDBALL_NET_WEB_URL}ligen/{league_id}",
+        )
+        standings = payload.get("data", []) if payload else []
+        result = self._normalize_standings(standings)
 
         if result is not None:
             # Prevent unbounded growth
