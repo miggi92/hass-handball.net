@@ -109,11 +109,15 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
         }
     elif entity_type == ENTITY_TYPE_CLUB:
         club_id = entry.data.get("club_id", entry.entry_id)
+        team_mapping = entry.data.get(CONF_TEAM_MAPPING, {})
         hass.data[DOMAIN][club_id] = {
             "club_name": entry.data.get("club_name"),
-            "team_mapping": entry.data.get(CONF_TEAM_MAPPING, {}),
+            "team_mapping": team_mapping,
             "sensors": []
         }
+
+        from .device_helpers import async_prune_stale_team_devices
+        await async_prune_stale_team_devices(hass, entry, set(team_mapping.keys()))
     elif entity_type == ENTITY_TYPE_TOURNAMENT:
         tournament_id = entry.data[CONF_TOURNAMENT_ID]
         tournament_key = f"tournament_{tournament_id}"
