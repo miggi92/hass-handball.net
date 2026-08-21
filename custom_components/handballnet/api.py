@@ -1,10 +1,11 @@
 import logging
 import time
+from datetime import datetime
 from typing import Dict, List, Any, Optional
 from urllib.parse import quote_plus
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.core import HomeAssistant
-from .const import HANDBALL_NET_BASE_URL
+from .const import HANDBALL_NET_BASE_URL, HANDBALL_NET_NEW_API_BASE_URL, HANDBALL_NET_WEB_URL
 from .utils import HandballNetUtils
 
 _LOGGER = logging.getLogger(__name__)
@@ -38,6 +39,102 @@ class HandballNetAPI:
             _LOGGER.error("Request failed for endpoint %s: %s", endpoint, e)
             return None
 
+    async def _make_new_api_request(
+        self, endpoint: str, params: Dict[str, Any], referer: str
+    ) -> Optional[Dict[str, Any]]:
+        """Make HTTP request to the new (/api/new) handball.net API"""
+        url = f"{HANDBALL_NET_NEW_API_BASE_URL}/{endpoint}"
+        headers = {"Referer": referer}
+        try:
+            async with self.session.get(url, params=params, headers=headers) as resp:
+                if resp.status != 200:
+                    _LOGGER.warning("HTTP error %s for endpoint %s", resp.status, endpoint)
+                    return None
+                payload = await resp.json()
+        except Exception as e:
+            _LOGGER.error("Request failed for endpoint %s: %s", endpoint, e)
+            return None
+
+        if not payload or not payload.get("success"):
+            return None
+
+        return payload
+
+    async def _fetch_new_api_paginated(
+        self, endpoint: str, params: Dict[str, Any], referer: str
+    ) -> List[Dict[str, Any]]:
+        """Fetch all pages of a paginated new-API list endpoint"""
+        results: List[Dict[str, Any]] = []
+        page = 1
+        last_page = 1
+
+        while page <= last_page:
+            payload = await self._make_new_api_request(
+                endpoint, {**params, "page": page}, referer
+            )
+            if not payload:
+                break
+
+            results.extend(payload.get("data", []) or [])
+
+            pagination = payload.get("pagination") or {}
+            last_page = pagination.get("last_page", last_page) or last_page
+            page += 1
+
+        return results
+
+    @staticmethod
+    def _parse_match_date_to_ms(date_str: Optional[str]) -> Optional[int]:
+        """Parse an ISO 8601 match date into epoch milliseconds"""
+        if not date_str:
+            return None
+        try:
+            return int(datetime.fromisoformat(date_str).timestamp() * 1000)
+        except ValueError:
+            return None
+
+    def _normalize_match(self, match: Dict[str, Any], team_id: str) -> Dict[str, Any]:
+        """Normalize a new-API match into the schedule shape the rest of the integration expects"""
+        local = match.get("local") or {}
+        visitor = match.get("visitor") or {}
+        status = match.get("status") or {}
+        result = match.get("result") or {}
+        phase = match.get("phase") or {}
+        competition = phase.get("competition") or {}
+
+        local_id = local.get("id")
+        visitor_id = visitor.get("id")
+        local_logo = (local.get("club") or {}).get("logo")
+        visitor_logo = (visitor.get("club") or {}).get("logo")
+
+        return {
+            "id": match.get("id"),
+            "startsAt": self._parse_match_date_to_ms(match.get("date")),
+            "state": "Post" if status.get("is_finished") else status.get("short_name"),
+            "homeTeam": {
+                "id": str(local_id) if local_id is not None else None,
+                "name": local.get("name"),
+                "logo": self.utils.normalize_logo_url(local_logo) if local_logo else None,
+            },
+            "awayTeam": {
+                "id": str(visitor_id) if visitor_id is not None else None,
+                "name": visitor.get("name"),
+                "logo": self.utils.normalize_logo_url(visitor_logo) if visitor_logo else None,
+            },
+            "field": {"name": (match.get("field") or {}).get("name")},
+            "homeGoals": result.get("local"),
+            "awayGoals": result.get("visitor"),
+            "tournament": {
+                "id": phase.get("id"),
+                "name": competition.get("name"),
+            },
+            "isHomeMatch": str(local_id) == str(team_id) if local_id is not None else False,
+            "isAway": str(visitor_id) == str(team_id) if visitor_id is not None else False,
+            "lastUpdated": None,
+            "status": status.get("short_name"),
+            "error": None,
+        }
+
     async def get_team_schedule(self, team_id: str) -> Optional[List[Dict[str, Any]]]:
         """Get team schedule/matches"""
         now = time.time()
@@ -47,8 +144,12 @@ class HandballNetAPI:
             if now - timestamp < self.TEAM_SCHEDULE_CACHE_TTL:
                 return cached_data
 
-        data = await self._make_request(f"teams/{team_id}/schedule")
-        result = data.get("data", []) if data else None
+        matches = await self._fetch_new_api_paginated(
+            "matches",
+            {"team_id": team_id},
+            referer=f"{HANDBALL_NET_WEB_URL}team/{team_id}",
+        )
+        result = [self._normalize_match(match, team_id) for match in matches]
 
         if result is not None:
             # Prevent unbounded growth
