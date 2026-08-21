@@ -1,6 +1,33 @@
 # Changelog
 
 
+## v0.0.30
+
+[compare changes](https://github.com/miggi92/hass-handball.net/compare/v0.0.29...v0.0.30)
+
+### 🚀 Enhancements
+
+- Show league in team picker, fix stale devices on club reconfigure ([7ec002d](https://github.com/miggi92/hass-handball.net/commit/7ec002d))
+- Add search-based tournament setup, drop dead manual entry ([b317dd8](https://github.com/miggi92/hass-handball.net/commit/b317dd8))
+
+### 🩹 Fixes
+
+- Clean up dead code and stale club device on club switch ([2bf6d20](https://github.com/miggi92/hass-handball.net/commit/2bf6d20))
+
+### 📖 Documentation
+
+- Note breaking ID change in v0.0.29 changelog ([d8afcfa](https://github.com/miggi92/hass-handball.net/commit/d8afcfa))
+
+### 🏡 Chore
+
+- **release:** V0.0.29 ([0982dd0](https://github.com/miggi92/hass-handball.net/commit/0982dd0))
+- 🔖  updated version ([44cee72](https://github.com/miggi92/hass-handball.net/commit/44cee72))
+
+### ❤️ Contributors
+
+- Claude <noreply@anthropic.com>
+- Miguel ([@miggi92](https://github.com/miggi92))
+
 ## v0.0.29
 
 [compare changes](https://github.com/miggi92/hass-handball.net/compare/v0.0.28...v0.0.29)
