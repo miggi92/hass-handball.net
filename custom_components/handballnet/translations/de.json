@@ -35,9 +35,39 @@
       },
       "tournament": {
         "title": "Handball.net Turnier hinzufügen",
-        "description": "Bitte gib die Turnier-ID ein. Du findest sie in der URL: handball.net/ligen/TURNIER-ID",
+        "description": "Wähle, ob du über einen Verein/dein Team oder direkt über den Wettbewerbsnamen suchen möchtest",
         "data": {
-          "tournament_id": "Turnier-ID"
+          "tournament_input_mode": "Eingabemodus",
+          "club_query": "Vereinsname (Suche)",
+          "competition_query": "Wettbewerbsname (Suche)"
+        }
+      },
+      "tournament_select_club": {
+        "title": "Verein auswählen",
+        "description": "Wähle einen Verein aus den Suchergebnissen",
+        "data": {
+          "club_id": "Verein"
+        }
+      },
+      "tournament_select_team": {
+        "title": "Team auswählen",
+        "description": "Wähle ein Team aus, dessen aktuelle Liga als Turnier übernommen werden soll",
+        "data": {
+          "selected_team_id": "Team"
+        }
+      },
+      "tournament_select_competition": {
+        "title": "Wettbewerb auswählen",
+        "description": "Wähle einen Wettbewerb aus den Suchergebnissen",
+        "data": {
+          "selected_competition_id": "Wettbewerb"
+        }
+      },
+      "tournament_select_phase": {
+        "title": "Staffel auswählen",
+        "description": "Wähle die Staffel/Gruppe, in der dein Team spielt",
+        "data": {
+          "selected_phase_id": "Staffel"
         }
       },
       "reconfigure": {
@@ -69,11 +99,15 @@
       "invalid_club_query": "Bitte mindestens 2 Zeichen für die Vereinssuche eingeben",
       "invalid_club_selection": "Ungültiger Verein ausgewählt",
       "invalid_team_selection": "Ungültiges Team ausgewählt",
-      "invalid_tournament_id": "Ungültige Turnier-ID",
       "team_not_found": "Team wurde nicht gefunden. Überprüfe die Team-ID.",
       "club_not_found": "Kein Verein zur Suche gefunden.",
       "no_teams_found": "Für diesen Verein wurden keine Teams gefunden.",
-      "tournament_not_found": "Turnier wurde nicht gefunden. Überprüfe die Turnier-ID.",
+      "tournament_not_found": "Für dieses Team konnte aktuell keine Liga ermittelt werden (evtl. ist der Spielplan noch nicht veröffentlicht).",
+      "invalid_competition_query": "Bitte mindestens 2 Zeichen für die Wettbewerbssuche eingeben",
+      "competition_not_found": "Kein Wettbewerb zur Suche gefunden.",
+      "invalid_competition_selection": "Ungültiger Wettbewerb ausgewählt",
+      "no_phases_found": "Für diesen Wettbewerb wurden keine Staffeln gefunden.",
+      "invalid_phase_selection": "Ungültige Staffel ausgewählt",
       "cannot_connect": "Verbindung zu handball.net fehlgeschlagen",
       "already_configured": "Diese Entität ist bereits konfiguriert."
     },

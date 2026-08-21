@@ -35,9 +35,39 @@
       },
       "tournament": {
         "title": "Add Handball.net Tournament",
-        "description": "Please enter the tournament ID. You can find it in the URL: handball.net/ligen/TOURNAMENT-ID",
+        "description": "Choose whether to search via a club/your team or directly by competition name",
         "data": {
-          "tournament_id": "Tournament ID"
+          "tournament_input_mode": "Input mode",
+          "club_query": "Club name (search)",
+          "competition_query": "Competition name (search)"
+        }
+      },
+      "tournament_select_club": {
+        "title": "Select club",
+        "description": "Choose a club from the search results",
+        "data": {
+          "club_id": "Club"
+        }
+      },
+      "tournament_select_team": {
+        "title": "Select team",
+        "description": "Choose a team whose current league should be used as the tournament",
+        "data": {
+          "selected_team_id": "Team"
+        }
+      },
+      "tournament_select_competition": {
+        "title": "Select competition",
+        "description": "Choose a competition from the search results",
+        "data": {
+          "selected_competition_id": "Competition"
+        }
+      },
+      "tournament_select_phase": {
+        "title": "Select group",
+        "description": "Choose the group/Staffel your team plays in",
+        "data": {
+          "selected_phase_id": "Group"
         }
       },
       "reconfigure": {
@@ -69,11 +99,15 @@
       "invalid_club_query": "Please enter at least 2 characters for club search",
       "invalid_club_selection": "Invalid club selection",
       "invalid_team_selection": "Invalid team selection",
-      "invalid_tournament_id": "Invalid tournament ID",
       "team_not_found": "Team was not found. Please check the team ID.",
       "club_not_found": "No club found for this search.",
       "no_teams_found": "No teams were found for this club.",
-      "tournament_not_found": "Tournament was not found. Please check the tournament ID.",
+      "tournament_not_found": "Could not determine a current league for this team (the schedule may not be published yet).",
+      "invalid_competition_query": "Please enter at least 2 characters for competition search",
+      "competition_not_found": "No competition found for this search.",
+      "invalid_competition_selection": "Invalid competition selection",
+      "no_phases_found": "No groups were found for this competition.",
+      "invalid_phase_selection": "Invalid group selection",
       "cannot_connect": "Connection to handball.net failed",
       "already_configured": "This entity is already configured."
     },
