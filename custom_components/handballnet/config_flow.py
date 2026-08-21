@@ -547,6 +547,7 @@ class HandballNetConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         team_mapping: dict[str, str],
     ):
         old_team_ids = list(entry.data.get(CONF_TEAM_MAPPING, {}).values())
+        old_club_id = entry.data.get(CONF_CLUB_ID)
         data_updates = {
             CONF_ENTITY_TYPE: ENTITY_TYPE_CLUB,
             CONF_CLUB_ID: club_id,
@@ -568,6 +569,11 @@ class HandballNetConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
         for old_team_id in old_team_ids:
             self.hass.data.get(DOMAIN, {}).pop(old_team_id, None)
+
+        if old_club_id and old_club_id != club_id:
+            from .device_helpers import async_remove_stale_club_device
+
+            await async_remove_stale_club_device(self.hass, entry, old_club_id)
 
         await self.hass.config_entries.async_reload(entry.entry_id)
         return self.async_abort(reason="reconfigure_successful")
@@ -904,12 +910,7 @@ class HandballNetConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     async def async_step_reconfigure_select_club(self, user_input=None):
         """Handle club selection during reconfiguration."""
         errors = {}
-        entry = None
-        if user_input is not None and hasattr(user_input, "data"):
-            entry = user_input
-            user_input = None
-        else:
-            entry = self._get_reconfigure_entry()
+        entry = self._get_reconfigure_entry()
 
         if entry is None:
             return self.async_abort(reason="invalid_reconfigure_entry")
@@ -947,12 +948,7 @@ class HandballNetConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     async def async_step_reconfigure_select_team(self, user_input=None):
         """Handle final team selection during reconfiguration."""
         errors = {}
-        entry = None
-        if user_input is not None and hasattr(user_input, "data"):
-            entry = user_input
-            user_input = None
-        else:
-            entry = self._get_reconfigure_entry()
+        entry = self._get_reconfigure_entry()
 
         if entry is None:
             return self.async_abort(reason="invalid_reconfigure_entry")
