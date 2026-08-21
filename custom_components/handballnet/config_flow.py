@@ -369,7 +369,7 @@ class HandballNetConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         payload = await self._api_get_new(
             "teams/clubs",
             {"all": "1", "filter[search]": query},
-            referer=f"{HANDBALL_NET_WEB_URL}clubs",
+            referer=HANDBALL_NET_WEB_URL,
         )
         clubs = payload.get("data", []) if payload else []
 
