@@ -1,6 +1,29 @@
 # Changelog
 
 
+## v0.0.29
+
+[compare changes](https://github.com/miggi92/hass-handball.net/compare/v0.0.28...v0.0.29)
+
+### 🚀 Enhancements
+
+- Migrate club/team lookup to the new handball.net API ([9df0910](https://github.com/miggi92/hass-handball.net/commit/9df0910))
+- Migrate team schedule lookup to the new handball.net API ([a984536](https://github.com/miggi92/hass-handball.net/commit/a984536))
+- Migrate team info and league table to the new handball.net API ([6e52246](https://github.com/miggi92/hass-handball.net/commit/6e52246))
+
+### 🩹 Fixes
+
+- Use bare handball.net origin as referer for club search ([bdb1d86](https://github.com/miggi92/hass-handball.net/commit/bdb1d86))
+
+### 🏡 Chore
+
+- Relicense under MIT ([855476f](https://github.com/miggi92/hass-handball.net/commit/855476f))
+- Relicense under MIT ([8a28b89](https://github.com/miggi92/hass-handball.net/commit/8a28b89))
+
+### ❤️ Contributors
+
+- Claude <noreply@anthropic.com>
+
 ## v0.0.28
 
 [compare changes](https://github.com/miggi92/hass-handball.net/compare/v0.0.27...v0.0.28)
