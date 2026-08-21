@@ -34,6 +34,14 @@ CONF_SELECTED_TEAM_ID = "selected_team_id"
 TEAM_INPUT_MODE_MANUAL = "manual"
 TEAM_INPUT_MODE_CLUB_SEARCH = "club_search"
 
+CONF_TOURNAMENT_INPUT_MODE = "tournament_input_mode"
+CONF_COMPETITION_QUERY = "competition_query"
+CONF_SELECTED_COMPETITION_ID = "selected_competition_id"
+CONF_SELECTED_PHASE_ID = "selected_phase_id"
+
+TOURNAMENT_INPUT_MODE_CLUB = "club_search"
+TOURNAMENT_INPUT_MODE_COMPETITION = "competition_search"
+
 
 class HandballNetConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     VERSION = 1
@@ -51,6 +59,11 @@ class HandballNetConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         self._team_variants: dict[str, str] = {}
         self._selected_club_id: str | None = None
         self._selected_club_name: str | None = None
+        self._competition_options: dict[str, str] = {}
+        self._competition_names: dict[str, str] = {}
+        self._selected_competition_id: str | None = None
+        self._selected_competition_name: str | None = None
+        self._phase_options: dict[str, str] = {}
 
     @staticmethod
     def _split_trailing_parentheses(value: str | None) -> tuple[str | None, str | None]:
@@ -198,24 +211,6 @@ class HandballNetConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             return None
 
         return self.hass.config_entries.async_get_entry(entry_id)
-
-    async def _api_get(self, path: str):
-        """Get JSON data from the legacy handball.net API path.
-
-        The legacy `a/sportdata/1` API was retired and is no longer
-        reachable; this remains only for endpoints not yet migrated
-        to the new API.
-        """
-        session = async_get_clientsession(self.hass)
-        url = f"https://www.handball.net/a/sportdata/1/{path}"
-
-        try:
-            async with session.get(url) as resp:
-                if resp.status != 200:
-                    return None
-                return await resp.json()
-        except Exception:
-            return None
 
     async def _api_get_new(
         self, path: str, params: dict, referer: str
@@ -398,8 +393,8 @@ class HandballNetConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
         return club_options
 
-    async def _get_team_league_name(self, team_id: str) -> str | None:
-        """Best-effort lookup of a team's current league/competition name."""
+    async def _get_team_phase(self, team_id: str) -> dict | None:
+        """Best-effort lookup of a team's current phase (league/season group)."""
         payload = await self._api_get_new(
             "matches",
             {"team_id": team_id, "page": 1},
@@ -410,8 +405,104 @@ class HandballNetConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             return None
 
         phase = matches[0].get("phase") or {}
+        phase_id = phase.get("id")
+        if phase_id is None:
+            return None
+
         competition = phase.get("competition") or {}
-        return competition.get("name") or None
+        return {
+            "id": str(phase_id),
+            "name": phase.get("name"),
+            "competition_name": competition.get("name"),
+        }
+
+    async def _get_team_league_name(self, team_id: str) -> str | None:
+        """Best-effort lookup of a team's current league/competition name."""
+        phase = await self._get_team_phase(team_id)
+        return phase.get("competition_name") if phase else None
+
+    async def _search_competitions(self, query: str) -> dict[str, str]:
+        """Search competitions by name and return competition_id -> display_name map."""
+        payload = await self._api_get_new(
+            "competitions", {"name": query}, referer=HANDBALL_NET_WEB_URL
+        )
+        competitions = payload.get("data", []) if payload else []
+
+        competition_options: dict[str, str] = {}
+        self._competition_names = {}
+        for competition in competitions:
+            competition_id = competition.get("id")
+            name = competition.get("name")
+            if competition_id is None or not name:
+                continue
+
+            competition_id = str(competition_id)
+
+            championship = competition.get("championship") or {}
+            federation = championship.get("federation") or {}
+            federation_name = federation.get("name")
+
+            category = competition.get("category") or {}
+            gender_info = category.get("gender") or {}
+            age_info = category.get("age") or {}
+            gender_label = self._format_gender(gender_info.get("id"), gender_info.get("name"))
+            age_label = self._format_age_category(age_info.get("name"))
+
+            detail_parts = [part for part in (age_label, gender_label, federation_name) if part]
+
+            self._competition_names[competition_id] = name
+            competition_options[competition_id] = (
+                f"{name} ({', '.join(detail_parts)})" if detail_parts else name
+            )
+
+        return competition_options
+
+    async def _get_phases_for_competition(self, competition_id: str) -> dict[str, str]:
+        """Get the phases (season groups/Staffeln) for a competition."""
+        payload = await self._api_get_new(
+            "phases", {"competition_id": competition_id}, referer=HANDBALL_NET_WEB_URL
+        )
+        phases = payload.get("data", []) if payload else []
+
+        phase_options: dict[str, str] = {}
+        for phase in phases:
+            phase_id = phase.get("id")
+            name = phase.get("name")
+            if phase_id is None or not name:
+                continue
+
+            phase_options[str(phase_id)] = name
+
+        return phase_options
+
+    @staticmethod
+    def _compose_tournament_name(
+        competition_name: str | None, phase_name: str | None
+    ) -> str | None:
+        if competition_name and phase_name:
+            return f"{competition_name} ({phase_name})"
+        return competition_name or phase_name
+
+    def _is_tournament_already_configured(self, tournament_id: str) -> bool:
+        return any(
+            entry.data.get(CONF_TOURNAMENT_ID) == tournament_id
+            and entry.data.get(CONF_ENTITY_TYPE) == ENTITY_TYPE_TOURNAMENT
+            for entry in self._async_current_entries()
+        )
+
+    def _create_tournament_entry(self, tournament_id: str, tournament_name: str | None):
+        """Create config entry for a tournament."""
+        data = {
+            CONF_ENTITY_TYPE: ENTITY_TYPE_TOURNAMENT,
+            CONF_TOURNAMENT_ID: tournament_id,
+            "tournament_name": tournament_name,
+            CONF_UPDATE_INTERVAL: self._update_interval,
+            CONF_UPDATE_INTERVAL_LIVE: self._update_interval_live,
+        }
+        title = (
+            f"Tournament: {tournament_name}" if tournament_name else f"Tournament {tournament_id}"
+        )
+        return self.async_create_entry(title=title, data=data)
 
     async def _get_teams_for_club(self, club_id: str) -> dict[str, str]:
         """Get teams for a club and return team_id -> display_name map."""
@@ -488,21 +579,6 @@ class HandballNetConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         if team_data:
             team_name = team_data.get("name", team_id)
             return True, team_name
-
-        return False, None
-
-    async def _validate_tournament_id(
-        self, tournament_id: str
-    ) -> tuple[bool, str | None]:
-        """Validate tournament ID against handball.net API and return tournament name"""
-        data = await self._api_get(f"tournaments/{tournament_id}/table")
-        if not data:
-            return False, None
-
-        tournament_data = data.get("data", {}).get("tournament")
-        if tournament_data:
-            tournament_name = tournament_data.get("name", tournament_id)
-            return True, tournament_name
 
         return False, None
 
@@ -752,49 +828,183 @@ class HandballNetConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         errors = {}
 
         if user_input is not None:
-            tournament_id = user_input.get(CONF_TOURNAMENT_ID)
-            if not tournament_id:
-                errors[CONF_TOURNAMENT_ID] = "invalid_tournament_id"
-            else:
-                # Check if already configured
-                for entry in self._async_current_entries():
-                    if (
-                        entry.data.get(CONF_TOURNAMENT_ID) == tournament_id
-                        and entry.data.get(CONF_ENTITY_TYPE) == ENTITY_TYPE_TOURNAMENT
-                    ):
-                        errors[CONF_TOURNAMENT_ID] = "already_configured"
-                        break
+            input_mode = user_input.get(CONF_TOURNAMENT_INPUT_MODE, TOURNAMENT_INPUT_MODE_CLUB)
 
-                if not errors:
-                    is_valid, tournament_name = await self._validate_tournament_id(
-                        tournament_id
-                    )
-                    if not is_valid:
-                        errors[CONF_TOURNAMENT_ID] = "tournament_not_found"
+            if input_mode == TOURNAMENT_INPUT_MODE_CLUB:
+                club_query = user_input.get(CONF_CLUB_QUERY, "").strip()
+                if len(club_query) < 2:
+                    errors[CONF_CLUB_QUERY] = "invalid_club_query"
+                else:
+                    self._club_options = await self._search_clubs(club_query)
+                    if not self._club_options:
+                        errors[CONF_CLUB_QUERY] = "club_not_found"
                     else:
-                        # Create the final data dictionary
-                        data = {
-                            CONF_ENTITY_TYPE: ENTITY_TYPE_TOURNAMENT,
-                            CONF_TOURNAMENT_ID: tournament_id,
-                            "tournament_name": tournament_name,
-                            CONF_UPDATE_INTERVAL: self._update_interval,
-                            CONF_UPDATE_INTERVAL_LIVE: self._update_interval_live,
-                        }
-                        title = (
-                            f"Tournament: {tournament_name}"
-                            if tournament_name
-                            else f"Tournament {tournament_id}"
-                        )
-                        return self.async_create_entry(title=title, data=data)
+                        return await self.async_step_tournament_select_club()
+
+            elif input_mode == TOURNAMENT_INPUT_MODE_COMPETITION:
+                competition_query = user_input.get(CONF_COMPETITION_QUERY, "").strip()
+                if len(competition_query) < 2:
+                    errors[CONF_COMPETITION_QUERY] = "invalid_competition_query"
+                else:
+                    self._competition_options = await self._search_competitions(
+                        competition_query
+                    )
+                    if not self._competition_options:
+                        errors[CONF_COMPETITION_QUERY] = "competition_not_found"
+                    else:
+                        return await self.async_step_tournament_select_competition()
 
         data_schema = vol.Schema(
             {
-                vol.Required(CONF_TOURNAMENT_ID): str,
+                vol.Required(
+                    CONF_TOURNAMENT_INPUT_MODE, default=TOURNAMENT_INPUT_MODE_CLUB
+                ): vol.In(
+                    {
+                        TOURNAMENT_INPUT_MODE_CLUB: "Search by Club",
+                        TOURNAMENT_INPUT_MODE_COMPETITION: "Search by Competition",
+                    }
+                ),
+                vol.Optional(CONF_CLUB_QUERY): str,
+                vol.Optional(CONF_COMPETITION_QUERY): str,
             }
         )
 
         return self.async_show_form(
             step_id="tournament", data_schema=data_schema, errors=errors
+        )
+
+    async def async_step_tournament_select_club(self, user_input=None):
+        """Handle club selection for tournament setup (search-by-club path)."""
+        errors = {}
+
+        if user_input is not None:
+            club_id = user_input.get(CONF_CLUB_ID)
+            if not club_id or club_id not in self._club_options:
+                errors[CONF_CLUB_ID] = "invalid_club_selection"
+            else:
+                self._selected_club_id = club_id
+                self._selected_club_name = self._club_clean_names.get(
+                    club_id, self._club_options.get(club_id)
+                )
+                self._team_options = await self._get_teams_for_club(club_id)
+                if not self._team_options:
+                    errors[CONF_CLUB_ID] = "no_teams_found"
+                else:
+                    return await self.async_step_tournament_select_team()
+
+        if not self._club_options:
+            return await self.async_step_tournament()
+
+        data_schema = vol.Schema(
+            {
+                vol.Required(CONF_CLUB_ID): vol.In(self._club_options),
+            }
+        )
+
+        return self.async_show_form(
+            step_id="tournament_select_club",
+            data_schema=data_schema,
+            errors=errors,
+        )
+
+    async def async_step_tournament_select_team(self, user_input=None):
+        """Resolve a tournament from a team's current phase (search-by-club path)."""
+        errors = {}
+
+        if user_input is not None:
+            team_id = user_input.get(CONF_SELECTED_TEAM_ID)
+            if not team_id or team_id not in self._team_options:
+                errors[CONF_SELECTED_TEAM_ID] = "invalid_team_selection"
+            else:
+                phase = await self._get_team_phase(team_id)
+                if not phase:
+                    errors[CONF_SELECTED_TEAM_ID] = "tournament_not_found"
+                elif self._is_tournament_already_configured(phase["id"]):
+                    errors[CONF_SELECTED_TEAM_ID] = "already_configured"
+                else:
+                    tournament_name = self._compose_tournament_name(
+                        phase.get("competition_name"), phase.get("name")
+                    )
+                    return self._create_tournament_entry(phase["id"], tournament_name)
+
+        if not self._team_options:
+            return await self.async_step_tournament()
+
+        data_schema = vol.Schema(
+            {
+                vol.Required(CONF_SELECTED_TEAM_ID): vol.In(self._team_options),
+            }
+        )
+
+        return self.async_show_form(
+            step_id="tournament_select_team",
+            data_schema=data_schema,
+            errors=errors,
+        )
+
+    async def async_step_tournament_select_competition(self, user_input=None):
+        """Handle competition selection (search-by-competition path)."""
+        errors = {}
+
+        if user_input is not None:
+            competition_id = user_input.get(CONF_SELECTED_COMPETITION_ID)
+            if not competition_id or competition_id not in self._competition_options:
+                errors[CONF_SELECTED_COMPETITION_ID] = "invalid_competition_selection"
+            else:
+                self._selected_competition_id = competition_id
+                self._selected_competition_name = self._competition_names.get(
+                    competition_id, self._competition_options.get(competition_id)
+                )
+                self._phase_options = await self._get_phases_for_competition(competition_id)
+                if not self._phase_options:
+                    errors[CONF_SELECTED_COMPETITION_ID] = "no_phases_found"
+                else:
+                    return await self.async_step_tournament_select_phase()
+
+        if not self._competition_options:
+            return await self.async_step_tournament()
+
+        data_schema = vol.Schema(
+            {
+                vol.Required(CONF_SELECTED_COMPETITION_ID): vol.In(self._competition_options),
+            }
+        )
+
+        return self.async_show_form(
+            step_id="tournament_select_competition",
+            data_schema=data_schema,
+            errors=errors,
+        )
+
+    async def async_step_tournament_select_phase(self, user_input=None):
+        """Handle phase/Staffel selection (search-by-competition path)."""
+        errors = {}
+
+        if user_input is not None:
+            phase_id = user_input.get(CONF_SELECTED_PHASE_ID)
+            if not phase_id or phase_id not in self._phase_options:
+                errors[CONF_SELECTED_PHASE_ID] = "invalid_phase_selection"
+            elif self._is_tournament_already_configured(phase_id):
+                errors[CONF_SELECTED_PHASE_ID] = "already_configured"
+            else:
+                tournament_name = self._compose_tournament_name(
+                    self._selected_competition_name, self._phase_options.get(phase_id)
+                )
+                return self._create_tournament_entry(phase_id, tournament_name)
+
+        if not self._phase_options:
+            return await self.async_step_tournament()
+
+        data_schema = vol.Schema(
+            {
+                vol.Required(CONF_SELECTED_PHASE_ID): vol.In(self._phase_options),
+            }
+        )
+
+        return self.async_show_form(
+            step_id="tournament_select_phase",
+            data_schema=data_schema,
+            errors=errors,
         )
 
     async def async_step_reconfigure(self, user_input=None):
