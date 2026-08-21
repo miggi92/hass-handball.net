@@ -21,9 +21,12 @@ HEALTH_CHECK_STALE_HOURS = 2
 LIVE_GAME_CHECK_INTERVAL = 60
 
 # API endpoints
-HANDBALL_NET_BASE_URL = "https://www.handball.net/a/sportdata/1"
+HANDBALL_NET_BASE_URL = "https://www.handball.net/a/sportdata/1"  # legacy API, no longer reachable
+HANDBALL_NET_NEW_API_BASE_URL = "https://handball.net/api/new"
 HANDBALL_NET_LOGO_PREFIX = "handball-net:"
 HANDBALL_NET_WEB_URL = "https://www.handball.net/"
+
+CONF_FEDERATION_ID = "federation_id"
 
 # Date format constants
 DATE_FORMAT_UTC = "%Y-%m-%d %H:%M:%S UTC"

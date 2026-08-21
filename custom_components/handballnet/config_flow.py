@@ -2,11 +2,11 @@ import voluptuous as vol
 from homeassistant import config_entries
 from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
-from urllib.parse import quote_plus
 import re
 from .const import (
     DOMAIN,
     CONF_CLUB_ID,
+    CONF_FEDERATION_ID,
     CONF_TEAM_ID,
     CONF_TEAM_MAPPING,
     CONF_TOURNAMENT_ID,
@@ -18,7 +18,12 @@ from .const import (
     DEFAULT_UPDATE_INTERVAL,
     CONF_UPDATE_INTERVAL_LIVE,
     DEFAULT_UPDATE_INTERVAL_LIVE,
+    HANDBALL_NET_NEW_API_BASE_URL,
+    HANDBALL_NET_WEB_URL,
 )
+
+# Gender ids as returned by the new /api/new API
+_GENDER_LABELS = {"M": "männlich", "F": "weiblich", "S": "gemischt"}
 
 CONF_TEAM_INPUT_MODE = "team_input_mode"
 CONF_CLUB_QUERY = "club_query"
@@ -39,6 +44,7 @@ class HandballNetConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         self._update_interval_live = DEFAULT_UPDATE_INTERVAL_LIVE
         self._club_options: dict[str, str] = {}
         self._club_clean_names: dict[str, str] = {}
+        self._club_federation_ids: dict[str, str] = {}
         self._team_options: dict[str, str] = {}
         self._team_base_names: dict[str, str] = {}
         self._team_variants: dict[str, str] = {}
@@ -193,7 +199,12 @@ class HandballNetConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         return self.hass.config_entries.async_get_entry(entry_id)
 
     async def _api_get(self, path: str):
-        """Get JSON data from handball.net API path."""
+        """Get JSON data from the legacy handball.net API path.
+
+        The legacy `a/sportdata/1` API was retired and is no longer
+        reachable; this remains only for endpoints not yet migrated
+        to the new API.
+        """
         session = async_get_clientsession(self.hass)
         url = f"https://www.handball.net/a/sportdata/1/{path}"
 
@@ -204,6 +215,64 @@ class HandballNetConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 return await resp.json()
         except Exception:
             return None
+
+    async def _api_get_new(
+        self, path: str, params: dict, referer: str
+    ) -> dict | None:
+        """Get JSON data from a new (/api/new) handball.net API path."""
+        session = async_get_clientsession(self.hass)
+        url = f"{HANDBALL_NET_NEW_API_BASE_URL}/{path}"
+        headers = {"Referer": referer}
+
+        try:
+            async with session.get(url, params=params, headers=headers) as resp:
+                if resp.status != 200:
+                    return None
+                payload = await resp.json()
+        except Exception:
+            return None
+
+        if not payload or not payload.get("success"):
+            return None
+
+        return payload
+
+    async def _api_get_new_paginated(
+        self, path: str, params: dict, referer: str
+    ) -> list:
+        """Get all pages of a paginated new-API list endpoint."""
+        results: list = []
+        page = 1
+        last_page = 1
+
+        while page <= last_page:
+            payload = await self._api_get_new(
+                path, {**params, "page": page}, referer
+            )
+            if not payload:
+                break
+
+            results.extend(payload.get("data", []) or [])
+
+            pagination = payload.get("pagination") or {}
+            last_page = pagination.get("last_page", last_page) or last_page
+            page += 1
+
+        return results
+
+    @staticmethod
+    def _format_age_category(age_category_name: str | None) -> str | None:
+        """Format an age category name like 'B-JUGEND' into 'B-Jugend'."""
+        if not age_category_name:
+            return None
+        return "-".join(part.capitalize() for part in age_category_name.split("-"))
+
+    @staticmethod
+    def _format_gender(gender_id: str | None, gender_name: str | None) -> str | None:
+        """Format a gender id/name into a German display label."""
+        if gender_id and gender_id in _GENDER_LABELS:
+            return _GENDER_LABELS[gender_id]
+        return gender_name
 
     def _is_team_already_configured(
         self,
@@ -280,6 +349,10 @@ class HandballNetConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             CONF_UPDATE_INTERVAL_LIVE: self._update_interval_live,
         }
 
+        federation_id = self._club_federation_ids.get(club_id)
+        if federation_id:
+            data[CONF_FEDERATION_ID] = federation_id
+
         title = club_name or club_id
         return self.async_create_entry(title=title, data=data)
 
@@ -293,33 +366,47 @@ class HandballNetConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
     async def _search_clubs(self, query: str) -> dict[str, str]:
         """Search clubs by query and return club_id -> display_name map."""
-        encoded_query = quote_plus(query)
-        data = await self._api_get(f"clubs/search?query={encoded_query}")
-        clubs = data.get("data", []) if data else []
+        payload = await self._api_get_new(
+            "teams/clubs",
+            {"all": "1", "filter[search]": query},
+            referer=f"{HANDBALL_NET_WEB_URL}clubs",
+        )
+        clubs = payload.get("data", []) if payload else []
 
         club_options: dict[str, str] = {}
         self._club_clean_names = {}
+        self._club_federation_ids = {}
         for club in clubs:
             club_id = club.get("id")
             club_name = club.get("name")
-            if club_id and club_name:
-                clean_club_name, _ = self._split_trailing_parentheses(club_name)
-                self._club_clean_names[club_id] = clean_club_name or club_name
+            if club_id is None or not club_name:
+                continue
 
-                acronym = club.get("acronym")
-                if acronym:
-                    club_options[club_id] = (
-                        f"{clean_club_name or club_name} ({acronym})"
-                    )
-                else:
-                    club_options[club_id] = clean_club_name or club_name
+            club_id = str(club_id)
+            self._club_clean_names[club_id] = club_name
+
+            federation = club.get("federation") or {}
+            federation_id = federation.get("id")
+            if federation_id is not None:
+                self._club_federation_ids[club_id] = str(federation_id)
+
+            federation_name = federation.get("name")
+            club_options[club_id] = (
+                f"{club_name} ({federation_name})" if federation_name else club_name
+            )
 
         return club_options
 
     async def _get_teams_for_club(self, club_id: str) -> dict[str, str]:
         """Get teams for a club and return team_id -> display_name map."""
-        data = await self._api_get(f"clubs/{club_id}/teams")
-        teams = data.get("data", []) if data else []
+        params = {"club_id": club_id}
+        federation_id = self._club_federation_ids.get(club_id)
+        if federation_id:
+            params["federation_id"] = federation_id
+
+        teams = await self._api_get_new_paginated(
+            "teams", params, referer=f"{HANDBALL_NET_WEB_URL}club/{club_id}"
+        )
 
         team_options: dict[str, str] = {}
         self._team_base_names = {}
@@ -327,32 +414,35 @@ class HandballNetConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         for team in teams:
             team_id = team.get("id")
             team_name = team.get("name")
-            if team_id and team_name:
-                default_tournament = team.get("defaultTournament")
-                acronym = (
-                    default_tournament.get("acronym") if default_tournament else None
-                )
-                base_team_name, team_variant = self._normalize_team_selection(
-                    team_name, acronym
-                )
-                self._team_base_names[team_id] = base_team_name or team_name
-                if team_variant:
-                    self._team_variants[team_id] = team_variant
+            if team_id is None or not team_name:
+                continue
 
-                preferred_label = self._compose_team_display_name(
-                    base_team_name or team_name,
-                    self._selected_club_name,
-                    team_variant,
-                )
-                if preferred_label and preferred_label != (base_team_name or team_name):
-                    if acronym:
-                        team_options[team_id] = f"{preferred_label} ({acronym})"
-                    else:
-                        team_options[team_id] = preferred_label
-                elif acronym:
-                    team_options[team_id] = f"{base_team_name or team_name} ({acronym})"
-                else:
-                    team_options[team_id] = base_team_name or team_name
+            team_id = str(team_id)
+            club_info = team.get("club") or {}
+            if not self._selected_club_name:
+                self._selected_club_name = club_info.get("name")
+
+            base_team_name, team_number = self._strip_team_suffix(team_name)
+
+            gender = team.get("gender") or {}
+            age_category = team.get("age_category") or {}
+            gender_label = self._format_gender(gender.get("id"), gender.get("name"))
+            age_label = self._format_age_category(age_category.get("name"))
+
+            variant_parts = [
+                part for part in (team_number, age_label, gender_label) if part
+            ]
+            team_variant = " ".join(variant_parts) if variant_parts else None
+
+            self._team_base_names[team_id] = base_team_name or team_name
+            if team_variant:
+                self._team_variants[team_id] = team_variant
+
+            team_options[team_id] = self._compose_team_display_name(
+                base_team_name or team_name,
+                self._selected_club_name,
+                team_variant,
+            )
 
         return team_options
 
@@ -437,6 +527,10 @@ class HandballNetConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             "club_name": club_name,
             CONF_TEAM_MAPPING: team_mapping,
         }
+
+        federation_id = self._club_federation_ids.get(club_id)
+        if federation_id:
+            data_updates[CONF_FEDERATION_ID] = federation_id
 
         title = club_name or club_id
 
@@ -686,6 +780,7 @@ class HandballNetConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         current_team_id = entry.data.get(CONF_TEAM_ID, "")
         self._club_options = {}
         self._club_clean_names = {}
+        self._club_federation_ids = {}
         self._team_options = {}
         self._team_base_names = {}
         self._team_variants = {}
@@ -695,6 +790,9 @@ class HandballNetConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             if existing_club_id:
                 self._selected_club_id = existing_club_id
                 self._selected_club_name = entry.data.get("club_name")
+                existing_federation_id = entry.data.get(CONF_FEDERATION_ID)
+                if existing_federation_id:
+                    self._club_federation_ids[existing_club_id] = existing_federation_id
                 self._team_options = await self._get_teams_for_club(existing_club_id)
                 if self._team_options:
                     return await self.async_step_reconfigure_select_team()
