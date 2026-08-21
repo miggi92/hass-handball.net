@@ -5,6 +5,12 @@
 
 [compare changes](https://github.com/miggi92/hass-handball.net/compare/v0.0.28...v0.0.29)
 
+### ⚠️ Breaking Changes
+
+handball.net retired its old API and switched to a new one, which also assigned new IDs to every club and team. **All previously configured teams, clubs and tournaments will stop working** after this update.
+
+To fix it: remove your existing Handball.net integration entries in Home Assistant and set them up again (Settings → Devices & Services → Handball.net → ⋮ → Delete, then re-add). This is unfortunately unavoidable, since the old IDs no longer exist on handball.net's side.
+
 ### 🚀 Enhancements
 
 - Migrate club/team lookup to the new handball.net API ([9df0910](https://github.com/miggi92/hass-handball.net/commit/9df0910))
