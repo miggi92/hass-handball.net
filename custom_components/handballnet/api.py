@@ -55,7 +55,9 @@ class HandballNetAPI:
             _LOGGER.error("Request failed for endpoint %s: %s", endpoint, e)
             return None
 
-        if not payload or not payload.get("success"):
+        if not payload or payload.get("success") is False:
+            # Some endpoints (e.g. matches/{id}/events) omit "success" entirely
+            # on a successful response, so only an explicit False rejects.
             return None
 
         return payload
@@ -262,8 +264,15 @@ class HandballNetAPI:
 
     async def get_live_ticker(self, game_id: str) -> Optional[Dict[str, Any]]:
         """Get live ticker events for a game"""
-        data = await self._make_request(f"games/{game_id}/combined")
-        return data.get("data", {}) if data else None
+        payload = await self._make_new_api_request(
+            f"matches/{game_id}/events",
+            {},
+            referer=f"{HANDBALL_NET_WEB_URL}match/{game_id}",
+        )
+        if payload is None:
+            return None
+
+        return {"events": payload.get("data", []) or []}
 
     async def get_tournament_team_ids(self, tournament_id: str) -> list[str]:
         """Resolve tournament participants using team search fallback."""
