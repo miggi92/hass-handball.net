@@ -1,6 +1,23 @@
 # Changelog
 
 
+## v0.0.31
+
+[compare changes](https://github.com/miggi92/hass-handball.net/compare/v0.0.30...v0.0.31)
+
+### 🚀 Enhancements
+
+- Migrate live ticker to the new handball.net API ([b4fdc6b](https://github.com/miggi92/hass-handball.net/commit/b4fdc6b))
+
+### 🏡 Chore
+
+- **release:** V0.0.30 ([19efc23](https://github.com/miggi92/hass-handball.net/commit/19efc23))
+
+### ❤️ Contributors
+
+- Claude <noreply@anthropic.com>
+- Miguel ([@miggi92](https://github.com/miggi92))
+
 ## v0.0.30
 
 [compare changes](https://github.com/miggi92/hass-handball.net/compare/v0.0.29...v0.0.30)
