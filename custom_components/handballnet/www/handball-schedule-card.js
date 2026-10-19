@@ -226,7 +226,7 @@ class HandballScheduleCard extends HTMLElement {
       const logo = (name) => {
         const url = logos[this._norm(name)];
         return url
-          ? `<img class="logo" src="${this._esc(url)}" alt="" width="20" height="20" decoding="async">`
+          ? `<img class="logo" src="${this._esc(url)}" alt="" width="20" height="20" decoding="sync">`
           : "";
       };
       rows.push(`

@@ -70,7 +70,7 @@ class HandballTeamCard extends HTMLElement {
   _teamLogoHtml(team, cssClass) {
     if (!team) return "";
     return team.logo
-      ? `<img src="${team.logo}" alt="${team.name || ""}" class="${cssClass}" loading="lazy">`
+      ? `<img src="${team.logo}" alt="${team.name || ""}" class="${cssClass}" decoding="sync">`
       : `<span class="${cssClass} placeholder"></span>`;
   }
 

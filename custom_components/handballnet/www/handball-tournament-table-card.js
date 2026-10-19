@@ -11,6 +11,30 @@
  *   show_logo: true              # optional, default true
  */
 class HandballTournamentTableCard extends HTMLElement {
+  constructor() {
+    super();
+    HandballTournamentTableCard._instances =
+      (HandballTournamentTableCard._instances || 0) + 1;
+    this._instanceNo = HandballTournamentTableCard._instances;
+    this._domWrites = 0;
+    this._hassUpdates = 0;
+  }
+
+  // Optional "debug: true": shows how often the card element is created,
+  // how often hass is pushed and how often the DOM is actually rewritten.
+  _updateDebug() {
+    if (!this._config?.debug || !this.shadowRoot) return;
+    let el = this.shadowRoot.querySelector(".hb-debug");
+    if (!el) {
+      el = document.createElement("div");
+      el.className = "hb-debug";
+      el.style.cssText =
+        "font:11px monospace;padding:4px 16px;color:var(--secondary-text-color)";
+      this.shadowRoot.appendChild(el);
+    }
+    el.textContent = `Debug · Instanz #${this._instanceNo} · DOM-Writes ${this._domWrites} · hass-Updates ${this._hassUpdates}`;
+  }
+
   static async getConfigElement() {
     return document.createElement("handball-tournament-table-card-editor");
   }
@@ -35,8 +59,12 @@ class HandballTournamentTableCard extends HTMLElement {
     // hass is pushed on every state change in the whole instance. Re-rendering
     // innerHTML each time recreates all <img> tags and makes the logos flicker,
     // so only render when the watched entity actually changed.
+    this._hassUpdates += 1;
     const stateObj = hass.states[this._config?.entity];
-    if (this._rendered && stateObj === this._lastStateObj) return;
+    if (this._rendered && stateObj === this._lastStateObj) {
+      this._updateDebug();
+      return;
+    }
     this._lastStateObj = stateObj;
     this._render();
     this._rendered = true;
@@ -52,7 +80,9 @@ class HandballTournamentTableCard extends HTMLElement {
     if (this._html !== null && this._html !== this._lastHtml) {
       this.shadowRoot.innerHTML = this._html;
       this._lastHtml = this._html;
+      this._domWrites += 1;
     }
+    this._updateDebug();
   }
 
   _buildRender() {
@@ -155,7 +185,7 @@ class HandballTournamentTableCard extends HTMLElement {
 
         const logoHtml =
           showLogo && row.team_logo
-            ? `<img src="${row.team_logo}" alt="" class="team-logo" loading="lazy">`
+            ? `<img src="${row.team_logo}" alt="" class="team-logo" width="20" height="20" decoding="sync">`
             : `<span class="team-logo-placeholder"></span>`;
 
         const rawDiff = Number(row.goal_difference);
