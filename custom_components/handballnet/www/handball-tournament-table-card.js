@@ -43,6 +43,19 @@ class HandballTournamentTableCard extends HTMLElement {
   }
 
   _render() {
+    // Build the markup and only touch the DOM when it actually differs.
+    // Re-assigning identical innerHTML recreates every <img> and makes the
+    // team logos flicker, even if the entity state object was replaced
+    // with identical content.
+    this._html = null;
+    this._buildRender();
+    if (this._html !== null && this._html !== this._lastHtml) {
+      this.shadowRoot.innerHTML = this._html;
+      this._lastHtml = this._html;
+    }
+  }
+
+  _buildRender() {
     if (!this._hass || !this._config) return;
 
     let stateObj = this._hass.states[this._config.entity];
@@ -109,7 +122,7 @@ class HandballTournamentTableCard extends HTMLElement {
     }
 
     if (!stateObj) {
-      this.shadowRoot.innerHTML = `
+      this._html = `
         <ha-card>
           <div style="padding:16px;color:var(--error-color)">
             Entity <code>${this._config.entity}</code> not found.
@@ -181,7 +194,7 @@ class HandballTournamentTableCard extends HTMLElement {
       .filter(Boolean)
       .join(" · ");
 
-    this.shadowRoot.innerHTML = `
+    this._html = `
       <style>
         :host { display: block; }
         ha-card { overflow: hidden; }

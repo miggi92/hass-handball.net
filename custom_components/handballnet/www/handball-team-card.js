@@ -193,6 +193,19 @@ class HandballTeamCard extends HTMLElement {
   // ── main render ──────────────────────────────────────────────────────────
 
   _render() {
+    // Build the markup and only touch the DOM when it actually differs.
+    // Re-assigning identical innerHTML recreates every <img> and makes the
+    // team logos flicker, even if the entity state object was replaced
+    // with identical content.
+    this._html = null;
+    this._buildRender();
+    if (this._html !== null && this._html !== this._lastHtml) {
+      this.shadowRoot.innerHTML = this._html;
+      this._lastHtml = this._html;
+    }
+  }
+
+  _buildRender() {
     if (!this._hass || !this._config) return;
 
     let tableState = this._state(this._config.table_position_entity);
@@ -234,7 +247,7 @@ class HandballTeamCard extends HTMLElement {
 
     const isLive = liveState?.state === "Live";
 
-    this.shadowRoot.innerHTML = `
+    this._html = `
       <style>
         :host { display: block; }
         ha-card { overflow: hidden; }
