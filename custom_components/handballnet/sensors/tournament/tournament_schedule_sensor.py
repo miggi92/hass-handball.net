@@ -6,7 +6,7 @@ from typing import Any
 
 from .base_sensor import HandballBaseSensor
 
-_RECENT_RESULTS = 7
+_RECENT_RESULTS = 21  # roughly the last three matchdays
 
 
 def _compact(match: dict[str, Any], with_result: bool) -> dict[str, Any]:
