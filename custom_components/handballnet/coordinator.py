@@ -464,6 +464,7 @@ class HandballDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                     "isHomeMatch": match.get("homeTeam", {}).get("id") == team_id,
                     "isAway": match.get("awayTeam", {}).get("id") == team_id,
                     "lastUpdated": match.get("lastUpdated"),
+                    "round": match.get("round"),
                     "status": match.get("status"),
                     "error": match.get("error"),
                 }

@@ -54,6 +54,7 @@ async def async_diagnose_team(hass: HomeAssistant, call):
 _LOVELACE_CARDS = [
     "handball-tournament-table-card.js",
     "handball-team-card.js",
+    "handball-schedule-card.js",
 ]
 
 
