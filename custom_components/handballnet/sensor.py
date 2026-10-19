@@ -24,6 +24,7 @@ from .sensors import (
     HandballTablePositionSensor,
     HandballTournamentTableSensor,
     HandballTournamentRemainingTeamsSensor,
+    HandballTournamentScheduleSensor,
     HandballTournamentTeamPositionSensor,
 )
 
@@ -90,7 +91,10 @@ async def _setup_tournament_sensors(hass: HomeAssistant, entry, async_add_entiti
     table_rows = tournament_bucket.get("table_rows", [])
     has_table = tournament_bucket.get("has_table", bool(table_rows))
 
-    sensors = [HandballTournamentTableSensor(coordinator, entry, tournament_id)]
+    sensors = [
+        HandballTournamentTableSensor(coordinator, entry, tournament_id),
+        HandballTournamentScheduleSensor(coordinator, entry, tournament_id),
+    ]
 
     # Knockout helper sensor is only useful when no table data exists.
     if not has_table:

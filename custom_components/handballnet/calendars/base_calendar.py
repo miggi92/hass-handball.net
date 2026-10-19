@@ -2,6 +2,7 @@ from homeassistant.components.calendar import CalendarEntity, CalendarEvent
 from datetime import datetime, timedelta, timezone
 import re
 from ..const import DOMAIN
+from ..device_helpers import via_device_fields
 
 class HandballBaseCalendar(CalendarEntity):
     """Base class for all handball calendars"""
@@ -40,7 +41,9 @@ class HandballBaseCalendar(CalendarEntity):
         }
 
         if via_device is not None:
-            device_info["via_device"] = via_device
+            device_info.update(
+                via_device_fields(self._attr_config_entry_id, via_device)
+            )
 
         return device_info
 

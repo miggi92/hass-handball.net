@@ -9,6 +9,7 @@ from .const import (
     ENTITY_TYPE_CLUB,
 )
 from .coordinator import HandballDataUpdateCoordinator
+from .device_helpers import async_ensure_club_device
 from .sensors.team.base_sensor import HandballBaseSensor
 
 
@@ -22,6 +23,9 @@ async def async_setup_entry(hass: HomeAssistant, entry, async_add_entities):
         coordinator = HandballDataUpdateCoordinator(hass, entry)
         await coordinator.async_config_entry_first_refresh()
         entry.runtime_data = coordinator
+
+    # The team devices link to the club device; it must exist first.
+    await async_ensure_club_device(hass, entry)
 
     entities = []
 

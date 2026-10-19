@@ -54,6 +54,7 @@ async def async_diagnose_team(hass: HomeAssistant, call):
 _LOVELACE_CARDS = [
     "handball-tournament-table-card.js",
     "handball-team-card.js",
+    "handball-schedule-card.js",
 ]
 
 
@@ -72,7 +73,9 @@ async def async_setup(hass: HomeAssistant, config: dict):
         file_path = os.path.join(www_dir, filename)
         if os.path.isfile(file_path):
             static_files.append((url_path, file_path))
-            add_extra_js_url(hass, url_path)
+            # Version query busts stale browser/app caches after an update.
+            version = int(os.path.getmtime(file_path))
+            add_extra_js_url(hass, f"{url_path}?v={version}")
 
     if static_files:
         if hasattr(hass.http, "async_register_static_paths") and StaticPathConfig is not None:

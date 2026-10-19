@@ -7,6 +7,7 @@ from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.core import HomeAssistant
 from .const import HANDBALL_NET_BASE_URL, HANDBALL_NET_NEW_API_BASE_URL, HANDBALL_NET_WEB_URL
 from .utils import HandballNetUtils
+from .http_client import HandballNetHTTPError, async_get_json
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -43,16 +44,9 @@ class HandballNetAPI:
         self, endpoint: str, params: Dict[str, Any], referer: str
     ) -> Optional[Dict[str, Any]]:
         """Make HTTP request to the new (/api/new) handball.net API"""
-        url = f"{HANDBALL_NET_NEW_API_BASE_URL}/{endpoint}"
-        headers = {"Referer": referer}
         try:
-            async with self.session.get(url, params=params, headers=headers) as resp:
-                if resp.status != 200:
-                    _LOGGER.warning("HTTP error %s for endpoint %s", resp.status, endpoint)
-                    return None
-                payload = await resp.json()
-        except Exception as e:
-            _LOGGER.error("Request failed for endpoint %s: %s", endpoint, e)
+            payload = await async_get_json(self.hass, endpoint, params, referer)
+        except HandballNetHTTPError:
             return None
 
         if not payload or payload.get("success") is False:
@@ -95,6 +89,33 @@ class HandballNetAPI:
         except ValueError:
             return None
 
+    _round_keys_logged = False
+
+    def _extract_round(self, match: Dict[str, Any]) -> Optional[int]:
+        """Matchday number of a match, if the API provides one.
+
+        The standings endpoint exposes "round" as int; for matches the exact
+        shape is not documented, so a few candidates are accepted (int or
+        object with number/order/name).
+        """
+        for key in ("round", "matchday", "round_number", "jornada", "journey"):
+            value = match.get(key)
+            if isinstance(value, dict):
+                value = value.get("number") or value.get("order") or value.get("name")
+            if isinstance(value, str):
+                digits = "".join(ch for ch in value if ch.isdigit())
+                value = int(digits) if digits else None
+            if isinstance(value, int) and value > 0:
+                return value
+        if not HandballNetAPI._round_keys_logged:
+            HandballNetAPI._round_keys_logged = True
+            _LOGGER.debug(
+                "No matchday field found in match data (keys: %s); "
+                "falling back to calendar-week grouping",
+                sorted(match.keys()),
+            )
+        return None
+
     def _normalize_match(self, match: Dict[str, Any], team_id: str) -> Dict[str, Any]:
         """Normalize a new-API match into the schedule shape the rest of the integration expects"""
         local = match.get("local") or {}
@@ -133,6 +154,7 @@ class HandballNetAPI:
             "isHomeMatch": str(local_id) == str(team_id) if local_id is not None else False,
             "isAway": str(visitor_id) == str(team_id) if visitor_id is not None else False,
             "lastUpdated": None,
+            "round": self._extract_round(match),
             "status": status.get("short_name"),
             "error": None,
         }

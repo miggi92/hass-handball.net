@@ -34,6 +34,7 @@ class HandballTeamCard extends HTMLElement {
       );
     }
     this._config = config;
+    this._rendered = false;
     if (!this.shadowRoot) {
       this.attachShadow({ mode: "open" });
     }
@@ -41,7 +42,23 @@ class HandballTeamCard extends HTMLElement {
 
   set hass(hass) {
     this._hass = hass;
+    // Only re-render when one of the configured entities changed; a full
+    // innerHTML rebuild on every hass update makes images flicker.
+    const watched = [
+      this._config?.table_position_entity,
+      this._config?.next_match_entity,
+      this._config?.live_ticker_entity,
+    ].map((id) => (id ? hass.states[id] : undefined));
+    if (
+      this._rendered &&
+      this._lastStates &&
+      watched.every((st, i) => st === this._lastStates[i])
+    ) {
+      return;
+    }
+    this._lastStates = watched;
     this._render();
+    this._rendered = true;
   }
 
   // ── helpers ──────────────────────────────────────────────────────────────
@@ -53,7 +70,7 @@ class HandballTeamCard extends HTMLElement {
   _teamLogoHtml(team, cssClass) {
     if (!team) return "";
     return team.logo
-      ? `<img src="${team.logo}" alt="${team.name || ""}" class="${cssClass}" loading="lazy">`
+      ? `<img src="${team.logo}" alt="${team.name || ""}" class="${cssClass}" decoding="sync">`
       : `<span class="${cssClass} placeholder"></span>`;
   }
 
@@ -176,6 +193,19 @@ class HandballTeamCard extends HTMLElement {
   // ── main render ──────────────────────────────────────────────────────────
 
   _render() {
+    // Build the markup and only touch the DOM when it actually differs.
+    // Re-assigning identical innerHTML recreates every <img> and makes the
+    // team logos flicker, even if the entity state object was replaced
+    // with identical content.
+    this._html = null;
+    this._buildRender();
+    if (this._html !== null && this._html !== this._lastHtml) {
+      this.shadowRoot.innerHTML = this._html;
+      this._lastHtml = this._html;
+    }
+  }
+
+  _buildRender() {
     if (!this._hass || !this._config) return;
 
     let tableState = this._state(this._config.table_position_entity);
@@ -217,7 +247,7 @@ class HandballTeamCard extends HTMLElement {
 
     const isLive = liveState?.state === "Live";
 
-    this.shadowRoot.innerHTML = `
+    this._html = `
       <style>
         :host { display: block; }
         ha-card { overflow: hidden; }

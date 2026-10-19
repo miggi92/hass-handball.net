@@ -109,7 +109,8 @@
       "no_phases_found": "No groups were found for this competition.",
       "invalid_phase_selection": "Invalid group selection",
       "cannot_connect": "Connection to handball.net failed",
-      "already_configured": "This entity is already configured."
+      "already_configured": "This entity is already configured.",
+      "api_blocked": "handball.net rejected the request. See the Home Assistant log (custom_components.handballnet)."
     },
     "abort": {
       "already_configured": "This entity is already configured.",

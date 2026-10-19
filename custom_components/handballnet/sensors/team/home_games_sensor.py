@@ -1,6 +1,8 @@
+import time
 from typing import Any, Optional
 from .base_sensor import HandballBaseSensor
 from ...utils import HandballNetUtils
+from ...const import MATCH_RUNNING_WINDOW_S
 
 
 class HandballHeimspielSensor(HandballBaseSensor):
@@ -54,8 +56,19 @@ class HandballHeimspielSensor(HandballBaseSensor):
         return None
 
     def _get_next_home_match(self) -> dict[str, Any] | None:
+        """Return the upcoming (or currently running) match of this type.
+
+        Matches are sorted by start time; a match counts as current until
+        MATCH_RUNNING_WINDOW_S after kick-off, so a running game is still shown.
+        """
+        now_ts = time.time()
         matches = self._get_team_bucket().get("matches", [])
         for match in matches:
-            if match.get("isHomeMatch"):
+            if not match.get("isHomeMatch"):
+                continue
+            starts_at = match.get("startsAt")
+            if not isinstance(starts_at, (int, float)):
+                continue
+            if starts_at / 1000 + MATCH_RUNNING_WINDOW_S > now_ts:
                 return match
         return None

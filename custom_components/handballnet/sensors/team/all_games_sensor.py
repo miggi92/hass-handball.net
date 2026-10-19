@@ -1,3 +1,4 @@
+import time
 from typing import Any
 from .base_sensor import HandballBaseSensor
 from ...utils import HandballNetUtils
@@ -55,8 +56,12 @@ class HandballAllGamesSensor(HandballBaseSensor):
             "next_match": next_match,
             "last_match": last_match,
             "total_matches": len(matches),
+            # Previously filtered on startsAt > 0, which returned the first five
+            # matches of the season (all already played) instead of future ones.
             "upcoming_matches": [
-                match for match in matches if match.get("startsAt", 0) > 0
+                match
+                for match in matches
+                if (match.get("startsAt") or 0) > time.time() * 1000
             ][:5],
             "recent_matches": [
                 match for match in matches if match.get("state") == "Post"

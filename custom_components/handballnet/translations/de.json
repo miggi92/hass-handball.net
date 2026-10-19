@@ -109,7 +109,8 @@
       "no_phases_found": "Für diesen Wettbewerb wurden keine Staffeln gefunden.",
       "invalid_phase_selection": "Ungültige Staffel ausgewählt",
       "cannot_connect": "Verbindung zu handball.net fehlgeschlagen",
-      "already_configured": "Diese Entität ist bereits konfiguriert."
+      "already_configured": "Diese Entität ist bereits konfiguriert.",
+      "api_blocked": "handball.net hat die Anfrage abgelehnt. Details im Home-Assistant-Log (custom_components.handballnet)."
     },
     "abort": {
       "already_configured": "Diese Entität ist bereits konfiguriert.",

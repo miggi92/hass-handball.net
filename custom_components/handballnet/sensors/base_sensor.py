@@ -1,5 +1,6 @@
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from ..const import DOMAIN
+from ..device_helpers import via_device_fields
 
 class HandballBaseSensor(CoordinatorEntity):
     """Base class for all handball sensors"""
@@ -25,7 +26,9 @@ class HandballBaseSensor(CoordinatorEntity):
         }
 
         if via_device is not None:
-            device_info["via_device"] = via_device
+            device_info.update(
+                via_device_fields(self._attr_config_entry_id, via_device)
+            )
 
         return device_info
 

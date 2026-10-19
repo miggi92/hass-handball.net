@@ -19,6 +19,7 @@ from .tournament import (
     HandballTournamentTableSensor,
     HandballTournamentTeamPositionSensor,
     HandballTournamentRemainingTeamsSensor,
+    HandballTournamentScheduleSensor,
 )
 
 __all__ = [
@@ -38,4 +39,5 @@ __all__ = [
     "HandballTournamentTableSensor",
     "HandballTournamentTeamPositionSensor",
     "HandballTournamentRemainingTeamsSensor",
+    "HandballTournamentScheduleSensor",
 ]
