@@ -610,23 +610,17 @@ class HandballDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         return {"state": "healthy", "attributes": attributes}
 
     async def _get_tournament_info(self) -> dict[str, Any]:
-        data = await self._api._make_request(f"tournaments/{self._tournament_id}")
-        if data and "data" in data:
-            tournament_data = data.get("data", {})
-            meta = data.get("meta", {})
-            return {
-                "name": tournament_data.get("name", self._tournament_id),
-                "acronym": tournament_data.get("acronym", ""),
-                "organization": tournament_data.get("organization", {}).get("name", ""),
-                "logo": tournament_data.get("logo", ""),
-                "has_table": bool(meta.get("hasTable", False)),
-            }
+        """Basic tournament info.
+
+        The legacy endpoint (tournaments/{id}) no longer exists (HTTP 404), so
+        the name chosen in the config flow is used. "has_table" is deliberately
+        left out so it is derived from the actual standings.
+        """
         return {
-            "name": self._tournament_id,
+            "name": self._entry.data.get("tournament_name") or self._tournament_id,
             "acronym": "",
             "organization": "",
             "logo": "",
-            "has_table": False,
         }
 
     def _extract_tournament_info_from_table_data(
@@ -792,7 +786,12 @@ class HandballDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                     tournament_data = match.get("tournament", {})
                     match_tournament_id = tournament_data.get("id")
                     match_tournament_name = tournament_data.get("name", "")
-                    is_target_tournament = match_tournament_id == self._tournament_id
+                    # Match data delivers the phase id as int, the config entry
+                    # stores it as str - compare as strings.
+                    is_target_tournament = (
+                        match_tournament_id is not None
+                        and str(match_tournament_id) == str(self._tournament_id)
+                    )
 
                     if (
                         not is_target_tournament
