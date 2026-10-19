@@ -7,6 +7,7 @@ from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.core import HomeAssistant
 from .const import HANDBALL_NET_BASE_URL, HANDBALL_NET_NEW_API_BASE_URL, HANDBALL_NET_WEB_URL
 from .utils import HandballNetUtils
+from .http_client import HandballNetHTTPError, async_get_json
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -43,16 +44,9 @@ class HandballNetAPI:
         self, endpoint: str, params: Dict[str, Any], referer: str
     ) -> Optional[Dict[str, Any]]:
         """Make HTTP request to the new (/api/new) handball.net API"""
-        url = f"{HANDBALL_NET_NEW_API_BASE_URL}/{endpoint}"
-        headers = {"Referer": referer}
         try:
-            async with self.session.get(url, params=params, headers=headers) as resp:
-                if resp.status != 200:
-                    _LOGGER.warning("HTTP error %s for endpoint %s", resp.status, endpoint)
-                    return None
-                payload = await resp.json()
-        except Exception as e:
-            _LOGGER.error("Request failed for endpoint %s: %s", endpoint, e)
+            payload = await async_get_json(self.hass, endpoint, params, referer)
+        except HandballNetHTTPError:
             return None
 
         if not payload or payload.get("success") is False:

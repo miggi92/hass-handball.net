@@ -2,8 +2,8 @@ import asyncio
 import voluptuous as vol
 from homeassistant import config_entries
 from homeassistant.helpers import config_validation as cv
-from homeassistant.helpers.aiohttp_client import async_get_clientsession
 import re
+from .http_client import HandballNetHTTPError, async_get_json
 from .const import (
     DOMAIN,
     CONF_CLUB_ID,
@@ -64,6 +64,7 @@ class HandballNetConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         self._selected_competition_id: str | None = None
         self._selected_competition_name: str | None = None
         self._phase_options: dict[str, str] = {}
+        self._last_http_status: int | None = None
 
     @staticmethod
     def _split_trailing_parentheses(value: str | None) -> tuple[str | None, str | None]:
@@ -216,22 +217,23 @@ class HandballNetConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         self, path: str, params: dict, referer: str
     ) -> dict | None:
         """Get JSON data from a new (/api/new) handball.net API path."""
-        session = async_get_clientsession(self.hass)
-        url = f"{HANDBALL_NET_NEW_API_BASE_URL}/{path}"
-        headers = {"Referer": referer}
-
         try:
-            async with session.get(url, params=params, headers=headers) as resp:
-                if resp.status != 200:
-                    return None
-                payload = await resp.json()
-        except Exception:
+            payload = await async_get_json(self.hass, path, params, referer)
+        except HandballNetHTTPError as err:
+            self._last_http_status = err.status or -1
             return None
 
+        self._last_http_status = None
         if not payload or not payload.get("success"):
             return None
 
         return payload
+
+    def _lookup_error(self, not_found_key: str) -> str:
+        """Distinguish 'really nothing found' from 'handball.net rejected us'."""
+        if getattr(self, "_last_http_status", None):
+            return "api_blocked"
+        return not_found_key
 
     async def _api_get_new_paginated(
         self, path: str, params: dict, referer: str
@@ -706,7 +708,7 @@ class HandballNetConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 else:
                     is_valid, team_name = await self._validate_team_id(team_id)
                     if not is_valid:
-                        errors[CONF_TEAM_ID] = "team_not_found"
+                        errors[CONF_TEAM_ID] = self._lookup_error("team_not_found")
                     else:
                         clean_team_name, parsed_suffix = (
                             self._split_trailing_parentheses(team_name)
@@ -724,7 +726,7 @@ class HandballNetConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 else:
                     self._club_options = await self._search_clubs(club_query)
                     if not self._club_options:
-                        errors[CONF_CLUB_QUERY] = "club_not_found"
+                        errors[CONF_CLUB_QUERY] = self._lookup_error("club_not_found")
                     else:
                         return await self.async_step_team_select_club()
 
@@ -762,7 +764,7 @@ class HandballNetConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 )
                 self._team_options = await self._get_teams_for_club(club_id)
                 if not self._team_options:
-                    errors[CONF_CLUB_ID] = "no_teams_found"
+                    errors[CONF_CLUB_ID] = self._lookup_error("no_teams_found")
                 else:
                     return await self.async_step_team_select_team()
 
@@ -837,7 +839,7 @@ class HandballNetConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 else:
                     self._club_options = await self._search_clubs(club_query)
                     if not self._club_options:
-                        errors[CONF_CLUB_QUERY] = "club_not_found"
+                        errors[CONF_CLUB_QUERY] = self._lookup_error("club_not_found")
                     else:
                         return await self.async_step_tournament_select_club()
 
@@ -850,7 +852,7 @@ class HandballNetConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                         competition_query
                     )
                     if not self._competition_options:
-                        errors[CONF_COMPETITION_QUERY] = "competition_not_found"
+                        errors[CONF_COMPETITION_QUERY] = self._lookup_error("competition_not_found")
                     else:
                         return await self.async_step_tournament_select_competition()
 
@@ -888,7 +890,7 @@ class HandballNetConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 )
                 self._team_options = await self._get_teams_for_club(club_id)
                 if not self._team_options:
-                    errors[CONF_CLUB_ID] = "no_teams_found"
+                    errors[CONF_CLUB_ID] = self._lookup_error("no_teams_found")
                 else:
                     return await self.async_step_tournament_select_team()
 
@@ -918,7 +920,7 @@ class HandballNetConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             else:
                 phase = await self._get_team_phase(team_id)
                 if not phase:
-                    errors[CONF_SELECTED_TEAM_ID] = "tournament_not_found"
+                    errors[CONF_SELECTED_TEAM_ID] = self._lookup_error("tournament_not_found")
                 elif self._is_tournament_already_configured(phase["id"]):
                     errors[CONF_SELECTED_TEAM_ID] = "already_configured"
                 else:
@@ -957,7 +959,7 @@ class HandballNetConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 )
                 self._phase_options = await self._get_phases_for_competition(competition_id)
                 if not self._phase_options:
-                    errors[CONF_SELECTED_COMPETITION_ID] = "no_phases_found"
+                    errors[CONF_SELECTED_COMPETITION_ID] = self._lookup_error("no_phases_found")
                 else:
                     return await self.async_step_tournament_select_phase()
 
@@ -1052,7 +1054,7 @@ class HandballNetConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 else:
                     self._club_options = await self._search_clubs(club_query)
                     if not self._club_options:
-                        errors[CONF_CLUB_QUERY] = "club_not_found"
+                        errors[CONF_CLUB_QUERY] = self._lookup_error("club_not_found")
                     else:
                         return await self.async_step_reconfigure_select_club()
 
@@ -1067,7 +1069,7 @@ class HandballNetConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 else:
                     is_valid, team_name = await self._validate_team_id(team_id)
                     if not is_valid:
-                        errors[CONF_TEAM_ID] = "team_not_found"
+                        errors[CONF_TEAM_ID] = self._lookup_error("team_not_found")
                     else:
                         clean_team_name, team_variant = self._normalize_team_selection(
                             team_name
@@ -1136,7 +1138,7 @@ class HandballNetConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 )
                 self._team_options = await self._get_teams_for_club(club_id)
                 if not self._team_options:
-                    errors[CONF_CLUB_ID] = "no_teams_found"
+                    errors[CONF_CLUB_ID] = self._lookup_error("no_teams_found")
                 else:
                     return await self.async_step_reconfigure_select_team()
 
