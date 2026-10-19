@@ -1,6 +1,35 @@
+import logging
+from typing import Any
+
 from homeassistant.helpers import device_registry as dr, entity_registry as er
+from homeassistant.helpers.device_registry import DeviceInfo
 
 from .const import CONF_CLUB_ID, CONF_ENTITY_TYPE, DOMAIN, ENTITY_TYPE_CLUB, ENTITY_TYPE_TEAM
+
+_LOGGER = logging.getLogger(__name__)
+
+# HA Core 2026.8 deprecated DeviceInfo["via_device"] (identifier tuple) in favour
+# of via_device_id. Using via_device from an entity's device_info raises inside
+# the entity platform ("Error adding entity None"), so link by device id there.
+SUPPORTS_VIA_DEVICE_ID = "via_device_id" in getattr(DeviceInfo, "__annotations__", {})
+
+# config entry id -> device id of its parent club device
+_club_device_ids: dict[str, str] = {}
+
+
+def via_device_fields(entry_id: str, via_identifier: tuple[str, str]) -> dict[str, Any]:
+    """Return the DeviceInfo fields linking a device to its parent club device."""
+    if not SUPPORTS_VIA_DEVICE_ID:
+        return {"via_device": via_identifier}
+    device_id = _club_device_ids.get(entry_id)
+    if device_id is None:
+        _LOGGER.debug(
+            "Parent device %s for entry %s not registered yet; creating device without link",
+            via_identifier,
+            entry_id,
+        )
+        return {}
+    return {"via_device_id": device_id}
 
 
 async def async_prune_stale_team_devices(hass, entry, keep_team_names: set[str]) -> None:
@@ -65,7 +94,7 @@ async def async_ensure_club_device(hass, entry) -> None:
 
     club_name = (entry.data.get("club_name") or club_id).strip()
     device_registry = dr.async_get(hass)
-    device_registry.async_get_or_create(
+    device = device_registry.async_get_or_create(
         config_entry_id=entry.entry_id,
         identifiers={(DOMAIN, club_id)},
         manufacturer="handball.net",
@@ -73,3 +102,4 @@ async def async_ensure_club_device(hass, entry) -> None:
         name=club_name,
         entry_type=dr.DeviceEntryType.SERVICE,
     )
+    _club_device_ids[entry.entry_id] = device.id
