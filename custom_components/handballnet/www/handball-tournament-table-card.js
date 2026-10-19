@@ -24,6 +24,7 @@ class HandballTournamentTableCard extends HTMLElement {
       throw new Error("handball-tournament-table-card: 'entity' is required");
     }
     this._config = config;
+    this._rendered = false;
     if (!this.shadowRoot) {
       this.attachShadow({ mode: "open" });
     }
@@ -31,7 +32,14 @@ class HandballTournamentTableCard extends HTMLElement {
 
   set hass(hass) {
     this._hass = hass;
+    // hass is pushed on every state change in the whole instance. Re-rendering
+    // innerHTML each time recreates all <img> tags and makes the logos flicker,
+    // so only render when the watched entity actually changed.
+    const stateObj = hass.states[this._config?.entity];
+    if (this._rendered && stateObj === this._lastStateObj) return;
+    this._lastStateObj = stateObj;
     this._render();
+    this._rendered = true;
   }
 
   _render() {

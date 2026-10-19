@@ -34,6 +34,7 @@ class HandballTeamCard extends HTMLElement {
       );
     }
     this._config = config;
+    this._rendered = false;
     if (!this.shadowRoot) {
       this.attachShadow({ mode: "open" });
     }
@@ -41,7 +42,23 @@ class HandballTeamCard extends HTMLElement {
 
   set hass(hass) {
     this._hass = hass;
+    // Only re-render when one of the configured entities changed; a full
+    // innerHTML rebuild on every hass update makes images flicker.
+    const watched = [
+      this._config?.table_position_entity,
+      this._config?.next_match_entity,
+      this._config?.live_ticker_entity,
+    ].map((id) => (id ? hass.states[id] : undefined));
+    if (
+      this._rendered &&
+      this._lastStates &&
+      watched.every((st, i) => st === this._lastStates[i])
+    ) {
+      return;
+    }
+    this._lastStates = watched;
     this._render();
+    this._rendered = true;
   }
 
   // ── helpers ──────────────────────────────────────────────────────────────
