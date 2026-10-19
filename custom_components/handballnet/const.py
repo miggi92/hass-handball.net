@@ -18,6 +18,7 @@ ENTITY_TYPE_TOURNAMENT = "tournament"
 # Game duration and health check constants
 GAME_DURATION_HOURS = 2
 HEALTH_CHECK_STALE_HOURS = 2
+MATCH_RUNNING_WINDOW_S = 7200  # a match counts as running up to 2 h after kick-off
 LIVE_GAME_CHECK_INTERVAL = 60
 
 # API endpoints

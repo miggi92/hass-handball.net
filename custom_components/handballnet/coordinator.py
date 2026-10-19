@@ -266,6 +266,32 @@ class HandballDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         next_match = self._get_next_match(sorted_matches)
         last_match = self._get_last_match(sorted_matches)
 
+        _LOGGER.debug(
+            "Team %s (%s): %d matches (%d home / %d away), schedule_unavailable=%s, "
+            "next=%s, last=%s, live=%d, tournament=%s, table_position=%s, health=%s",
+            team_id,
+            team_name,
+            len(sorted_matches),
+            sum(1 for m in sorted_matches if m.get("isHomeMatch")),
+            sum(1 for m in sorted_matches if m.get("isAway")),
+            schedule_unavailable,
+            (next_match or {}).get("starts_at_formatted"),
+            (last_match or {}).get("starts_at_formatted"),
+            len(live_matches),
+            tournament_id,
+            table_position,
+            health.get("state"),
+        )
+        if sorted_matches and not any(
+            m.get("isHomeMatch") or m.get("isAway") for m in sorted_matches
+        ):
+            _LOGGER.warning(
+                "Team %s: %d matches loaded, but none matches the configured team id "
+                "(home/away detection failed - team id format may have changed)",
+                team_id,
+                len(sorted_matches),
+            )
+
         self._log_perf(
             "team_bucket_update",
             team_started,
@@ -549,49 +575,39 @@ class HandballDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
 
         now = datetime.now(timezone.utc)
         stale_threshold = now - timedelta(hours=HEALTH_CHECK_STALE_HOURS)
+        now_ms = int(now.timestamp() * 1000)
 
-        if all(
-            datetime.fromtimestamp(
-                (match.get("lastUpdated", 0) or 0) / 1000, tz=timezone.utc
-            )
-            < stale_threshold
+        update_stamps = [
+            match["lastUpdated"]
             for match in matches
-        ):
-            return {"state": "stale", "attributes": {}}
+            if isinstance(match.get("lastUpdated"), (int, float))
+        ]
+        attributes: dict[str, Any] = {
+            "total_matches": len(matches),
+            "played_matches": sum(
+                1 for match in matches if (match.get("startsAt") or 0) <= now_ms
+            ),
+            "upcoming_matches": sum(
+                1 for match in matches if (match.get("startsAt") or 0) > now_ms
+            ),
+            "fetched_at": now.isoformat(),
+        }
+
+        # The new /api/new endpoints do not provide per-match "lastUpdated".
+        # Only evaluate staleness when the source actually delivers it.
+        if update_stamps:
+            last_updated = max(update_stamps)
+            attributes["last_updated"] = last_updated
+            if (
+                datetime.fromtimestamp(last_updated / 1000, tz=timezone.utc)
+                < stale_threshold
+            ):
+                return {"state": "stale", "attributes": attributes}
 
         if any(match.get("error") for match in matches):
-            return {"state": "error", "attributes": {}}
+            return {"state": "error", "attributes": attributes}
 
-        if any(match.get("status") == "unhealthy" for match in matches):
-            return {"state": "unhealthy", "attributes": {}}
-
-        if any(match.get("status") == "degraded" for match in matches):
-            return {"state": "degraded", "attributes": {}}
-
-        return {
-            "state": "healthy",
-            "attributes": {
-                "last_updated": max(match.get("lastUpdated", 0) for match in matches),
-                "total_matches": len(matches),
-                "healthy_matches": sum(
-                    1 for match in matches if match.get("status") == "healthy"
-                ),
-                "degraded_matches": sum(
-                    1 for match in matches if match.get("status") == "degraded"
-                ),
-                "unhealthy_matches": sum(
-                    1 for match in matches if match.get("status") == "unhealthy"
-                ),
-                "stale_matches": sum(
-                    1
-                    for match in matches
-                    if datetime.fromtimestamp(
-                        (match.get("lastUpdated", 0) or 0) / 1000, tz=timezone.utc
-                    )
-                    < stale_threshold
-                ),
-            },
-        }
+        return {"state": "healthy", "attributes": attributes}
 
     async def _get_tournament_info(self) -> dict[str, Any]:
         data = await self._api._make_request(f"tournaments/{self._tournament_id}")
