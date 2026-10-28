@@ -1,6 +1,6 @@
 {
     "name": "miggi92/hass-handball.net",
-    "image": "mcr.microsoft.com/devcontainers/python:3.14",
+    "image": "mcr.microsoft.com/devcontainers/python:3.15",
     "postCreateCommand": "sudo scripts/setup",
     "forwardPorts": [
         8123
